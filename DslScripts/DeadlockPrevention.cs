@@ -5,4 +5,4 @@ string lockDocument =
 		.Distinct()
 		.Select(documentId => "sp_getapplock 'LightDms.Document_" + documentId + "', 'Exclusive';"));
 
-_executionContext.NHibernateSession.CreateSQLQuery(lockDocument).ExecuteUpdate();
+_executionContext.SqlExecuter.ExecuteSql(lockDocument);

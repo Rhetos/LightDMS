@@ -226,6 +226,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="OnInitializationCodeGenerator.cs" />
+    <Compile Include="OnInitializationInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WebServiceInterface.cs" />
   </ItemGroup>

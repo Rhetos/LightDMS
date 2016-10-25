@@ -99,10 +99,4 @@ Module LightDMS
 			KeepSynchronized;
 		}
 	}
-	
-	Browse DocumentStatusBrowse LightDMS.DocumentStatus
-	{
-		Take CheckedOutToNameSurname "CheckedOutTo.Extension_PrincipalZaposlenikExt.ImePrezime";
-		Take LastFileExtension 'LastVersion.Extension_DocumentVersionExt.FileExtension';
-	}
 }
