@@ -1,5 +1,8 @@
 @REM HINT: SET SECOND ARGUMENT TO /NOPAUSE WHEN AUTOMATING THE BUILD.
 
+@SET Config=%1%
+@IF [%1] == [] SET Config=Debug
+
 IF NOT DEFINED VisualStudioVersion CALL "%VS140COMNTOOLS%VsDevCmd.bat" || ECHO ERROR: Cannot find Visual Studio 2015, missing VS140COMNTOOLS variable. && GOTO Error0
 @ECHO ON
 
@@ -11,7 +14,7 @@ WHERE /Q NuGet.exe || ECHO ERROR: Please download the NuGet.exe command line too
 
 NuGet.exe restore Rhetos.LightDMS.sln -NonInteractive || GOTO Error1
 MSBuild.exe Rhetos.LightDMS.sln /target:rebuild /p:Configuration=%Config% /verbosity:minimal /fileLogger || GOTO Error1
-NuGet.exe pack -o .. || GOTO Error1
+NuGet.exe pack Rhetos.LightDMS.nuspec -o .. || GOTO Error1
 
 CALL ChangeVersions.bat /RESTORE || GOTO Error1
 POPD
