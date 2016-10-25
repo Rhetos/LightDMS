@@ -1,0 +1,69 @@
+﻿Module LightDMS
+{
+	Entity DocumentVersion
+	{
+		Logging 
+		{
+			Log LightDMS.DocumentVersion.CreatedBy;
+			Log LightDMS.DocumentVersion.CreatedDate;
+			Log LightDMS.DocumentVersion.DocumentID;
+			Log LightDMS.DocumentVersion.VersionNumber;
+			Log LightDMS.DocumentVersion.FileName;
+		}
+		
+		Is LightDMS.DocumentEvent;
+		Reference CreatedBy Common.Principal { SystemRequired; }
+		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
+		Guid DocumentID { SqlIndex; }
+		
+		Integer VersionNumber { AutocodeForEach LightDMS.DocumentVersion.DocumentID; }
+		LongString FileName { Required; }
+		Binary Content { Required; }
+		
+		SaveMethod
+		{
+			OnInitialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
+			OnInitialization 'DefaultValues' <InitializeCreatedBy.cs>; // TODO: Remove this after implementing "CreatedBy" Rhetos concept.
+		}
+		
+		ComposableFilterBy OtherUserDocumentCheckIn
+		'(items, repository, filterParameter) =>
+		{
+			var itemList = items.Select(x => new { ID = (Guid?)x.ID, DocumentID = x.DocumentID }).ToList();
+			var itemListIds = itemList.Select(x => x.ID);
+			var itemListDocumentIds = itemList.Select(x => x.DocumentID).Distinct();
+
+			return repository.LightDMS.DocumentEvent.Query()
+				.Where(de =>
+					itemListIds.Contains(de.DocumentVersionID) &&
+					itemListDocumentIds.Contains(de.DocumentID) && // Ne micati. Dodatan uvjet za sprječavanje lockova 
+					de.Extension_DocumentStatusBeforeEvent.CheckoutID != null &&
+					de.Extension_DocumentStatusBeforeEvent.CheckedOutToID != de.DocumentVersion.CreatedByID)
+				.Select(de => de.DocumentVersion);
+		}
+		';		
+		InvalidData OtherUserDocumentCheckIn 'Akcija nije moguća jer je sadržaj rezerviran za uređivanje od strane drugog korisnika.';
+	}
+	
+	Parameter OtherUserDocumentCheckIn;
+	
+	SqlQueryable DocumentVersionExt 
+	"
+		SELECT
+			dv.ID,
+			SizeInKBytes = (DATALENGTH(Content) + 1024 - 1) / 1024, -- Round to a higher integer number.
+			FileExtension = CASE
+				WHEN CHARINDEX('.', FileName) > 0 
+					THEN REVERSE(LEFT(REVERSE(FileName), ISNULL(CHARINDEX('.', REVERSE(FileName)), LEN(FileName)) - 1))
+				ELSE ''
+			END
+		FROM
+			LightDMS.DocumentVersion dv
+	"
+	{
+		Extends LightDMS.DocumentVersion;
+
+		Decimal SizeInKBytes;
+		ShortString FileExtension;
+	}
+}

@@ -1,0 +1,108 @@
+Module LightDMS
+{
+	SqlQueryable DocumentStatusBeforeEvent
+	"
+		SELECT
+			deBase.ID,
+			deBase.DocumentID,	
+			PreviousEventID = previousEvent.ID,	
+			previousEvent.CheckoutID,
+			previousEvent.DocumentVersionID,
+			CheckedOutToID = CASE WHEN previousEvent.CheckoutID IS NOT NULL THEN previousEvent.CreatedByID ELSE NULL END
+		FROM
+			LightDMS.DocumentEvent deBase
+			OUTER APPLY (
+				SELECT TOP 1
+					de2.ID,
+					de2.CheckoutID,
+					de2.DocumentVersionID,
+					de2.CreatedByID
+				FROM
+					LightDMS.DocumentEvent de2
+				WHERE
+					de2.DocumentID = deBase.DocumentID
+					AND
+					(
+						de2.CreatedDate < deBase.CreatedDate
+						OR (de2.CreatedDate = deBase.CreatedDate AND de2.ID < deBase.ID)
+					)
+				ORDER BY
+					de2.CreatedDate DESC, de2.ID DESC
+			) previousEvent
+	"	
+	{
+		Extends LightDMS.DocumentEvent;
+		SqlDependsOnSqlObject LightDMS.DocumentEvent;  // TODO: Maknuti nakon što se ispravi AutoDetectSqlDependencies nad Polymorphic
+	
+		Reference PreviousEvent LightDMS.DocumentEvent;
+		Guid DocumentID;
+		Reference Checkout LightDMS.Checkout;
+		Reference DocumentVersion LightDMS.DocumentVersion;
+		Reference CheckedOutTo Common.Principal;
+	}
+
+	SqlQueryable ComputeDocumentStatus
+	"
+		SELECT
+			ID = document.DocumentID,
+			LastEventID = lastEvent.ID,
+			CheckedOutToID = CASE WHEN lastEvent.CheckoutID IS NOT NULL THEN lastEvent.CreatedByID ELSE NULL END,			
+			IsCheckout = CASE WHEN lastEvent.CheckoutID IS NOT NULL THEN CAST(1 AS BIT) ELSE 0 END,
+			LastVersionID = lastVersion.ID
+		FROM
+			(SELECT DocumentID FROM LightDMS.DocumentEvent GROUP BY DocumentID) document
+			OUTER APPLY
+			(
+				SELECT TOP 1
+					ID
+				FROM
+					LightDMS.DocumentVersion dv
+				WHERE dv.DocumentID = document.DocumentID
+				ORDER BY dv.CreatedDate DESC, dv.ID DESC
+			) lastVersion 
+			OUTER APPLY
+			(
+				SELECT TOP 1
+					ID,
+					CheckoutID,
+					CreatedByID
+				FROM
+					LightDMS.DocumentEvent dv
+				WHERE dv.DocumentID = document.DocumentID
+				ORDER BY dv.CreatedDate DESC, dv.ID DESC
+			) lastEvent
+	"
+	{
+		SqlDependsOnSqlObject LightDMS.DocumentEvent;  // TODO: Maknuti nakon što se ispravi AutoDetectSqlDependencies nad Polymorphic
+
+		Guid LastEventID; // TODO: Staviti referencu nakon što Bojan popravi redosljed Recompute (prvo _Materialized pa onda status)
+		Reference CheckedOutTo Common.Principal;
+		Bool IsCheckout;
+		Reference LastVersion LightDMS.DocumentVersion;
+
+		ChangesOnChangedItems LightDMS.DocumentVersion 'Guid[]' <ComputeDocumentStatusSync.cs>;
+		ChangesOnChangedItems LightDMS.Checkout 'Guid[]' <ComputeDocumentStatusSync.cs>;
+		ChangesOnChangedItems LightDMS.UndoCheckout 'Guid[]' <ComputeDocumentStatusSync.cs>;
+	}
+	
+	Entity DocumentStatus
+	{
+		Browseable;
+
+		Guid LastEventID { ComputedFrom LightDMS.ComputeDocumentStatus.LastEventID; }
+		Reference CheckedOutTo Common.Principal { ComputedFrom LightDMS.ComputeDocumentStatus.CheckedOutTo; CascadeDelete; }
+		Bool IsCheckout { ComputedFrom LightDMS.ComputeDocumentStatus.IsCheckout; }
+		Reference LastVersion LightDMS.DocumentVersion { ComputedFrom LightDMS.ComputeDocumentStatus.LastVersion; CascadeDelete; }
+		
+		ComputedFrom LightDMS.ComputeDocumentStatus
+		{
+			KeepSynchronized;
+		}
+	}
+	
+	Browse DocumentStatusBrowse LightDMS.DocumentStatus
+	{
+		Take CheckedOutToNameSurname "CheckedOutTo.Extension_PrincipalZaposlenikExt.ImePrezime";
+		Take LastFileExtension 'LastVersion.Extension_DocumentVersionExt.FileExtension';
+	}
+}

@@ -1,0 +1,23 @@
+﻿Module LightDMS
+{
+	Entity Checkout
+	{
+		Logging { AllProperties; }
+		Is LightDMS.DocumentEvent;		
+		Reference CreatedBy Common.Principal { SystemRequired; }
+		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
+		Guid DocumentID;
+		
+		SaveMethod
+		{
+			OnInitialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
+			OnInitialization 'DefaultValues' <InitializeCreatedBy.cs>; // TODO: Remove this after implementing "CreatedBy" Rhetos concept.
+		}
+
+		ItemFilter MultipleDocumentCheckout 'item => repository.LightDMS.DocumentStatusBeforeEvent.Query().Where(x => x.ID == item.ID).Single().CheckoutID != null';
+		InvalidData MultipleDocumentCheckout 'Akcija nije moguća jer je sadržaj već rezerviran za uređivanje.';
+		
+		ItemFilter NullDocumentCheckout 'item => repository.LightDMS.DocumentVersion.Query().Where(x => x.DocumentID == item.DocumentID).Count() == 0';
+		InvalidData NullDocumentCheckout 'Akcija nije moguća jer ne postoji sadržaj za preuzimanje.';
+	}
+}

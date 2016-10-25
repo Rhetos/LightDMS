@@ -1,0 +1,9 @@
+Module LightDMS
+{
+	Entity DocumentRepository
+	{
+		Logging { AllProperties; }
+		
+		ShortString	Name { Required; }
+	}
+}

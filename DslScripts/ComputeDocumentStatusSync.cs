@@ -1,0 +1,1 @@
+changedItems => changedItems.Select(item => item.DocumentID.Value).Distinct().ToArray()

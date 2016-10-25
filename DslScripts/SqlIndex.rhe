@@ -1,0 +1,35 @@
+﻿Module LightDMS
+{	
+	SqlObject IX_DocumentVersion_DocumentID_CreatedDate_ID
+	"
+		CREATE CLUSTERED INDEX IX_DocumentVersion_DocumentID_CreatedDate_ID
+			ON LightDMS.DocumentVersion (DocumentID, CreatedDate, ID)
+	"
+	"DROP INDEX LightDMS.DocumentVersion.IX_DocumentVersion_DocumentID_CreatedDate_ID"
+	{
+		SqlDependsOn LightDMS.DocumentVersion.DocumentID;
+		SqlDependsOn LightDMS.DocumentVersion.CreatedDate;
+	}
+	
+	SqlObject IX_Checkout_DocumentID_CreatedDate_ID
+	"
+		CREATE CLUSTERED INDEX IX_Checkout_DocumentID_CreatedDate_ID
+			ON LightDMS.Checkout (DocumentID, CreatedDate, ID)
+	"
+	"DROP INDEX LightDMS.Checkout.IX_Checkout_DocumentID_CreatedDate_ID"
+	{
+		SqlDependsOn LightDMS.Checkout.DocumentID;
+		SqlDependsOn LightDMS.Checkout.CreatedDate;
+	}
+	
+	SqlObject IX_UndoCheckout_DocumentID_CreatedDate_ID
+	"
+		CREATE CLUSTERED INDEX IX_UndoCheckout_DocumentID_CreatedDate_ID 
+			ON LightDMS.UndoCheckout (DocumentID, CreatedDate, ID)
+	"
+	"DROP INDEX LightDMS.UndoCheckout.IX_UndoCheckout_DocumentID_CreatedDate_ID"
+	{
+		SqlDependsOn LightDMS.UndoCheckout.DocumentID;
+		SqlDependsOn LightDMS.UndoCheckout.CreatedDate;
+	}
+}

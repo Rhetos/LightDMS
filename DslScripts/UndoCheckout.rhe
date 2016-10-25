@@ -1,0 +1,49 @@
+﻿Module LightDMS
+{
+	Entity UndoCheckout
+	{
+		Logging { AllProperties; }
+		Is LightDMS.DocumentEvent;
+		Reference CreatedBy Common.Principal { SystemRequired; }
+		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
+		Guid DocumentID;
+	
+		SaveMethod
+		{
+			OnInitialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
+			OnInitialization 'DefaultValues' <InitializeCreatedBy.cs>; // TODO: Remove this after implementing "CreatedBy" Rhetos concept.
+		}
+
+		ItemFilter DocumentNotCheckouted 'item => repository.LightDMS.DocumentStatusBeforeEvent.Query().Where(x => x.ID == item.ID).Single().CheckoutID == null';
+		InvalidData DocumentNotCheckouted 'Akcija nije moguća jer sadržaj niste rezervirali za uređivanje.';
+
+        ComposableFilterBy OtherUserDocumentUndoCheckout '(items, repository, parameter, context) =>
+		{							
+			var claimCanUndoCheckoutForOtherUser = new List<Rhetos.Security.Claim>() { new Rhetos.Security.Claim("LightDMS.UndoCheckout", "CanUndoCheckoutForOtherUser") };
+			var canUndoCheckoutForOtherUser = context.AuthorizationManager.GetAuthorizations(claimCanUndoCheckoutForOtherUser).FirstOrDefault();
+			if(canUndoCheckoutForOtherUser)
+			{
+				return items.Where(i => false);
+			}
+			else
+			{
+				var itemList = items.Select(x => (Guid?)x.ID).ToList();
+				return repository.LightDMS.DocumentEvent.Query()
+					.Where(de =>
+						itemList.Contains(de.UndoCheckoutID) &&
+						de.Extension_DocumentStatusBeforeEvent.CheckoutID != null &&
+						(de.Extension_DocumentStatusBeforeEvent.CheckedOutToID != de.UndoCheckout.CreatedByID)
+					)
+					.Select(de => de.UndoCheckout);
+			}
+		}
+		'
+		{
+            UseExecutionContext;
+        }
+
+		InvalidData OtherUserDocumentUndoCheckout 'Akcija nije moguća jer je sadržaj rezerviran za uređivanje od strane drugog korisnika.';
+	}
+	
+	Parameter OtherUserDocumentUndoCheckout;
+}
