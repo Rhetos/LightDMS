@@ -49,3 +49,19 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 			Content varbinary(max) FILESTREAM
 		);
 		DROP TABLE dbo.Test_FS;
+		
+## If you enabled FILESTREAM and made setup to DATABASE after LightDMS package deployment, you still can add FILESTREAM attribute to FileContent.Content column as following:
+		ALTER TABLE LightDMS.FileContent
+			ALTER COLUMN ID ADD ROWGUIDCOL;
+		EXEC sp_rename 'LightDMS.FileContent.Content', 'Content_backup' , 'COLUMN';
+		ALTER TABLE LightDMS.FileContent
+			ADD Content varbinary(max) FILESTREAM
+		
+		GO
+			
+		EXEC ('
+			UPDATE LightDMS.FileContent
+				SET Content = Content_backup;
+			ALTER TABLE LightDMS.FileContent
+				DROP COLUMN Content_backup;
+		');
