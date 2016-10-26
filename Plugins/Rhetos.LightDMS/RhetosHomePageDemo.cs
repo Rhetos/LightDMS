@@ -23,7 +23,7 @@ namespace Rhetos.LightDMS
             </form>
         </div><div class=""col-md-4"">
             <h4>Download demo</h4>
-            <label for=""file-id"">FileID</label>
+            <label for=""file-id"">DocumentVersionID</label>
             <input type=""text"" name=""file-id"" id=""file-id"" />
             <br />
             <button onclick=""window.location = 'lightdms/Download/' + document.getElementById('file-id').value"">Download</button>

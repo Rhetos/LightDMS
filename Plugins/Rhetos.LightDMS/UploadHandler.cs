@@ -31,12 +31,18 @@ namespace Rhetos.LightDMS
         
         public void ProcessRequest(HttpContext context)
         {
+            if (context.Request.Files.Count != 1)
+            {
+                context.Response.ContentType = "application/json;";
+                context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = "Exactly one file has to be sent as request in Multipart format. There were " + context.Request.Files.Count + " files in upload request." }));
+                context.Response.StatusCode = 400;
+                return;
+            }
             var id = Guid.NewGuid();
             var sw = Stopwatch.StartNew();
             int bufferSize = 100 * 1024; // 100 kB buffer
             byte[] buffer = new byte[bufferSize];
-            long bytesRead = 0, size;
-            string filetype;
+            long bytesRead = 0;
 
             SqlConnection sqlConnection = new SqlConnection(SqlUtility.ConnectionString);
             sqlConnection.Open();
