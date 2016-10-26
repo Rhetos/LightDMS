@@ -29,22 +29,23 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 1. Enable FileStream on SqlServer instance - Sql Server Configuration Manager [Steps](https://msdn.microsoft.com/en-us/library/cc645923.aspx)
 
 2. Enable FileStream on database level:
-	EXEC sp_configure filestream_access_level, 2
-	RECONFIGURE;
+		EXEC sp_configure filestream_access_level, 2
+		RECONFIGURE;
 
 3. Setup FileGroup on database level to enable FileStream option for varbinary(max) column:
-	ALTER DATABASE <DB_Name>
-	ADD FILEGROUP fs_Group CONTAINS FILESTREAM;
-	GO
-	-- Minimum one location where to save files for that fileGroup
-	ALTER DATABASE <DB_Name>
-	ADD FILE ( NAME = 'fs_<DB_Name>', FILENAME = '<LOCAL_DIR_PATH>' )
-	TO FILEGROUP fs_Group;
+		ALTER DATABASE <DB_Name>
+		ADD FILEGROUP fs_Group CONTAINS FILESTREAM;
+		GO
+		-- Minimum one location where to save files for that fileGroup
+		ALTER DATABASE <DB_Name>
+		ADD FILE ( NAME = 'fs_<DB_Name>', FILENAME = '<LOCAL_DIR_PATH>' )
+		TO FILEGROUP fs_Group;
 	
 4. Test that FileStream is enabled and can be used for varbinary(max) COLUMN
-	CREATE TABLE dbo.Test_FS
-	(
-		ID uniqueidentifier PRIMARY KEY ROWGUIDCOL,
-		Content varbinary(max) FILESTREAM
-	);
-	DROP TABLE dbo.Test_FS;
+	
+		CREATE TABLE dbo.Test_FS
+		(
+			ID uniqueidentifier PRIMARY KEY ROWGUIDCOL,
+			Content varbinary(max) FILESTREAM
+		);
+		DROP TABLE dbo.Test_FS;
