@@ -28,6 +28,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.Routing;
 
 namespace Rhetos.LightDMS
 {
@@ -36,11 +37,12 @@ namespace Rhetos.LightDMS
     {
         public void Initialize()
         {
-			// register additional Routes -- Upload/Download
         }
 
         public void InitializeApplicationInstance(System.Web.HttpApplication context)
         {
+            RouteTable.Routes.Add(new Route("LightDMS/Upload/{id}", new LightDMSRouteHandler("Upload")));
+            RouteTable.Routes.Add(new Route("LightDMS/Download/{id}", new LightDMSRouteHandler("Download")));
         }
     }
 }
