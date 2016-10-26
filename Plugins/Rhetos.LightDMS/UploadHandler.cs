@@ -43,14 +43,16 @@ namespace Rhetos.LightDMS
             SqlTransaction sqlTransaction = null;
             try
             {
+                // TODO: check if FileStream is enabled
+                //      if not, throw error or differente upload/download procedure
                 sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-                SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStream(System.IO.FileAccess.Write, @"
-                    INSERT INTO dbo.MyDocuments([stream_id], [name], [file_stream]) 
-                    VALUES(@stream_id, @filename, CAST('' AS VARBINARY(MAX)));
+                SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForUpload(@"
+                    INSERT INTO LightDMS.FileContent(ID, [Content]) 
+                    VALUES(@id, CAST('' AS VARBINARY(MAX)));
                     
-                    SELECT file_stream.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT(), 0, ''
-                    FROM dbo.MyDocuments
-                    WHERE stream_id = @stream_id", id, context.Request.Files[0].FileName, context.Request.Files[0].ContentType, sqlTransaction, out size, out filetype);
+                    SELECT Content.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT()
+                    FROM LightDMS.FileContent
+                    WHERE ID = @id", id, sqlTransaction);
                 
                 while (bytesRead < context.Request.Files[0].ContentLength)
                 {
@@ -73,7 +75,14 @@ namespace Rhetos.LightDMS
                 sqlConnection.Close();
 
                 context.Response.ContentType = "application/json;";
-                context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = ex.Message, trace = ex.StackTrace }));
+                if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
+                {
+                    context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = "FILESTREAM is not enabled on Database, or FileStream FileGroup is missing on database, or FILESTREAM attribute is missing from LightDMS.FileContent.Content column. Try with enabling FileStream on database, add FileGroup to database and transform Content column to VARBINARY(MAX) FILESTREAM type." }));
+                }
+                else
+                {
+                    context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = ex.Message, trace = ex.StackTrace }));
+                }
                 context.Response.StatusCode = 400;
             }
         }

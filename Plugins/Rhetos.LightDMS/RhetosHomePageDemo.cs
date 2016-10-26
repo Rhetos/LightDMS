@@ -15,7 +15,7 @@ namespace Rhetos.LightDMS
         <div class=""col-md-4""></div>
         <div class=""col-md-4"">
             <h4>Upload demo</h4>
-            <form action=""lightdms/upload/1231"" method=""post"" enctype=""multipart/form-data"">
+            <form action=""lightdms/upload"" method=""post"" enctype=""multipart/form-data"">
                 <label for=""file-web-api"">Select file</label>
                 <input type=""file"" name=""file-web-api"" id=""file-web-api"" />
                 <br />

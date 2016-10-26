@@ -12,30 +12,46 @@ namespace Rhetos.LightDms.Storage
     /// </summary>
     public class SqlFileStreamProvider
     {
-        public static SqlFileStream GetSqlFileStream(FileAccess access, string InsertSqlText, Guid id, string fileName, string fileType, SqlTransaction SqlTransaction, out long size, out string type)
+        public static SqlFileStream GetSqlFileStreamForUpload(string InsertSqlText, Guid id, SqlTransaction SqlTransaction)
         {
             SqlCommand SqlCommand = new SqlCommand(InsertSqlText, SqlTransaction.Connection)
             {
                 Transaction = SqlTransaction
             };
             
-            SqlCommand.Parameters.Add("@stream_id", SqlDbType.UniqueIdentifier).Value = id;
-            SqlCommand.Parameters.Add("@filename", SqlDbType.VarChar).Value = fileName;
+            SqlCommand.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
 
             using (var reader = SqlCommand.ExecuteReader())
             {
-                size = 0;
-                type = "";
                 if (reader.Read())
                 {
                     var path = reader.GetString(0);
                     byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
-                    if (access == FileAccess.Read)
-                    {
-                        size = reader.GetInt64(2);
-                        type = reader.GetString(3);
-                    }
-                    return new SqlFileStream(path, transactionContext, access, FileOptions.SequentialScan, 0);
+                    return new SqlFileStream(path, transactionContext, FileAccess.Write, FileOptions.SequentialScan, 0);
+                }
+                else return null;
+            }
+        }
+
+        public static SqlFileStream GetSqlFileStreamForDownload(string InsertSqlText, SqlTransaction SqlTransaction, out long size, out string filename, out string fileExtension)
+        {
+            SqlCommand SqlCommand = new SqlCommand(InsertSqlText, SqlTransaction.Connection)
+            {
+                Transaction = SqlTransaction
+            };
+
+            using (var reader = SqlCommand.ExecuteReader())
+            {
+                size = 0;
+                filename = fileExtension = "";
+                if (reader.Read())
+                {
+                    var path = reader.GetString(0);
+                    byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
+                    size = reader.GetInt64(2);
+                    filename = reader.GetString(3);
+                    fileExtension = reader.GetString(4);
+                    return new SqlFileStream(path, transactionContext, FileAccess.Read, FileOptions.SequentialScan, 0);
                 }
                 else return null;
             }

@@ -37,31 +37,60 @@ namespace Rhetos.LightDMS
             int bufferSize = 100 * 1024; // 100 kB buffer
             byte[] buffer = new byte[bufferSize];
             long bytesRead = 0, size = 0;
-            string fileName;
+            string fileName, fileExtension;
 
             SqlConnection sqlConnection = new SqlConnection(SqlUtility.ConnectionString);
             sqlConnection.Open();
             SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-            SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStream(System.IO.FileAccess.Read, @"
-                    SELECT file_stream.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT(), cached_file_size, name
-                    FROM dbo.MyDocuments
-                    WHERE stream_id = @stream_id", id, "", "", sqlTransaction, out size, out fileName);
-            while (bytesRead < size)
+            // check if FileStream is enabled
+            //      if not, throw error or differente upload/download procedure
+            try
             {
-                var readed = sfs.Read(buffer, 0, bufferSize);
-                if (readed == bufferSize)
-                    context.Response.BinaryWrite(buffer);
-                else
-                    context.Response.BinaryWrite(buffer.Take(readed).ToArray());
-                bytesRead += readed;
+                SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForDownload(@"
+                        SELECT fc.Content.PathName(),
+                                GET_FILESTREAM_TRANSACTION_CONTEXT(), 
+                                FileSize = DATALENGTH(Content), 
+                                Name = dv.FileName, 
+                                Extension = dvext.FileExtension
+                        FROM LightDMS.DocumentVersion dv
+                            INNER JOIN LightDMS.FileContent fc ON dv.FileContentID = fc.ID
+                            INNER JOIN LightDMS.DocumentVersionExt dvext ON dvext.ID = dv.ID
+                        WHERE dv.ID = '" + id.ToString() + "'", sqlTransaction, out size, out fileName, out fileExtension);
+                while (bytesRead < size)
+                {
+                    var readed = sfs.Read(buffer, 0, bufferSize);
+                    if (readed == bufferSize)
+                        context.Response.BinaryWrite(buffer);
+                    else
+                        context.Response.BinaryWrite(buffer.Take(readed).ToArray());
+                    bytesRead += readed;
+                }
+                sfs.Close();
+                sqlTransaction.Commit();
+                sqlConnection.Close();
+                _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (" + id + ") Executed.");
+                context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
+                context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+                context.Response.StatusCode = 200;
             }
-            sfs.Close();
-            sqlTransaction.Commit();
-            sqlConnection.Close();
-            _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (" + id + ") Executed.");
-            context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
-            context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
-            context.Response.StatusCode = 200;
+            catch (Exception ex)
+            {
+                // TODO: Log into Rhetos logger
+                if (sqlTransaction != null) sqlTransaction.Rollback();
+                sqlConnection.Close();
+
+                context.Response.ContentType = "application/json;";
+                if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
+                {
+                    context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface." }));
+                }
+                else
+                {
+                    context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = ex.Message, trace = ex.StackTrace }));
+                }
+
+                context.Response.StatusCode = 400;
+            }
         }
     }
 }
