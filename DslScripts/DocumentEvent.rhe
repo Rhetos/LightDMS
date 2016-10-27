@@ -5,7 +5,7 @@ Module LightDMS
 	Polymorphic DocumentEvent
 	{
 		Reference Repository LightDMS.DocumentRepository; 
-		Guid DocumentID; // { SqlIndex; } --> SqlIndex ne može ići po non-writeable structure
+		Reference Document LightDMS.DocumentMetadata; // { SqlIndex; } --> SqlIndex ne može ići po non-writeable structure
 		Reference CreatedBy Common.Principal; // { SystemRequired; }
 		DateTime CreatedDate; // --> DenyUserEdit; CreationTime; SystemRequired; ne može ići po non-writeable structure
 		LongString Comment;

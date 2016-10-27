@@ -1,12 +1,17 @@
 ﻿Module LightDMS
 {
+	Polymorphic DocumentMetadata
+	{
+		Materialized;
+	}
+	
 	Entity DocumentVersion
 	{
 		Logging 
 		{
 			Log LightDMS.DocumentVersion.CreatedBy;
 			Log LightDMS.DocumentVersion.CreatedDate;
-			Log LightDMS.DocumentVersion.DocumentID;
+			Log LightDMS.DocumentVersion.Document;
 			Log LightDMS.DocumentVersion.VersionNumber;
 			Log LightDMS.DocumentVersion.FileName;
 		}
@@ -14,9 +19,9 @@
 		Is LightDMS.DocumentEvent;
 		Reference CreatedBy Common.Principal { SystemRequired; }
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
-		Guid DocumentID { SqlIndex; }
+		Reference Document LightDMS.DocumentMetadata_Materialized;
 		
-		Integer VersionNumber { AutocodeForEach LightDMS.DocumentVersion.DocumentID; }
+		Integer VersionNumber { AutocodeForEach LightDMS.DocumentVersion.Document; }
 		LongString FileName { Required; }
 		Reference FileContent { Required; }
 		
