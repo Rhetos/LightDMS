@@ -4,6 +4,10 @@
 	{
 		Materialized;
 	}
+	Entity DocumentMetadata_Materialized
+	{
+		ShortString Subtype { ComputedFrom LightDMS.DocumentMetadata.Subtype; }
+	}
 	
 	Entity DocumentVersion
 	{
@@ -24,6 +28,7 @@
 		Integer VersionNumber { AutocodeForEach LightDMS.DocumentVersion.Document; }
 		LongString FileName { Required; }
 		Reference FileContent { Required; }
+		SqlDependsOn LightDMS.DocumentMetadata_Materialized;
 		
 		SaveMethod
 		{
@@ -48,6 +53,18 @@
 		}
 		';
 		InvalidData OtherUserDocumentCheckIn 'Akcija nije moguća jer je sadržaj rezerviran za uređivanje od strane drugog korisnika.';
+	}
+	
+	Browse DocumentVersionBrowse LightDMS.DocumentVersion 
+	{
+		Take CreatedBy;
+		Take CreatedDate;
+		Take DocumentSubType 'Document.Subtype';
+		Take VersionNumber;
+		Take FileName;
+		Take FileContent;
+		Take SizeInKBytes 'Extension_DocumentVersionExt.SizeInKBytes';
+		Take FileExtension 'Extension_DocumentVersionExt.FileExtension';
 	}
 	
 	Parameter OtherUserDocumentCheckIn;
