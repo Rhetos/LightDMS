@@ -6,7 +6,7 @@
 		Is LightDMS.DocumentEvent;		
 		Reference CreatedBy Common.Principal { SystemRequired; }
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
-		Reference Document LightDMS.DocumentMetadata;
+		Guid DocumentID;
 		
 		SaveMethod
 		{

@@ -47,7 +47,7 @@ Module LightDMS
 			ID = document.DocumentID,
 			LastEventID = lastEvent.ID,
 			CheckedOutToID = CASE WHEN lastEvent.CheckoutID IS NOT NULL THEN lastEvent.CreatedByID ELSE NULL END,			
-			IsCheckout = CASE WHEN lastEvent.CheckoutID IS NOT NULL THEN CAST(1 AS BIT) ELSE 0 END,
+			IsCheckout = CAST(CASE WHEN lastEvent.CheckoutID IS NOT NULL THEN 1 ELSE 0 END AS BIT),
 			LastVersionID = lastVersion.ID
 		FROM
 			(SELECT DocumentID FROM LightDMS.DocumentEvent GROUP BY DocumentID) document

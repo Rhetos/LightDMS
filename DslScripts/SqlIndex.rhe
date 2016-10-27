@@ -7,7 +7,7 @@
 	"
 	"DROP INDEX LightDMS.DocumentVersion.IX_DocumentVersion_DocumentID_CreatedDate_ID"
 	{
-		SqlDependsOn LightDMS.DocumentVersion.Document;
+		SqlDependsOn LightDMS.DocumentVersion.DocumentID;
 		SqlDependsOn LightDMS.DocumentVersion.CreatedDate;
 	}
 	
@@ -18,7 +18,7 @@
 	"
 	"DROP INDEX LightDMS.Checkout.IX_Checkout_DocumentID_CreatedDate_ID"
 	{
-		SqlDependsOn LightDMS.Checkout.Document;
+		SqlDependsOn LightDMS.Checkout.DocumentID;
 		SqlDependsOn LightDMS.Checkout.CreatedDate;
 	}
 	
@@ -29,7 +29,7 @@
 	"
 	"DROP INDEX LightDMS.UndoCheckout.IX_UndoCheckout_DocumentID_CreatedDate_ID"
 	{
-		SqlDependsOn LightDMS.UndoCheckout.Document;
+		SqlDependsOn LightDMS.UndoCheckout.DocumentID;
 		SqlDependsOn LightDMS.UndoCheckout.CreatedDate;
 	}
 }
