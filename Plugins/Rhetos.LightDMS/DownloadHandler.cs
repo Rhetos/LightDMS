@@ -33,6 +33,8 @@ namespace Rhetos.LightDMS
         {
             // TODO: handle invalid ID
             var id = Guid.Parse(context.Request.Url.LocalPath.Split('/').Last());
+            var query = HttpUtility.ParseQueryString(context.Request.Url.Query);
+
             var sw = Stopwatch.StartNew();
             int bufferSize = 100 * 1024; // 100 kB buffer
             byte[] buffer = new byte[bufferSize];
@@ -56,6 +58,13 @@ namespace Rhetos.LightDMS
                             INNER JOIN LightDMS.FileContent fc ON dv.FileContentID = fc.ID
                             INNER JOIN LightDMS.DocumentVersionExt dvext ON dvext.ID = dv.ID
                         WHERE dv.ID = '" + id.ToString() + "'", sqlTransaction, out size, out fileName, out fileExtension);
+
+                // if as query is "filename" given, that one is used as download filename
+                foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
+
+                context.Response.BufferOutput = false;
+                context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
+                context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
                 while (bytesRead < size)
                 {
                     var readed = sfs.Read(buffer, 0, bufferSize);
@@ -69,8 +78,6 @@ namespace Rhetos.LightDMS
                 sqlTransaction.Commit();
                 sqlConnection.Close();
                 _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (" + id + ") Executed.");
-                context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
-                context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
                 context.Response.StatusCode = 200;
             }
             catch (Exception ex)
