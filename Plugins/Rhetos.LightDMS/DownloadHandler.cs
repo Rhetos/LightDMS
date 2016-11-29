@@ -7,6 +7,7 @@ using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Web;
 
 namespace Rhetos.LightDMS
@@ -62,23 +63,25 @@ namespace Rhetos.LightDMS
                 // if as query is "filename" given, that one is used as download filename
                 foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
 
-                context.Response.BufferOutput = false;
                 context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
                 context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+                context.Response.AddHeader("Content-Length", size.ToString());
+                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                context.Response.BufferOutput = false;
+
                 while (bytesRead < size)
                 {
                     var readed = sfs.Read(buffer, 0, bufferSize);
-                    if (readed == bufferSize)
-                        context.Response.BinaryWrite(buffer);
-                    else
-                        context.Response.BinaryWrite(buffer.Take(readed).ToArray());
+                    if (!context.Response.IsClientConnected)
+                        break;
+                    context.Response.OutputStream.Write(buffer, 0, readed);
+                    context.Response.Flush();
                     bytesRead += readed;
                 }
                 sfs.Close();
                 sqlTransaction.Commit();
                 sqlConnection.Close();
                 _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (" + id + ") Executed.");
-                context.Response.StatusCode = 200;
             }
             catch (Exception ex)
             {
