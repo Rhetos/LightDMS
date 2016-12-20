@@ -71,6 +71,7 @@ Module LightDMS
 				WHERE dv.DocumentID = document.DocumentID
 				ORDER BY dv.CreatedDate DESC, dv.ID DESC
 			) lastEvent
+		WHERE document.DocumentID IS NOT NULL
 	"
 	{
 		SqlDependsOnSqlObject LightDMS.DocumentEvent;  // TODO: Maknuti nakon što se ispravi AutoDetectSqlDependencies nad Polymorphic

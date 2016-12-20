@@ -39,6 +39,7 @@ namespace Rhetos.LightDMS
         {
             RouteTable.Routes.Add(new Route("LightDMS/Upload", new LightDMSRouteHandler("Upload")));
             RouteTable.Routes.Add(new Route("LightDMS/Download/{id}", new LightDMSRouteHandler("Download")));
+            RouteTable.Routes.Add(new Route("LightDMS/DownloadPreview/{id}", new LightDMSRouteHandler("DownloadPreview")));
         }
 
         public void InitializeApplicationInstance(System.Web.HttpApplication context)

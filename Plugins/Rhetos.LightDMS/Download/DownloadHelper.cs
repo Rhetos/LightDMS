@@ -1,64 +1,37 @@
 ﻿using Rhetos.LightDms.Storage;
-using Rhetos.Logging;
 using Rhetos.Utilities;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace Rhetos.LightDMS
 {
-    public class DownloadHandler : IHttpHandler
+    public class DownloadHelper
     {
-        private ILogger _performanceLogger;
-
-        public DownloadHandler()
+        public static void HandleDownload(HttpContext context, string sqlQuery)
         {
-            var logProvider = Activator.CreateInstance<NLogProvider>();
-            _performanceLogger = logProvider.GetLogger("Performance");
-        }
-
-        public bool IsReusable
-        {
-            get
-            {
-                return false;
-            }
-        }
-        
-        public void ProcessRequest(HttpContext context)
-        {
-            // TODO: handle invalid ID
-            var id = Guid.Parse(context.Request.Url.LocalPath.Split('/').Last());
             var query = HttpUtility.ParseQueryString(context.Request.Url.Query);
 
-            var sw = Stopwatch.StartNew();
             int bufferSize = 100 * 1024; // 100 kB buffer
             byte[] buffer = new byte[bufferSize];
             long bytesRead = 0, size = 0;
-            string fileName, fileExtension;
+            string fileName;
 
             SqlConnection sqlConnection = new SqlConnection(SqlUtility.ConnectionString);
             sqlConnection.Open();
             SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
             // check if FileStream is enabled
-            //      if not, throw error or differente upload/download procedure
+            //      if not, throw error or different upload/download procedure
             try
             {
-                SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForDownload(@"
-                        SELECT fc.Content.PathName(),
-                                GET_FILESTREAM_TRANSACTION_CONTEXT(), 
-                                FileSize = DATALENGTH(Content), 
-                                Name = dv.FileName, 
-                                Extension = dvext.FileExtension
-                        FROM LightDMS.DocumentVersion dv
-                            INNER JOIN LightDMS.FileContent fc ON dv.FileContentID = fc.ID
-                            INNER JOIN LightDMS.DocumentVersionExt dvext ON dvext.ID = dv.ID
-                        WHERE dv.ID = '" + id.ToString() + "'", sqlTransaction, out size, out fileName, out fileExtension);
+                SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForDownload(sqlQuery, sqlTransaction, out size, out fileName);
 
                 // if as query is "filename" given, that one is used as download filename
                 foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
@@ -81,7 +54,6 @@ namespace Rhetos.LightDMS
                 sfs.Close();
                 sqlTransaction.Commit();
                 sqlConnection.Close();
-                _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (" + id + ") Executed.");
             }
             catch (Exception ex)
             {

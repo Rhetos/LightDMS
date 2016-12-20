@@ -18,7 +18,9 @@ namespace Rhetos.LightDMS
                 return Activator.CreateInstance(typeof(UploadHandler)) as IHttpHandler;
             if (_operation == "Download")
                 return Activator.CreateInstance(typeof(DownloadHandler)) as IHttpHandler;
-            throw new InvalidOperationException("Only Upload & Download operations are allowed.");
+            if (_operation == "DownloadPreview")
+                return Activator.CreateInstance(typeof(DownloadPreviewHandler)) as IHttpHandler;
+            throw new InvalidOperationException("Only Upload & Download & DownloadPreview operations are allowed.");
         }
     }
 }

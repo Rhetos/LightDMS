@@ -33,7 +33,7 @@ namespace Rhetos.LightDms.Storage
             }
         }
 
-        public static SqlFileStream GetSqlFileStreamForDownload(string InsertSqlText, SqlTransaction SqlTransaction, out long size, out string filename, out string fileExtension)
+        public static SqlFileStream GetSqlFileStreamForDownload(string InsertSqlText, SqlTransaction SqlTransaction, out long size, out string filename)
         {
             SqlCommand SqlCommand = new SqlCommand(InsertSqlText, SqlTransaction.Connection)
             {
@@ -43,14 +43,13 @@ namespace Rhetos.LightDms.Storage
             using (var reader = SqlCommand.ExecuteReader())
             {
                 size = 0;
-                filename = fileExtension = "";
+                filename = "";
                 if (reader.Read())
                 {
                     var path = reader.GetString(0);
                     byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
                     size = reader.GetInt64(2);
                     filename = reader.GetString(3);
-                    fileExtension = reader.GetString(4);
                     return new SqlFileStream(path, transactionContext, FileAccess.Read, FileOptions.SequentialScan, 0);
                 }
                 else return null;

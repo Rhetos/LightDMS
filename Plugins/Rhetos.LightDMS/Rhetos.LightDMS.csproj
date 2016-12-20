@@ -243,6 +243,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Download\DownloadHelper.cs" />
+    <Compile Include="Download\DownloadPreviewHandler.cs" />
     <Compile Include="Helpers\MimeTypeHelper.cs" />
     <Compile Include="LightDMSRouteHandler.cs" />
     <Compile Include="OnInitializationCodeGenerator.cs" />
@@ -250,8 +252,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RhetosHomePageDemo.cs" />
     <Compile Include="Storage\SqlMultipartStreamProvider.cs" />
-    <Compile Include="DownloadHandler.cs" />
-    <Compile Include="UploadHandler.cs" />
+    <Compile Include="Download\DownloadHandler.cs" />
+    <Compile Include="Upload\UploadHandler.cs" />
     <Compile Include="WebServiceInterface.cs" />
   </ItemGroup>
   <ItemGroup>
