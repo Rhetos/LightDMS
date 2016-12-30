@@ -88,8 +88,6 @@ Module LightDMS
 	
 	Entity DocumentStatus
 	{
-		Browseable;
-
 		Guid LastEventID { ComputedFrom LightDMS.ComputeDocumentStatus.LastEventID; }
 		Reference CheckedOutTo Common.Principal { ComputedFrom LightDMS.ComputeDocumentStatus.CheckedOutTo; CascadeDelete; }
 		Bool IsCheckout { ComputedFrom LightDMS.ComputeDocumentStatus.IsCheckout; }

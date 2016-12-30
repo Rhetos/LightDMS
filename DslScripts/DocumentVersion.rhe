@@ -51,7 +51,7 @@
 	"
 		SELECT
 			dv.ID,
-			SizeInKBytes = (DATALENGTH(fc.Content) + 1024 - 1) / 1024, -- Round to a higher integer number.
+			SizeInKBytes = CAST(((DATALENGTH(fc.Content) + 1024 - 1) / 1024) as decimal), -- Round to a higher integer number.
 			FileExtension = CASE
 				WHEN CHARINDEX('.', dv.FileName) > 0 
 					THEN REVERSE(LEFT(REVERSE(FileName), ISNULL(CHARINDEX('.', REVERSE(dv.FileName)), LEN(dv.FileName)) - 1))
