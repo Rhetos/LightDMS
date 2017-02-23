@@ -43,13 +43,7 @@ namespace Rhetos.LightDMS
             }
 
             var sw = Stopwatch.StartNew();
-            DownloadHelper.HandleDownload(context, @"
-                        SELECT fc.Content.PathName(),
-                                GET_FILESTREAM_TRANSACTION_CONTEXT(), 
-                                FileSize = DATALENGTH(Content), 
-                                Name = 'unknown.txt'
-                        FROM LightDMS.FileContent fc
-                        WHERE fc.ID = '" + id + "'");
+            DownloadHelper.HandleDownload(context, null, id);
             _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (LightDMS.FileContent.ID = " + id + ") Executed.");
         }
     }

@@ -42,38 +42,75 @@ namespace Rhetos.LightDMS
             var sw = Stopwatch.StartNew();
             int bufferSize = 100 * 1024; // 100 kB buffer
             byte[] buffer = new byte[bufferSize];
-            long bytesRead = 0;
+            long totalbytesRead = 0;
 
             SqlConnection sqlConnection = new SqlConnection(SqlUtility.ConnectionString);
             sqlConnection.Open();
             SqlTransaction sqlTransaction = null;
             try
             {
-                // TODO: check if FileStream is enabled
-                //      if not, throw error or differente upload/download procedure
                 sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-                SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForUpload(@"
+                System.IO.Stream fileStream = context.Request.Files[0].InputStream;
+
+                SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
+                if (checkFileStreamEnabled.ExecuteScalar() == null)
+                {   //FileStream is not supported
+                    SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content]) VALUES('" + id + "', 0x0);", sqlConnection, sqlTransaction);
+                    createEmptyFileContent.ExecuteNonQuery();
+                    SqlCommand fileUpdateCommand = new SqlCommand("update LightDMS.FileContent set Content.WRITE(@Data, @Offset, null) where ID = @ID", sqlConnection, sqlTransaction);
+
+                    fileUpdateCommand.Parameters.Add("@Data", SqlDbType.Binary);
+                    fileUpdateCommand.Parameters.AddWithValue("@ID", id);
+                    fileUpdateCommand.Parameters.AddWithValue("@Offset", 0);
+
+                    var bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+                    while (bytesRead > 0)
+                    {
+                        if (bytesRead < buffer.Length)
+                        {
+                            fileUpdateCommand.Parameters["@Data"].Value = buffer.Where((val, ix) => ix < bytesRead).ToArray();
+                        }
+                        else
+                        {
+                            fileUpdateCommand.Parameters["@Data"].Value = buffer;
+                        }
+                        fileUpdateCommand.Parameters["@Offset"].Value = totalbytesRead;
+                        fileUpdateCommand.ExecuteNonQuery();
+                        totalbytesRead += bytesRead;
+                        bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+                    }
+
+                    fileUpdateCommand.Dispose();
+                    fileStream.Close();
+
+                    sqlTransaction.Commit();
+                    sqlConnection.Close();
+                }
+                else
+                {
+                    SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForUpload(@"
                     INSERT INTO LightDMS.FileContent(ID, [Content]) 
                     VALUES(@id, CAST('' AS VARBINARY(MAX)));
                     
                     SELECT Content.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT()
                     FROM LightDMS.FileContent
                     WHERE ID = @id", id, sqlTransaction);
-                
-                while (bytesRead < context.Request.Files[0].ContentLength)
-                {
-                    var readed = context.Request.Files[0].InputStream.Read(buffer, 0, bufferSize);
-                    sfs.Write(buffer, 0, readed);
-                    bytesRead += readed;
+                    while (totalbytesRead < context.Request.Files[0].ContentLength)
+                    {
+                        var readed = context.Request.Files[0].InputStream.Read(buffer, 0, bufferSize);
+                        sfs.Write(buffer, 0, readed);
+                        totalbytesRead += readed;
+                    }
+                    sfs.Close();
+                    sqlTransaction.Commit();
+                    sqlConnection.Close();
                 }
-                sfs.Close();
-                sqlTransaction.Commit();
-                sqlConnection.Close();
 
                 _performanceLogger.Write(sw, "Rhetos.LightDMS: UploadFile (" + id + ") Executed.");
                 context.Response.ContentType = "application/json;";
                 context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { ID = id }));
                 context.Response.StatusCode = 200;
+                
             }
             catch (Exception ex) {
                 // TODO: Log into Rhetos logger

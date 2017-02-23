@@ -15,7 +15,7 @@ namespace Rhetos.LightDMS
 {
     public class DownloadHelper
     {
-        public static void HandleDownload(HttpContext context, string sqlQuery)
+        public static void HandleDownload(HttpContext context, Guid? documentId, Guid? fileContentId)
         {
             var query = HttpUtility.ParseQueryString(context.Request.Url.Query);
 
@@ -27,31 +27,106 @@ namespace Rhetos.LightDMS
             SqlConnection sqlConnection = new SqlConnection(SqlUtility.ConnectionString);
             sqlConnection.Open();
             SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-            // check if FileStream is enabled
-            //      if not, throw error or different upload/download procedure
+
             try
             {
-                SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForDownload(sqlQuery, sqlTransaction, out size, out fileName);
-
-                // if as query is "filename" given, that one is used as download filename
-                foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
-
-                context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
-                context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
-                context.Response.AddHeader("Content-Length", size.ToString());
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
                 context.Response.BufferOutput = false;
 
-                while (bytesRead < size)
-                {
-                    var readed = sfs.Read(buffer, 0, bufferSize);
-                    if (!context.Response.IsClientConnected)
-                        break;
-                    context.Response.OutputStream.Write(buffer, 0, readed);
-                    context.Response.Flush();
-                    bytesRead += readed;
+                SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
+                if (checkFileStreamEnabled.ExecuteScalar() == null)
+                { // FileStream not available - read from VarBinary(MAX) column using buffer;
+                    SqlCommand getFileSize = new SqlCommand(@"
+                        SELECT FileSize = DATALENGTH(Content), 
+                                Name = dv.FileName,
+                                FileContentID = fc.ID
+                        FROM LightDMS.DocumentVersion dv
+                            INNER JOIN LightDMS.FileContent fc ON dv.FileContentID = fc.ID
+                            INNER JOIN LightDMS.DocumentVersionExt dvext ON dvext.ID = dv.ID
+                        WHERE dv.ID = '" + documentId + @"'", sqlConnection, sqlTransaction);
+
+                    if (!documentId.HasValue)
+                        getFileSize = new SqlCommand(@"
+                        SELECT FileSize = DATALENGTH(Content), 
+                                Name='unknown.txt',
+                                FileContentID = fc.ID 
+                        FROM LightDMS.FileContent fc WHERE ID = '" + fileContentId + "'", sqlConnection, sqlTransaction);
+
+                    var result = getFileSize.ExecuteReader(CommandBehavior.SingleRow);
+                    result.Read();
+                    fileName = (string)result["Name"];
+                    size = (long)result["FileSize"];
+                    var fileContentID = (Guid)result["FileContentID"];
+                    result.Close();
+
+                    // if as query is "filename" given, that one is used as download filename
+                    foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
+                    context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
+                    context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+                    context.Response.AddHeader("Content-Length", size.ToString());
+
+                    SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='"+ fileContentID.ToString() + "'", sqlConnection, sqlTransaction);
+                    SqlDataReader reader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess);
+
+                    while (reader.Read())
+                    {
+                        // Read bytes into outByte[] and retain the number of bytes returned.  
+                        var readed = reader.GetBytes(0, 0, buffer, 0, bufferSize);
+                        var startIndex = 0;
+                        // Continue while there are bytes beyond the size of the buffer.  
+                        while (readed == bufferSize)
+                        {
+                            context.Response.OutputStream.Write(buffer, 0, (int)readed);
+                            context.Response.Flush();
+
+                            // Reposition start index to end of last buffer and fill buffer.  
+                            startIndex += bufferSize;
+                            readed = reader.GetBytes(0, startIndex, buffer, 0, bufferSize);
+                        }
+
+                        context.Response.OutputStream.Write(buffer, 0, (int)readed);
+                        context.Response.Flush();
+                    }
+
+                    reader.Close();
                 }
-                sfs.Close();
+                else
+                {
+                    string sqlQuery = @"
+                        SELECT fc.Content.PathName(),
+                                GET_FILESTREAM_TRANSACTION_CONTEXT(), 
+                                FileSize = DATALENGTH(Content), 
+                                Name = dv.FileName
+                        FROM LightDMS.DocumentVersion dv
+                            INNER JOIN LightDMS.FileContent fc ON dv.FileContentID = fc.ID
+                            INNER JOIN LightDMS.DocumentVersionExt dvext ON dvext.ID = dv.ID
+                        WHERE dv.ID = '" + documentId + "'";
+                    if (!documentId.HasValue) sqlQuery = @"
+                        SELECT fc.Content.PathName(),
+                                GET_FILESTREAM_TRANSACTION_CONTEXT(), 
+                                FileSize = DATALENGTH(Content), 
+                                Name = 'unknown.txt'
+                        FROM LightDMS.FileContent fc
+                        WHERE fc.ID = '" + fileContentId + "'";
+                    SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForDownload(sqlQuery, sqlTransaction, out size, out fileName);
+
+                    // if as query is "filename" given, that one is used as download filename
+                    foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
+                    context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
+                    context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+                    context.Response.AddHeader("Content-Length", size.ToString());
+
+                    while (bytesRead < size)
+                    {
+                        var readed = sfs.Read(buffer, 0, bufferSize);
+                        if (!context.Response.IsClientConnected)
+                            break;
+                        context.Response.OutputStream.Write(buffer, 0, readed);
+                        context.Response.Flush();
+                        bytesRead += readed;
+                    }
+                    sfs.Close();
+                }
                 sqlTransaction.Commit();
                 sqlConnection.Close();
             }

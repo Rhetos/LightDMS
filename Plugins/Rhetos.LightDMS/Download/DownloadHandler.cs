@@ -34,15 +34,7 @@ namespace Rhetos.LightDMS
         {
             var id = Guid.Parse(context.Request.Url.LocalPath.Split('/').Last());
             var sw = Stopwatch.StartNew();
-            DownloadHelper.HandleDownload(context, @"
-                        SELECT fc.Content.PathName(),
-                                GET_FILESTREAM_TRANSACTION_CONTEXT(), 
-                                FileSize = DATALENGTH(Content), 
-                                Name = dv.FileName
-                        FROM LightDMS.DocumentVersion dv
-                            INNER JOIN LightDMS.FileContent fc ON dv.FileContentID = fc.ID
-                            INNER JOIN LightDMS.DocumentVersionExt dvext ON dvext.ID = dv.ID
-                        WHERE dv.ID = '"+ id + "'");
+            DownloadHelper.HandleDownload(context, id, null);
             _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (DocumentVersionID = " + id + ") Executed.");
         }
     }

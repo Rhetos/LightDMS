@@ -80,8 +80,8 @@
 			ALTER TABLE LightDMS.FileContent
 				ALTER COLUMN ID ADD ROWGUIDCOL;
 			EXEC sp_rename 'LightDMS.FileContent.Content', 'Content_backup' , 'COLUMN';
-			ALTER TABLE LightDMS.FileContent
-				ADD Content varbinary(max) FILESTREAM
+			EXEC ('ALTER TABLE LightDMS.FileContent
+				ADD Content varbinary(max) FILESTREAM');
 		END;
 		{SPLIT SCRIPT}
 		IF (((SELECT SERVERPROPERTY('FilestreamEffectiveLevel'))>1)
