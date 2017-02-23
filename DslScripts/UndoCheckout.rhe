@@ -4,17 +4,22 @@
 	{
 		Logging { AllProperties; }
 		Is LightDMS.DocumentEvent;
-		Reference CreatedBy Common.Principal { SystemRequired; }
+		Reference CreatedBy Common.Principal { SystemRequired; CreatedBy; }
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
 		Guid DocumentID;
 	
 		SaveMethod
 		{
 			OnInitialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
-			OnInitialization 'DefaultValues' <InitializeCreatedBy.cs>; // TODO: Remove this after implementing "CreatedBy" Rhetos concept.
 		}
 
-		ItemFilter DocumentNotCheckouted 'item => repository.LightDMS.DocumentStatusBeforeEvent.Query().Where(x => x.ID == item.ID).Single().CheckoutID == null';
+		ComposableFilterBy DocumentNotCheckouted
+		'(items, repository, filterParameter) =>
+		{
+            var itemsToCheck = items.Select(i => i.ID).ToList();
+    		var invalidItems = repository.LightDMS.DocumentStatusBeforeEvent.Query(i => itemsToCheck.Contains(i.ID) && i.CheckoutID == null).Select(i => i.ID).ToList();
+    		return items.Where(i => invalidItems.Contains(i.ID));
+	  	}';
 		InvalidData DocumentNotCheckouted 'Akcija nije moguća jer sadržaj niste rezervirali za uređivanje.';
 
         ComposableFilterBy OtherUserDocumentUndoCheckout '(items, repository, parameter, context) =>
@@ -46,4 +51,5 @@
 	}
 	
 	Parameter OtherUserDocumentUndoCheckout;
+	Parameter DocumentNotCheckouted;
 }

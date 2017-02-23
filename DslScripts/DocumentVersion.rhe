@@ -12,7 +12,7 @@
 		}
 		
 		Is LightDMS.DocumentEvent;
-		Reference CreatedBy Common.Principal { SystemRequired; }
+		Reference CreatedBy Common.Principal { SystemRequired; CreatedBy; }
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
 		Guid DocumentID;
 		
@@ -23,7 +23,6 @@
 		SaveMethod
 		{
 			OnInitialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
-			OnInitialization 'DefaultValues' <InitializeCreatedBy.cs>; // TODO: Remove this after implementing "CreatedBy" Rhetos concept.
 		}
 		
 		ComposableFilterBy OtherUserDocumentCheckIn
