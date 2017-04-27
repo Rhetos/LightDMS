@@ -27,7 +27,7 @@ namespace Rhetos.LightDMS
             SqlConnection sqlConnection = new SqlConnection(SqlUtility.ConnectionString);
             sqlConnection.Open();
             SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-
+            SqlDataReader reader = null;
             try
             {
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
@@ -62,11 +62,11 @@ namespace Rhetos.LightDMS
                     // if as query is "filename" given, that one is used as download filename
                     foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
                     context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
-                    context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+                    context.Response.AddHeader("Content-Disposition", "attachment; filename=\"" + fileName+"\"");
                     context.Response.AddHeader("Content-Length", size.ToString());
 
                     SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='"+ fileContentID.ToString() + "'", sqlConnection, sqlTransaction);
-                    SqlDataReader reader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess);
+                    reader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess);
 
                     while (reader.Read())
                     {
@@ -89,6 +89,7 @@ namespace Rhetos.LightDMS
                     }
 
                     reader.Close();
+                    reader = null;
                 }
                 else
                 {
@@ -113,7 +114,7 @@ namespace Rhetos.LightDMS
                     // if as query is "filename" given, that one is used as download filename
                     foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
                     context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
-                    context.Response.AddHeader("Content-Disposition", "attachment; filename=" + fileName);
+                    context.Response.AddHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
                     context.Response.AddHeader("Content-Length", size.ToString());
 
                     while (bytesRead < size)
@@ -132,6 +133,7 @@ namespace Rhetos.LightDMS
             }
             catch (Exception ex)
             {
+                if (reader != null && !reader.IsClosed) reader.Close();
                 // TODO: Log into Rhetos logger
                 if (sqlTransaction != null) sqlTransaction.Rollback();
                 sqlConnection.Close();
