@@ -1,4 +1,4 @@
-Module LightDMS
+﻿Module LightDMS
 {		
 	AutoDetectSqlDependencies;
 	
