@@ -53,9 +53,11 @@ namespace Rhetos.LightDMS
                 System.IO.Stream fileStream = context.Request.Files[0].InputStream;
 
                 SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
+                var createdDate = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff");
+
                 if (checkFileStreamEnabled.ExecuteScalar() == null)
                 {   //FileStream is not supported
-                    SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate]) VALUES('" + id + "', 0x0, '" + DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + "');", sqlConnection, sqlTransaction);
+                    SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate]) VALUES('" + id + "', 0x0, '" + createdDate + "');", sqlConnection, sqlTransaction);
                     createEmptyFileContent.ExecuteNonQuery();
                     SqlCommand fileUpdateCommand = new SqlCommand("update LightDMS.FileContent set Content.WRITE(@Data, @Offset, null) where ID = @ID", sqlConnection, sqlTransaction);
 
@@ -89,9 +91,9 @@ namespace Rhetos.LightDMS
                 else
                 {
                     SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForUpload(@"
-                    INSERT INTO LightDMS.FileContent(ID, [Content]) 
-                    VALUES(@id, CAST('' AS VARBINARY(MAX)));
-                    
+                    INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate]) 
+                    VALUES(@id, CAST('' AS VARBINARY(MAX)), '" + createdDate + @"');
+
                     SELECT Content.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT()
                     FROM LightDMS.FileContent
                     WHERE ID = @id", id, sqlTransaction);
