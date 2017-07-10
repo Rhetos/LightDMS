@@ -6,8 +6,8 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.Diagnostics;
-using System.Web;
 using System.Linq;
+using System.Web;
 
 namespace Rhetos.LightDMS
 {
@@ -28,7 +28,7 @@ namespace Rhetos.LightDMS
                 return false;
             }
         }
-        
+
         public void ProcessRequest(HttpContext context)
         {
             if (context.Request.Files.Count != 1)
@@ -55,7 +55,7 @@ namespace Rhetos.LightDMS
                 SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
                 if (checkFileStreamEnabled.ExecuteScalar() == null)
                 {   //FileStream is not supported
-                    SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content]) VALUES('" + id + "', 0x0);", sqlConnection, sqlTransaction);
+                    SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate]) VALUES('" + id + "', 0x0, '" + DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss:fff") + "');", sqlConnection, sqlTransaction);
                     createEmptyFileContent.ExecuteNonQuery();
                     SqlCommand fileUpdateCommand = new SqlCommand("update LightDMS.FileContent set Content.WRITE(@Data, @Offset, null) where ID = @ID", sqlConnection, sqlTransaction);
 
@@ -110,9 +110,10 @@ namespace Rhetos.LightDMS
                 context.Response.ContentType = "application/json;";
                 context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { ID = id }));
                 context.Response.StatusCode = 200;
-                
+
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 // TODO: Log into Rhetos logger
                 if (sqlTransaction != null) sqlTransaction.Rollback();
                 sqlConnection.Close();
