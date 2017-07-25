@@ -4,6 +4,6 @@ string lockDocument =
 		.Where(item => item.DocumentID.HasValue)
 		.Select(item => item.DocumentID)
 		.Distinct()
-		.Select(documentId => "sp_getapplock 'LightDms.Document_" + documentId + "', 'Exclusive';"));
+		.Select(documentId => "exec sp_getapplock 'LightDms.Document_" + documentId + "', 'Exclusive';"));
 
 _executionContext.SqlExecuter.ExecuteSql(lockDocument);
