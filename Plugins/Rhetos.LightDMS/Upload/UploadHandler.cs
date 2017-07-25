@@ -53,7 +53,7 @@ namespace Rhetos.LightDMS
                 System.IO.Stream fileStream = context.Request.Files[0].InputStream;
 
                 SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
-                var createdDate = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss.fff");
+                var createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
                 if (checkFileStreamEnabled.ExecuteScalar() == null)
                 {   //FileStream is not supported
