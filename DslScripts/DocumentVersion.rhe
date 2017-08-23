@@ -66,10 +66,11 @@
 		Decimal SizeInKBytes;
 		ShortString FileExtension;
 	}
-	
+
 	Entity FileContent
 	{
 		Binary Content { Required; }
+		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
 	}
 	
 	SqlObject FileContent_FileStream "
