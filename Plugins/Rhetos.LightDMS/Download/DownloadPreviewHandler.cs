@@ -43,7 +43,7 @@ namespace Rhetos.LightDMS
             }
 
             var sw = Stopwatch.StartNew();
-            DownloadHelper.HandleDownload(context, null, id);
+            new DownloadHelper().HandleDownload(context, null, id);
             _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (LightDMS.FileContent.ID = " + id + ") Executed.");
         }
     }

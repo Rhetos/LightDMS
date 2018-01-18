@@ -1,4 +1,5 @@
-﻿using Rhetos.LightDms.Storage;
+﻿using Newtonsoft.Json;
+using Rhetos.LightDms.Storage;
 using Rhetos.Logging;
 using Rhetos.Utilities;
 using System;
@@ -14,11 +15,13 @@ namespace Rhetos.LightDMS
     public class UploadHandler : IHttpHandler
     {
         private ILogger _performanceLogger;
+        private ILogger _logger;
 
         public UploadHandler()
         {
-            var logProvider = Activator.CreateInstance<NLogProvider>();
+            var logProvider = new NLogProvider();
             _performanceLogger = logProvider.GetLogger("Performance");
+            _logger = logProvider.GetLogger(GetType().Name);
         }
 
         public bool IsReusable
@@ -110,24 +113,26 @@ namespace Rhetos.LightDMS
 
                 _performanceLogger.Write(sw, "Rhetos.LightDMS: UploadFile (" + id + ") Executed.");
                 context.Response.ContentType = "application/json;";
-                context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { ID = id }));
+                context.Response.Write(JsonConvert.SerializeObject(new { ID = id }));
                 context.Response.StatusCode = 200;
-
             }
             catch (Exception ex)
             {
-                // TODO: Log into Rhetos logger
+                _logger.Error(ex.ToString());
+
                 if (sqlTransaction != null) sqlTransaction.Rollback();
                 sqlConnection.Close();
 
                 context.Response.ContentType = "application/json;";
                 if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
                 {
-                    context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = "FILESTREAM is not enabled on Database, or FileStream FileGroup is missing on database, or FILESTREAM attribute is missing from LightDMS.FileContent.Content column. Try with enabling FileStream on database, add FileGroup to database and transform Content column to VARBINARY(MAX) FILESTREAM type." }));
+                    var errorMessage = "FILESTREAM is not enabled on Database, or FileStream FileGroup is missing on database, or FILESTREAM attribute is missing from LightDMS.FileContent.Content column. Try with enabling FileStream on database, add FileGroup to database and transform Content column to VARBINARY(MAX) FILESTREAM type.";
+                    _logger.Error(errorMessage);
+                    context.Response.Write(JsonConvert.SerializeObject(new { error = errorMessage }));
                 }
                 else
                 {
-                    context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = ex.Message, trace = ex.StackTrace }));
+                    context.Response.Write(JsonConvert.SerializeObject(new { Message = ex.Message, StackTrace = ex.StackTrace }));
                 }
                 context.Response.StatusCode = 400;
             }
