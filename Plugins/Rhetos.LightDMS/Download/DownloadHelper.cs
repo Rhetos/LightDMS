@@ -1,21 +1,28 @@
 ﻿using Rhetos.LightDms.Storage;
+using Rhetos.Logging;
 using Rhetos.Utilities;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace Rhetos.LightDMS
 {
     public class DownloadHelper
     {
-        public static void HandleDownload(HttpContext context, Guid? documentId, Guid? fileContentId)
+        private ILogger _performanceLogger;
+        private ILogger _logger;
+
+        public DownloadHelper()
+        {
+            var logProvider = new NLogProvider();
+            _performanceLogger = logProvider.GetLogger("Performance");
+            _logger = logProvider.GetLogger(GetType().Name);
+        }
+
+        public void HandleDownload(HttpContext context, Guid? documentId, Guid? fileContentId)
         {
             var query = HttpUtility.ParseQueryString(context.Request.Url.Query);
 
@@ -62,10 +69,10 @@ namespace Rhetos.LightDMS
                     // if as query is "filename" given, that one is used as download filename
                     foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
                     context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
-                    context.Response.AddHeader("Content-Disposition", "attachment; filename=\"" + fileName+"\"");
+                    context.Response.AddHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
                     context.Response.AddHeader("Content-Length", size.ToString());
 
-                    SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='"+ fileContentID.ToString() + "'", sqlConnection, sqlTransaction);
+                    SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='" + fileContentID.ToString() + "'", sqlConnection, sqlTransaction);
                     reader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess);
 
                     while (reader.Read())
@@ -109,6 +116,7 @@ namespace Rhetos.LightDMS
                                 Name = 'unknown.txt'
                         FROM LightDMS.FileContent fc
                         WHERE fc.ID = '" + fileContentId + "'";
+
                     SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForDownload(sqlQuery, sqlTransaction, out size, out fileName);
 
                     // if as query is "filename" given, that one is used as download filename
@@ -128,20 +136,24 @@ namespace Rhetos.LightDMS
                     }
                     sfs.Close();
                 }
+
                 sqlTransaction.Commit();
                 sqlConnection.Close();
             }
             catch (Exception ex)
             {
+                _logger.Error(ex.ToString());
                 if (reader != null && !reader.IsClosed) reader.Close();
-                // TODO: Log into Rhetos logger
+
                 if (sqlTransaction != null) sqlTransaction.Rollback();
                 sqlConnection.Close();
 
                 context.Response.ContentType = "application/json;";
                 if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
                 {
-                    context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface." }));
+                    var errorMessage = "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.";
+                    _logger.Error(errorMessage);
+                    context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = errorMessage }));
                 }
                 else
                 {

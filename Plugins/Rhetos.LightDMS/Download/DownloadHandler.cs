@@ -1,13 +1,7 @@
-﻿using Rhetos.LightDms.Storage;
-using Rhetos.Logging;
-using Rhetos.Utilities;
+﻿using Rhetos.Logging;
 using System;
-using System.Data;
-using System.Data.SqlClient;
-using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Web;
 
 namespace Rhetos.LightDMS
@@ -15,11 +9,13 @@ namespace Rhetos.LightDMS
     public class DownloadHandler : IHttpHandler
     {
         private ILogger _performanceLogger;
+        private ILogger _logger;
 
         public DownloadHandler()
         {
-            var logProvider = Activator.CreateInstance<NLogProvider>();
+            var logProvider = new NLogProvider();
             _performanceLogger = logProvider.GetLogger("Performance");
+            _logger = logProvider.GetLogger(GetType().Name);
         }
 
         public bool IsReusable
@@ -34,7 +30,7 @@ namespace Rhetos.LightDMS
         {
             var id = Guid.Parse(context.Request.Url.LocalPath.Split('/').Last());
             var sw = Stopwatch.StartNew();
-            DownloadHelper.HandleDownload(context, id, null);
+            new DownloadHelper().HandleDownload(context, id, null);
             _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (DocumentVersionID = " + id + ") Executed.");
         }
     }
