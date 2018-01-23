@@ -1,8 +1,8 @@
 @SETLOCAL
 @SETLOCAL ENABLEDELAYEDEXPANSION
 @REM //////////////////////////////////////////////////////
-SET BuildVersion=1.2.9
-SET PrereleaseVersion=
+SET BuildVersion=1.2.10
+SET PrereleaseVersion=auto
 @REM SET PrereleaseVersion TO EMPTY VALUE FOR THE OFFICIAL RELEASE.
 @REM SET PrereleaseVersion TO "auto" FOR AUTOMATIC PRERELEASE NAME "alpha<date and time><last commit hash>"
 @REM \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
