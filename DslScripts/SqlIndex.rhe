@@ -10,6 +10,16 @@
 		SqlDependsOn LightDMS.DocumentVersion.DocumentID;
 		SqlDependsOn LightDMS.DocumentVersion.CreatedDate;
 	}
+
+    SqlObject IX_DocumentVersion_FileContentID
+    "
+        CREATE NONCLUSTERED INDEX IX_DocumentVersion_FileContentID 
+            ON LightDMS.DocumentVersion (FileContentID)
+    "
+    "DROP INDEX LightDMS.DocumentVersion.IX_DocumentVersion_FileContentID"
+    {
+        SqlDependsOn LightDMS.DocumentVersion.FileContent;
+    }
 	
 	SqlObject IX_Checkout_DocumentID_CreatedDate_ID
 	"
@@ -32,4 +42,14 @@
 		SqlDependsOn LightDMS.UndoCheckout.DocumentID;
 		SqlDependsOn LightDMS.UndoCheckout.CreatedDate;
 	}
+
+    SqlObject IX_FileContent_CreatedDate
+    "
+        CREATE NONCLUSTERED INDEX IX_FileContent_CreatedDate 
+            ON LightDMS.FileContent (CreatedDate) INCLUDE (ID)
+    "
+    "DROP INDEX LightDMS.FileContent.IX_FileContent_CreatedDate"
+    {
+        SqlDependsOn LightDMS.FileContent.CreatedDate;
+    }
 }
