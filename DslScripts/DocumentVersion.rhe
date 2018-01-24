@@ -18,7 +18,7 @@
 		
 		Integer VersionNumber { AutocodeForEach LightDMS.DocumentVersion.DocumentID; }
 		LongString FileName { Required; }
-		Reference FileContent { Required; }
+		Reference FileContent { Required; SqlIndex; }
 		
 		SaveMethod
 		{

@@ -10,16 +10,6 @@
 		SqlDependsOn LightDMS.DocumentVersion.DocumentID;
 		SqlDependsOn LightDMS.DocumentVersion.CreatedDate;
 	}
-
-    SqlObject IX_DocumentVersion_FileContentID
-    "
-        CREATE NONCLUSTERED INDEX IX_DocumentVersion_FileContentID 
-            ON LightDMS.DocumentVersion (FileContentID)
-    "
-    "DROP INDEX LightDMS.DocumentVersion.IX_DocumentVersion_FileContentID"
-    {
-        SqlDependsOn LightDMS.DocumentVersion.FileContent;
-    }
 	
 	SqlObject IX_Checkout_DocumentID_CreatedDate_ID
 	"
