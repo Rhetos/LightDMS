@@ -70,7 +70,7 @@
 	Entity FileContent
 	{
 		Binary Content { Required; }
-		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
+		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; SqlIndex; }
 	}
 	
 	SqlObject FileContent_FileStream "

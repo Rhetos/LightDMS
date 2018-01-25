@@ -32,14 +32,4 @@
 		SqlDependsOn LightDMS.UndoCheckout.DocumentID;
 		SqlDependsOn LightDMS.UndoCheckout.CreatedDate;
 	}
-
-    SqlObject IX_FileContent_CreatedDate
-    "
-        CREATE NONCLUSTERED INDEX IX_FileContent_CreatedDate 
-            ON LightDMS.FileContent (CreatedDate) INCLUDE (ID)
-    "
-    "DROP INDEX LightDMS.FileContent.IX_FileContent_CreatedDate"
-    {
-        SqlDependsOn LightDMS.FileContent.CreatedDate;
-    }
 }
