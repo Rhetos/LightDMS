@@ -18,7 +18,7 @@
 		
 		Integer VersionNumber { AutocodeForEach LightDMS.DocumentVersion.DocumentID; }
 		LongString FileName { Required; }
-		Reference FileContent { Required; }
+		Reference FileContent { Required; SqlIndex; }
 		
 		SaveMethod
 		{
@@ -70,7 +70,7 @@
 	Entity FileContent
 	{
 		Binary Content { Required; }
-		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
+		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; SqlIndex; }
 	}
 	
 	SqlObject FileContent_FileStream "
