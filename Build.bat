@@ -1,6 +1,6 @@
 SETLOCAL
 SET Version=1.2.13
-SET Prerelease=
+SET Prerelease=auto
 
 IF NOT DEFINED VisualStudioVersion CALL "%VS140COMNTOOLS%VsDevCmd.bat" || ECHO ERROR: Cannot find Visual Studio 2015, missing VS140COMNTOOLS variable. && GOTO Error0
 @ECHO ON
