@@ -70,7 +70,7 @@ namespace Rhetos.LightDMS
                     foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
                     context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
                     // Koristiti HttpUtility.UrlPathEncode umjesto HttpUtility.UrlEncode ili Uri.EscapeDataString jer drugačije handlea SPACE i specijalne znakove
-                    context.Response.AddHeader("Content-Disposition", "attachment; filename=\"" + HttpUtility.UrlPathEncode(fileName) + "\"");
+                    context.Response.AddHeader("Content-Disposition", "attachment; filename*=UTF-8''" + HttpUtility.UrlPathEncode(fileName) + "");
                     context.Response.AddHeader("Content-Length", size.ToString());
 
                     SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='" + fileContentID.ToString() + "'", sqlConnection, sqlTransaction);

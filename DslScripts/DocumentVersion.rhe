@@ -50,12 +50,7 @@
 	"
 		SELECT
 			dv.ID,
-			SizeInKBytes = CAST(((DATALENGTH(fc.Content) + 1024 - 1) / 1024) as decimal), -- Round to a higher integer number.
-			FileExtension = CASE
-				WHEN CHARINDEX('.', dv.FileName) > 0 
-					THEN REVERSE(LEFT(REVERSE(FileName), ISNULL(CHARINDEX('.', REVERSE(dv.FileName)), LEN(dv.FileName)) - 1))
-				ELSE ''
-			END
+			SizeInKBytes = CAST(((DATALENGTH(fc.Content) + 1024 - 1) / 1024) as decimal) -- Round to a higher integer number.
 		FROM
 			LightDMS.DocumentVersion dv
 			LEFT JOIN LightDMS.FileContent fc ON fc.ID = dv.FileContentID
@@ -64,7 +59,6 @@
 		Extends LightDMS.DocumentVersion;
 
 		Decimal SizeInKBytes;
-		ShortString FileExtension;
 	}
 
 	Entity FileContent
@@ -73,9 +67,11 @@
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; SqlIndex; }
 	}
 	
-	SqlObject FileContent_FileStream "
+	SqlObject FileContent_FileStream 
+	"
 		IF (((SELECT SERVERPROPERTY('FilestreamEffectiveLevel'))>1)
-			AND ((SELECT COUNT(*) FROM sys.database_files WHERE type = 2) > 0))
+			AND ((SELECT COUNT(*) FROM sys.database_files WHERE type = 2) > 0)
+			AND (SELECT is_filestream FROM sys.columns WHERE object_id = OBJECT_ID('LightDMS.FileContent') and name = 'Content') = 0)
 		BEGIN
 			ALTER TABLE LightDMS.FileContent
 				ALTER COLUMN ID ADD ROWGUIDCOL;
@@ -86,6 +82,7 @@
 		{SPLIT SCRIPT}
 		IF (((SELECT SERVERPROPERTY('FilestreamEffectiveLevel'))>1)
 			AND ((SELECT COUNT(*) FROM sys.database_files WHERE type = 2) > 0))
+			AND EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'FileContent' AND COLUMN_NAME = 'Content_backup')
 		BEGIN
 			EXEC ('
 				UPDATE LightDMS.FileContent
@@ -95,28 +92,7 @@
 			');
 		END
 	"
-
-	"
-		IF (((SELECT SERVERPROPERTY('FilestreamEffectiveLevel'))>1)
-			AND ((SELECT COUNT(*) FROM sys.database_files WHERE type = 2) > 0))
-		BEGIN
-			EXEC sp_rename 'LightDMS.FileContent.Content', 'Content_backup' , 'COLUMN';
-			ALTER TABLE LightDMS.FileContent
-				ADD Content varbinary(max);
-		END
-		{SPLIT SCRIPT}
-		IF (((SELECT SERVERPROPERTY('FilestreamEffectiveLevel'))>1)
-			AND ((SELECT COUNT(*) FROM sys.database_files WHERE type = 2) > 0))
-		BEGIN
-			EXEC ('
-				UPDATE LightDMS.FileContent
-					SET Content = Content_backup;
-				ALTER TABLE LightDMS.FileContent
-					DROP COLUMN Content_backup;
-				ALTER TABLE LightDMS.FileContent
-					ALTER COLUMN ID DROP ROWGUIDCOL;
-			');
-		END
+	"-- Zbog performansi ne uklanjamo filestream. Potrebno je ručno napraviti ako se radi downgrade servera 	
 	"
 	{
 		SqlDependsOn LightDMS.FileContent.Content;
