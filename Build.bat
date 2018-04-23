@@ -14,7 +14,7 @@ WHERE /Q NuGet.exe || ECHO ERROR: Please download the NuGet.exe command line too
 
 NuGet.exe restore Rhetos.LightDMS.sln -NonInteractive || GOTO Error1
 MSBuild.exe Rhetos.LightDMS.sln /target:rebuild /p:Configuration=%Config% /verbosity:minimal /fileLogger || GOTO Error1
-NuGet.exe pack Rhetos.LightDMS.nuspec -o .. || GOTO Error1
+NuGet.exe pack Rhetos.LightDMS.nuspec -OutputDirectory .. || GOTO Error1
 
 CALL ChangeVersions.bat /RESTORE || GOTO Error1
 POPD

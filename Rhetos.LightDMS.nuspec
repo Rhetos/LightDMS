@@ -7,7 +7,7 @@
     <owners>Omega software</owners>
     <licenseUrl>http://opensource.org/licenses/AGPL-3.0</licenseUrl>
     <projectUrl>https://github.com/rhetos/rhetos</projectUrl>
-    <description>LightDMS is a DSL package (a plugin module) for Rhetos development platform.
+    <description>LightDMS is a plugin package for Rhetos development platform.
       It is light implementation of a document version system. Provides DSL containers for Documents/DocumentVersions and service interfaces for upload/download files.</description>
     <copyright>Copyright Omega software 2016</copyright>
     <tags>Rhetos plugin</tags>
