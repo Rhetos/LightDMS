@@ -1,4 +1,6 @@
-﻿using Rhetos.LightDms.Storage;
+﻿using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+using Rhetos.LightDms.Storage;
 using Rhetos.Logging;
 using Rhetos.Utilities;
 using System;
@@ -35,6 +37,59 @@ namespace Rhetos.LightDMS
             sqlConnection.Open();
             SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
             SqlDataReader reader = null;
+            var storageConnectionVariable = System.Configuration.ConfigurationManager.AppSettings.Get("StorageConnectionVariable");
+            string storageConnectionString = null;
+            if (!string.IsNullOrWhiteSpace(storageConnectionVariable))
+                storageConnectionString = Environment.GetEnvironmentVariable(storageConnectionVariable, EnvironmentVariableTarget.Machine);
+
+            //ako je poslan Azure Blob Storage connection string pokusavamo prvo download-ati s Azure-a, a fallback-amo na bazu
+            if (!string.IsNullOrEmpty(storageConnectionString))
+            {
+                CloudStorageAccount storageAccount = null;
+                if (!CloudStorageAccount.TryParse(storageConnectionString, out storageAccount))
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = "Invalid Azure Blob Storage connection string." }));
+                    return;
+                }
+
+                CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
+                var storageContainer = System.Configuration.ConfigurationManager.AppSettings.Get("StorageContainer");
+                CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference(string.IsNullOrWhiteSpace(storageContainer) ? "lightdms" : storageContainer);
+                cloudBlobContainer.CreateIfNotExists(BlobContainerPublicAccessType.Blob);
+
+                SqlCommand getFileName = new SqlCommand(@"
+                        SELECT Name = dv.FileName
+                        FROM LightDMS.DocumentVersion dv
+                        WHERE dv.ID = '" + documentId + @"'", sqlConnection, sqlTransaction);
+
+                var result = getFileName.ExecuteReader(CommandBehavior.SingleRow);
+                result.Read();
+                fileName = (string)result["Name"];
+
+                CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference("doc-" + documentId.ToString());
+                if (cloudBlockBlob.Exists())
+                {
+                    try
+                    {
+                        cloudBlockBlob.FetchAttributes();
+                        context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
+                        // Koristiti HttpUtility.UrlPathEncode umjesto HttpUtility.UrlEncode ili Uri.EscapeDataString jer drugačije handlea SPACE i specijalne znakove
+                        context.Response.AddHeader("Content-Disposition", "attachment; filename*=UTF-8''" + HttpUtility.UrlPathEncode(fileName) + "");
+                        context.Response.AddHeader("Content-Length", cloudBlockBlob.Properties.Length.ToString());
+
+                        cloudBlockBlob.DownloadToStream(context.Response.OutputStream);
+
+                        context.Response.Flush();
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error("Azure storage error, falling back to DB. Error: " + ex.ToString());
+                    }
+                }
+            }
+
             try
             {
                 context.Response.StatusCode = (int)HttpStatusCode.OK;
