@@ -63,8 +63,12 @@
 
 	Entity FileContent
 	{
-		Binary Content { Required; }
+		Binary Content;
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; SqlIndex; }
+		Bool AzureStorage;
+
+		ItemFilter ContentIliAzureStorage 'item => item.Content == null && item.AzureStorage != true';
+		InvalidData ContentIliAzureStorage 'Ako Content nije postavljen, AzureStorage mora biti true.';
 	}
 	
 	SqlObject FileContent_FileStream 
