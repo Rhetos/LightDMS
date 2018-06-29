@@ -35,7 +35,6 @@ namespace Rhetos.LightDMS
             SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
             SqlDataReader reader = null;
             string fileName = null;
-            long size = 0;
             // if "filename" is present in query, that one is used as download filename
             foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
 
@@ -72,7 +71,7 @@ namespace Rhetos.LightDMS
                 : null;
 
             fileContentId = fileContentId ?? (Guid?)result["FileContentID"];
-            size = (long)result["FileSize"];
+            long size = (long)result["FileSize"];
             result.Close();
 
             if (azureStorage == true && TryDownloadFromAzureBlob(context, fileContentId, fileName, sqlConnection, sqlTransaction))
