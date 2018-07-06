@@ -63,42 +63,11 @@
 
 	Entity FileContent
 	{
-		Binary Content;
+		Binary Content; // Important: This column is converted to FILESTREAM in the AfterDeploy script "Use filestream if supported.sql".
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; SqlIndex; }
 		Bool AzureStorage;
 
 		ItemFilter ContentIliAzureStorage 'item => item.Content == null && item.AzureStorage != true';
 		InvalidData ContentIliAzureStorage 'Ako Content nije postavljen, AzureStorage mora biti true.';
-	}
-	
-	SqlObject FileContent_FileStream 
-	"
-		IF (((SELECT SERVERPROPERTY('FilestreamEffectiveLevel'))>1)
-			AND ((SELECT COUNT(*) FROM sys.database_files WHERE type = 2) > 0)
-			AND (SELECT is_filestream FROM sys.columns WHERE object_id = OBJECT_ID('LightDMS.FileContent') and name = 'Content') = 0)
-		BEGIN
-			ALTER TABLE LightDMS.FileContent
-				ALTER COLUMN ID ADD ROWGUIDCOL;
-			EXEC sp_rename 'LightDMS.FileContent.Content', 'Content_backup' , 'COLUMN';
-			EXEC ('ALTER TABLE LightDMS.FileContent
-				ADD Content varbinary(max) FILESTREAM');
-		END;
-		{SPLIT SCRIPT}
-		IF (((SELECT SERVERPROPERTY('FilestreamEffectiveLevel'))>1)
-			AND ((SELECT COUNT(*) FROM sys.database_files WHERE type = 2) > 0))
-			AND EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'FileContent' AND COLUMN_NAME = 'Content_backup')
-		BEGIN
-			EXEC ('
-				UPDATE LightDMS.FileContent
-					SET Content = Content_backup;
-				ALTER TABLE LightDMS.FileContent
-					DROP COLUMN Content_backup;
-			');
-		END
-	"
-	"-- Zbog performansi ne uklanjamo filestream. Potrebno je ručno napraviti ako se radi downgrade servera 	
-	"
-	{
-		SqlDependsOn LightDMS.FileContent.Content;
 	}
 }
