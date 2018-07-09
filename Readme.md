@@ -60,6 +60,10 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 
 ## If you enabled FILESTREAM and made setup to DATABASE after LightDMS package deployment, you still can add FILESTREAM attribute to FileContent.Content column as following:
 
+On the next execution of DeployPackages.exe, the FILESTREAM will be automatically added to the LightDMS.FileContent.Content column.
+
+Instead of running DeployPackages.exe, you can execute the following script to use FILESTREAM:
+
 ```SQL
 ALTER TABLE LightDMS.FileContent
     ALTER COLUMN ID ADD ROWGUIDCOL;
