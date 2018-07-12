@@ -12,41 +12,22 @@ namespace Rhetos.LightDms.Storage
     /// </summary>
     public class SqlFileStreamProvider
     {
-        public static SqlFileStream GetSqlFileStreamForUpload(string InsertSqlText, Guid id, SqlTransaction SqlTransaction)
+        public static SqlFileStream GetSqlFileStreamForUpload(string insertSqlText, Guid id, SqlTransaction sqlTransaction)
         {
-            SqlCommand SqlCommand = new SqlCommand(InsertSqlText, SqlTransaction.Connection)
+            SqlCommand sqlCommand = new SqlCommand(insertSqlText, sqlTransaction.Connection)
             {
-                Transaction = SqlTransaction
+                Transaction = sqlTransaction
             };
             
-            SqlCommand.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
+            sqlCommand.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
 
-            using (var reader = SqlCommand.ExecuteReader())
+            using (var reader = sqlCommand.ExecuteReader())
             {
                 if (reader.Read())
                 {
                     var path = reader.GetString(0);
                     byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
                     return new SqlFileStream(path, transactionContext, FileAccess.Write, FileOptions.SequentialScan, 0);
-                }
-                else return null;
-            }
-        }
-
-        public static SqlFileStream GetSqlFileStreamForDownload(string InsertSqlText, SqlTransaction SqlTransaction)
-        {
-            SqlCommand SqlCommand = new SqlCommand(InsertSqlText, SqlTransaction.Connection)
-            {
-                Transaction = SqlTransaction
-            };
-
-            using (var reader = SqlCommand.ExecuteReader())
-            {
-                if (reader.Read())
-                {
-                    var path = reader.GetString(0);
-                    byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
-                    return new SqlFileStream(path, transactionContext, FileAccess.Read, FileOptions.SequentialScan, 0);
                 }
                 else return null;
             }

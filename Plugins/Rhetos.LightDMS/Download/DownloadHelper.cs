@@ -7,6 +7,7 @@ using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
+using System.IO;
 using System.Net;
 using System.Web;
 
@@ -30,17 +31,17 @@ namespace Rhetos.LightDMS
         {
             var query = HttpUtility.ParseQueryString(context.Request.Url.Query);
             context.Response.StatusCode = (int)HttpStatusCode.OK;
-            SqlConnection sqlConnection = new SqlConnection(SqlUtility.ConnectionString);
-            sqlConnection.Open();
-            SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-            SqlDataReader reader = null;
-            string fileName = null;
-            // if "filename" is present in query, that one is used as download filename
-            foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
 
-            SqlCommand getMetadata = null;
-            if (documentVersionId != null)
-                getMetadata = new SqlCommand(@"
+            using (var sqlConnection = new SqlConnection(SqlUtility.ConnectionString))
+            {
+                sqlConnection.Open();
+                string fileName = null;
+                // if "filename" is present in query, that one is used as download filename
+                foreach (var key in query.AllKeys) if (key.ToLower() == "filename") fileName = query[key];
+
+                SqlCommand getMetadata = null;
+                if (documentVersionId != null)
+                    getMetadata = new SqlCommand(@"
                         SELECT
                             dv.FileName,
                             FileSize = DATALENGTH(Content),
@@ -50,9 +51,9 @@ namespace Rhetos.LightDMS
                             LightDMS.DocumentVersion dv
                             INNER JOIN LightDMS.FileContent fc ON dv.FileContentID = fc.ID
                         WHERE 
-                            dv.ID = '" + documentVersionId + @"'", sqlConnection, sqlTransaction);
-            else
-                getMetadata = new SqlCommand(@"
+                            dv.ID = '" + documentVersionId + @"'", sqlConnection);
+                else
+                    getMetadata = new SqlCommand(@"
                         SELECT 
                             FileName ='unknown.txt',
                             FileSize = DATALENGTH(Content),
@@ -61,56 +62,49 @@ namespace Rhetos.LightDMS
                         FROM 
                             LightDMS.FileContent fc 
                         WHERE 
-                            ID = '" + fileContentId + "'", sqlConnection, sqlTransaction);
+                            ID = '" + fileContentId + "'", sqlConnection);
 
-            var result = getMetadata.ExecuteReader(CommandBehavior.SingleRow);
-            result.Read();
-            fileName = fileName ?? (string)result["FileName"];
-            var azureStorage = result["AzureStorage"] != DBNull.Value 
-                ? (bool?)result["AzureStorage"]
-                : null;
+                bool? azureStorage;
+                using (var result = getMetadata.ExecuteReader(CommandBehavior.SingleRow))
+                {
+                    result.Read();
+                    fileName = fileName ?? (string)result["FileName"];
+                    azureStorage = result["AzureStorage"] != DBNull.Value
+                        ? (bool?)result["AzureStorage"]
+                        : null;
+                    fileContentId = fileContentId ?? (Guid?)result["FileContentID"];
+                    long size = (long)result["FileSize"];
+                    result.Close();
+                }
 
-            fileContentId = fileContentId ?? (Guid?)result["FileContentID"];
-            long size = (long)result["FileSize"];
-            result.Close();
+                if (azureStorage == true && TryDownloadFromAzureBlob(context, fileContentId.Value, fileName))
+                {
+                    return;
+                }
 
-            if (azureStorage == true && TryDownloadFromAzureBlob(context, fileContentId, fileName, sqlConnection, sqlTransaction))
-            {
-                sqlTransaction.Commit();
-                sqlConnection.Close();
-                return;
-            }
+                //if any error (from azure) changed status code, stop further execution
+                if (context.Response.StatusCode != (int)HttpStatusCode.OK)
+                    return;
 
-            //if any error (from azure) changed status code, stop further execution
-            if (context.Response.StatusCode != (int)HttpStatusCode.OK)
-                return;
-
-            //If there is no document on AzureBlobStorage, take it from DB
-            try
-            {
-                context.Response.BufferOutput = false;
-                // If FileStream is not available - read from VarBinary(MAX) column using buffer;
-                if (!TryDownloadFromFileStream(context, fileContentId, fileName, size, sqlConnection, sqlTransaction, reader))
-                    DownloadFromVarbinary(context, fileContentId, fileName, size, sqlConnection, sqlTransaction, reader);
-
-                sqlTransaction.Commit();
-                sqlConnection.Close();
-            }
-            catch (Exception ex)
-            {
-                if (reader != null && !reader.IsClosed) reader.Close();
-
-                if (sqlTransaction != null) sqlTransaction.Rollback();
-                sqlConnection.Close();
-
-                if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
-                    LogError("FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.", context);
-                else
-                    LogError(ex.Message, context, ex.StackTrace);
+                //If there is no document on AzureBlobStorage, take it from DB
+                try
+                {
+                    context.Response.BufferOutput = false;
+                    // If FileStream is not available - read from VarBinary(MAX) column using buffer;
+                    if (!TryDownloadFromFileStream(context, fileContentId.Value, fileName, size, sqlConnection))
+                        DownloadFromVarbinary(context, fileContentId.Value, fileName, size, sqlConnection);
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
+                        LogError("FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.", context);
+                    else
+                        LogError(ex.Message, context, ex.StackTrace);
+                }
             }
         }
 
-        private bool TryDownloadFromAzureBlob(HttpContext context, Guid? fileContentId, string fileName, SqlConnection sqlConnection, SqlTransaction sqlTransaction)
+        private bool TryDownloadFromAzureBlob(HttpContext context, Guid fileContentId, string fileName)
         {
             var storageConnectionVariable = System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.StorageConnectionVariable");
             string storageConnectionString = null;
@@ -178,48 +172,55 @@ namespace Rhetos.LightDMS
             }
         }
 
-        private bool TryDownloadFromFileStream(HttpContext context, Guid? fileContentId, string fileName, long size, SqlConnection sqlConnection, SqlTransaction sqlTransaction, SqlDataReader reader)
+        private bool TryDownloadFromFileStream(HttpContext context, Guid fileContentId, string fileName, long size, SqlConnection sqlConnection)
         {
-            byte[] buffer = new byte[BUFFER_SIZE];
-            long bytesRead = 0;
-
-            SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
+            SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection);
             if (checkFileStreamEnabled.ExecuteScalar() == null)
                 return false;
-            string sqlQuery = @"
+
+            string sqlQuery = $@"
                 SELECT 
                     fc.Content.PathName(),
                     GET_FILESTREAM_TRANSACTION_CONTEXT()
                 FROM 
                     LightDMS.FileContent fc
                 WHERE 
-                    fc.ID = '" + fileContentId + "'";
+                    fc.ID = '{fileContentId}'";
 
-            SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForDownload(sqlQuery, sqlTransaction);
+            SqlCommand sqlCommand = new SqlCommand(sqlQuery, sqlConnection);
+            using (var reader = sqlCommand.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    var path = reader.GetString(0);
+                    byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
+                    using (var fileStream = new SqlFileStream(path, transactionContext, FileAccess.Read, FileOptions.SequentialScan, 0))
+                    {
+                        byte[] buffer = new byte[BUFFER_SIZE];
+                        int bytesRead;
+                        while ((bytesRead = fileStream.Read(buffer, 0, BUFFER_SIZE)) > 0)
+                        {
+                            context.Response.OutputStream.Write(buffer, 0, bytesRead);
+                            context.Response.Flush();
+                        }
+                    }
+                }
+                else
+                    throw new ApplicationException($"Missing LightDMS.FileContent '{fileContentId}'.");
+            }
 
             PopulateHeader(context, fileName, size);
-
-            while (bytesRead < size)
-            {
-                var readed = sfs.Read(buffer, 0, BUFFER_SIZE);
-                if (!context.Response.IsClientConnected)
-                    break;
-                context.Response.OutputStream.Write(buffer, 0, readed);
-                context.Response.Flush();
-                bytesRead += readed;
-            }
-            sfs.Close();
             return true;
         }
 
-        private void DownloadFromVarbinary(HttpContext context, Guid? fileContentId, string fileName, long size, SqlConnection sqlConnection, SqlTransaction sqlTransaction, SqlDataReader reader)
+        private void DownloadFromVarbinary(HttpContext context, Guid? fileContentId, string fileName, long size, SqlConnection sqlConnection)
         {
             byte[] buffer = new byte[BUFFER_SIZE];
 
             PopulateHeader(context, fileName, size);
 
-            SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='" + fileContentId.ToString() + "'", sqlConnection, sqlTransaction);
-            reader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess);
+            SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='" + fileContentId.ToString() + "'", sqlConnection);
+            var reader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess);
 
             while (reader.Read())
             {
