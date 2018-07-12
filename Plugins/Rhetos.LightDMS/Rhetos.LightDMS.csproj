@@ -255,7 +255,7 @@
     <Compile Include="OnInitializationInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RhetosHomePageDemo.cs" />
-    <Compile Include="Storage\SqlMultipartStreamProvider.cs" />
+    <Compile Include="Storage\SqlFileStreamProvider.cs" />
     <Compile Include="Download\DownloadHandler.cs" />
     <Compile Include="Upload\UploadHandler.cs" />
     <Compile Include="WebServiceInterface.cs" />
