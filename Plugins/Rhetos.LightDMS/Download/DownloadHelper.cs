@@ -64,16 +64,17 @@ namespace Rhetos.LightDMS
                         WHERE 
                             ID = '" + fileContentId + "'", sqlConnection);
 
-                bool? azureStorage;
+                bool azureStorage;
+                long size;
                 using (var result = getMetadata.ExecuteReader(CommandBehavior.SingleRow))
                 {
                     result.Read();
                     fileName = fileName ?? (string)result["FileName"];
                     azureStorage = result["AzureStorage"] != DBNull.Value
-                        ? (bool?)result["AzureStorage"]
-                        : null;
+                        ? (bool)result["AzureStorage"]
+                        : false;
                     fileContentId = fileContentId ?? (Guid?)result["FileContentID"];
-                    long size = (long)result["FileSize"];
+                    size = (long)result["FileSize"];
                     result.Close();
                 }
 
@@ -99,7 +100,7 @@ namespace Rhetos.LightDMS
                     if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
                         LogError("FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.", context);
                     else
-                        LogError(ex.Message, context, ex.StackTrace);
+                        LogError(ex.Message, context, ex.ToString());
                 }
             }
         }
@@ -157,7 +158,7 @@ namespace Rhetos.LightDMS
                     catch (Exception ex)
                     {
                         //when unexpected error occurs log it, then fall back to DB
-                        LogError("Azure storage error, falling back to DB. Error: " + ex.ToString());
+                        LogError("Azure storage error, falling back to DB. Error:" + ex.Message, null, ex.ToString());
                         return false;
                     }
                 }
@@ -256,7 +257,7 @@ namespace Rhetos.LightDMS
 
         private void LogError(string error, HttpContext context = null, string trace = null)
         {
-            _logger.Error(error);
+            _logger.Error(error + (trace != null ? "\r\n" + trace : ""));
             if (context != null)
             {
                 context.Response.ContentType = "application/json;";
