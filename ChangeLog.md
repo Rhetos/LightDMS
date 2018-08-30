@@ -12,12 +12,17 @@
 ### New features
 
 * Support for Azure Blob Storage (file download and migration).
-* Support for database storage without filestream.
-* Added file upload time (FileContent.CreatedDate).
 
 ### Breaking changes
 
 * Removed property DocumentVersionExt.FileExtension.
+
+## 1.2.13 (2017-01-30)
+
+### New features
+
+* Support for database storage without filestream.
+* Added file upload time (FileContent.CreatedDate).
 
 ### Internal improvements
 
