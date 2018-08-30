@@ -46,7 +46,7 @@
 	
 	Parameter OtherUserDocumentCheckIn;
 	
-	SqlQueryable DocumentVersionExtInfo
+	SqlQueryable DocumentVersionInfo
 	"
 		SELECT
 			dv.ID,
@@ -61,7 +61,8 @@
 		Decimal SizeInKBytes;
 	}
 
-	Browse DocumentVersionExt LightDMS.DocumentVersionExtInfo
+	//Provided for backward compatibility, do not change to SqlQueryable
+	Browse DocumentVersionExt LightDMS.DocumentVersionInfo
 	{
 		Take SizeInKBytes;
 	}
