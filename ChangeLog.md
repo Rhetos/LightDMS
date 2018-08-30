@@ -17,7 +17,7 @@
 
 * Removed property DocumentVersionExt.FileExtension.
 
-## 1.2.13 (2017-01-30)
+## 1.2.13 (2018-03-01)
 
 ### New features
 
