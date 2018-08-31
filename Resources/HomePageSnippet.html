@@ -1,0 +1,20 @@
+        <h2>LightDMS</h2>
+        <b>Upload</b>
+        <form action="lightdms/upload" method="post" enctype="multipart/form-data">
+            <label for="file-web-api">Select file</label>
+            <input type="file" name="file-web-api" id="file-web-api" />
+            <input type="submit" name="submit" value="Upload" />
+        </form>
+        <b>Download</b>
+        <div>
+            <label for="FileContentID">FileContentID:</label>
+            <input type="text" name="FileContentID" id="FileContentID" />
+            <button onclick="window.location = 'lightdms/DownloadPreview/' + document.getElementById('FileContentID').value
+                + '?filename=' + (document.getElementById('file-web-api').value.replace(/^.*[\\\/]/, '') || document.getElementById('FileContentID').value)">
+                Download preview</button>
+        </div>
+        <div>
+            <label for="DocumentVersionID">DocumentVersionID:</label>
+            <input type="text" name="DocumentVersionID" id="DocumentVersionID" />
+            <button onclick="window.location = 'lightdms/Download/' + document.getElementById('DocumentVersionID').value">Download</button>
+        </div>

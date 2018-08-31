@@ -21,6 +21,7 @@
     <file src="Readme.md" target="" />
     <file src="DataMigration\**\*" target="DataMigration" />
     <file src="DslScripts\**\*" target="DslScripts" />
+    <file src="Resources\**\*" target="Resources" />
     <file src="Plugins\Rhetos.LightDMS\bin\Debug\Rhetos.LightDMS.dll" target="lib\net451" />
     <file src="Plugins\Rhetos.LightDMS\bin\Debug\Rhetos.LightDMS.pdb" target="lib\net451" />
   </files>

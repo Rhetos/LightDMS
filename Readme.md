@@ -8,23 +8,45 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 
 ## Features
 
-### Web service methods
+### File web API
 
-**Upload:**
+LightDMS plugin provides the following web API methods.
+Check out your Rhetos server homepage (http://localhost/Rhetos) for sample code and demonstration of the LightDMS web API.
 
-* Uploading a file with predefined document ID: `<RhetosSite>/LightDMS/Upload/{{ID}}`
-    * Query parameters ID is required. ID is GUID formatted identifier of DocumentVersion.
-    * Example format `http://localhost/Rhetos/LightDMS/Upload/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
+Upload:
 
-**Download:**
+* Uploading a file: `<RhetosSite>/LightDMS/Upload`
+  * Example format `http://localhost/Rhetos/LightDMS/Upload/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
+  * Response contains file content ID. Note that one LightDMS document may be related to many files, one for each version of the document.
 
-* Downloading a file with predefined document ID: `<RhetosSite>/LightDMS/Download/{{ID}}`
-    * Query parameters ID is required. ID is GUID formatted identifier of DocumentVersion.
-    * Example format `http://localhost/Rhetos/LightDMS/Download/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
+Download:
+
+* Downloading a file with given **file content ID**: `<RhetosSite>/LightDMS/DownloadPreview/{{ID}}?filename={{filename}}`
+  * The *ID* parameter is GUID formatted file content ID.
+  * The *filename* query parameter is a name that the browser will offer to the user when saving the downloaded file.
+  * Example format `http://localhost/Rhetos/LightDMS/DownloadPreview/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D?filename=somefile.txt`
+
+* Downloading a file with given **document version ID**: `<RhetosSite>/LightDMS/Download/{{ID}}`
+  * The *ID* parameter is GUID formatted document version ID.
+  * Example format `http://localhost/Rhetos/LightDMS/Download/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
+
+### Storage options
+
+LightDMS allows the following storage options:
+
+1. Simple BLOB storage in the database table
+2. Database FILESTREAM storage
+    * This is a large performance improvement over the simple BLOB storage.
+    * The files are accessed through the database API but are physically stored as file on a server disk.
+3. Azure Blob Storage (currently download-only)
+    * This option currently works as an extension of the FILESTREAM storage.
+    The files are uploaded to FILESTREAM.
+    A custom scheduled process is expected to migrate the files to Azure Blob Storage (archive).
+    LightDMS will then download the archived file from Azure.
 
 ## Database preparation
 
-**Enable FileStream:**
+### Enable FILESTREAM on your application's database
 
 1. Enable FileStream on SqlServer instance - Sql Server Configuration Manager [Steps](https://msdn.microsoft.com/en-us/library/cc645923.aspx)
 
@@ -58,27 +80,39 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
     DROP TABLE dbo.Test_FS;
     ```
 
-## If you enabled FILESTREAM and made setup to DATABASE after LightDMS package deployment, you still can add FILESTREAM attribute to FileContent.Content column as following:
+### Activate FILESTREAM usage in LightDMS
 
-On the next execution of DeployPackages.exe, the FILESTREAM will be automatically added to the LightDMS.FileContent.Content column.
+Option A:
+If you have enabled FILESTREAM on your database, it will **automatically** be used by LightDMS
+**after the next execution of *DeployPackages.exe***.
 
-Instead of running DeployPackages.exe, you can execute the following script to use FILESTREAM:
+Option B:
+If you have already executed *DeployPackages.exe* to deploy LightDMS package before enabling FILESTREAM on the database,
+and you do not want to execute *DeployPackages.exe* again,
+the FILESTREAM usage in LightDMS can be activated by running the following SQL script on the database:
 
 ```SQL
-ALTER TABLE LightDMS.FileContent
-    ALTER COLUMN ID ADD ROWGUIDCOL;
-EXEC sp_rename 'LightDMS.FileContent.Content', 'Content_backup' , 'COLUMN';
-ALTER TABLE LightDMS.FileContent
-    ADD Content varbinary(max) FILESTREAM
+DECLARE @Error INT = 0;
+BEGIN TRAN;
 
+ALTER TABLE LightDMS.FileContent ALTER COLUMN ID ADD ROWGUIDCOL;
+IF @@ERROR > 0 RETURN;
+
+EXEC @Error = sp_rename 'LightDMS.FileContent.Content', 'Content_backup' , 'COLUMN';
+IF @Error > 0 OR @@ERROR > 0 RETURN;
+
+EXEC @Error = sp_executesql N'ALTER TABLE LightDMS.FileContent ADD Content varbinary(max) FILESTREAM';
+IF @Error > 0 OR @@ERROR > 0 RETURN;
+
+EXEC @Error = sp_executesql N'UPDATE LightDMS.FileContent SET Content = Content_backup';
+IF @Error > 0 OR @@ERROR > 0 RETURN;
+
+EXEC @Error = sp_executesql N'ALTER TABLE LightDMS.FileContent DROP COLUMN Content_backup';
+IF @Error > 0 OR @@ERROR > 0 RETURN;
+
+COMMIT;
 GO
-
-EXEC ('
-    UPDATE LightDMS.FileContent
-        SET Content = Content_backup;
-    ALTER TABLE LightDMS.FileContent
-        DROP COLUMN Content_backup;
-');
+IF @@TRANCOUNT > 0 ROLLBACK;
 ```
 
 ## Build
