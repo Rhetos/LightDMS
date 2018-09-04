@@ -13,7 +13,7 @@
     <tags>Rhetos plugin</tags>
     <dependencies>
       <dependency id="Rhetos.AfterDeploy" version="1.0.0" />
-      <dependency id="Rhetos.CommonConcepts" version="1.1.0" />
+      <dependency id="Rhetos.CommonConcepts" version="2.7.0" />
       <dependency id="WindowsAzure.Storage" version="7.2.1" />
     </dependencies>
   </metadata>
