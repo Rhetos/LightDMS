@@ -1,11 +1,12 @@
 # LightDMS release notes
 
-## NEXT (to be released)
+## 1.4.0 (2018-09-04)
 
 ### Internal improvements
 
 * Improved error handling.
-* DocumentVersionExt changed from SqlQueryable to Browse, for better extensibility.
+* Improved documentation and homepage snippet.
+* *DocumentVersionExt* changed from SqlQueryable to Browse, for better extensibility.
 
 ## 1.3.0 (2018-06-29)
 
@@ -21,7 +22,7 @@
 
 ### New features
 
-* Support for database storage without filestream.
+* Support for database storage without FILESTREAM.
 * Added file upload time (FileContent.CreatedDate).
 
 ### Internal improvements
@@ -35,5 +36,5 @@
 
 ### Initial features
 
-* Web API for file upload/download from database filestream storage.
+* Web API for file upload/download from database FILESTREAM storage.
 * Download preview, for downloading uploaded file content before submitting the final metadata record.
