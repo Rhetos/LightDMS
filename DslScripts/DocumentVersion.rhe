@@ -46,25 +46,21 @@
 	
 	Parameter OtherUserDocumentCheckIn;
 	
-	SqlQueryable DocumentVersionInfo
+	SqlQueryable DocumentVersionExt
 	"
 		SELECT
 			dv.ID,
 			SizeInKBytes = CAST(((DATALENGTH(fc.Content) + 1024 - 1) / 1024) as decimal) -- Round to a higher integer number.
+			/*SqlQueryableInfo Select LightDMS.DocumentVersionExt*/
 		FROM
 			LightDMS.DocumentVersion dv
 			LEFT JOIN LightDMS.FileContent fc ON fc.ID = dv.FileContentID
+			/*SqlQueryableInfo From LightDMS.DocumentVersionExt*/
 	"
 	{
 		Extends LightDMS.DocumentVersion;
 
 		Decimal SizeInKBytes;
-	}
-
-	//Provided for backward compatibility, do not change to SqlQueryable
-	Browse DocumentVersionExt LightDMS.DocumentVersionInfo
-	{
-		Take SizeInKBytes;
 	}
 
 	Entity FileContent
