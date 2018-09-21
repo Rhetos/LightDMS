@@ -1,5 +1,11 @@
 # LightDMS release notes
 
+## 1.5.0 (2018-09-21)
+
+### Internal improvements
+
+* Extensibility: *DocumentVersionExt* changed to SqlQueryable with extension points to allow customizations and usage in database.
+
 ## 1.4.0 (2018-09-04)
 
 ### Internal improvements
