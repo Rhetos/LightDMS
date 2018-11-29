@@ -3,10 +3,14 @@
 	Entity Checkout
 	{
 		Logging { AllProperties; }
-		Is LightDMS.DocumentEvent;		
+
+		Reference Repository LightDMS.DocumentRepository; 
+		Guid DocumentID;
 		Reference CreatedBy Common.Principal { SystemRequired; CreatedBy; }
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
-		Guid DocumentID;
+		LongString Comment;
+
+		Is LightDMS.DocumentEvent;
 		
 		SaveMethod
 		{

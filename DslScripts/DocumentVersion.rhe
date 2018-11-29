@@ -2,23 +2,19 @@
 {
 	Entity DocumentVersion
 	{
-		Logging 
-		{
-			Log LightDMS.DocumentVersion.CreatedBy;
-			Log LightDMS.DocumentVersion.CreatedDate;
-			Log LightDMS.DocumentVersion.DocumentID;
-			Log LightDMS.DocumentVersion.VersionNumber;
-			Log LightDMS.DocumentVersion.FileName;
-		}
+		Logging { AllProperties; }
 		
-		Is LightDMS.DocumentEvent;
+		Reference Repository LightDMS.DocumentRepository; 
+		Guid DocumentID;
 		Reference CreatedBy Common.Principal { SystemRequired; CreatedBy; }
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
-		Guid DocumentID;
+		LongString Comment;
 		
 		Integer VersionNumber { AutocodeForEach LightDMS.DocumentVersion.DocumentID; }
 		LongString FileName { Required; }
 		Reference FileContent { Required; SqlIndex; }
+
+		Is LightDMS.DocumentEvent;
 		
 		SaveMethod
 		{
