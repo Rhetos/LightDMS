@@ -1,5 +1,11 @@
 # LightDMS release notes
 
+## 1.5.1 (2019-01-11)
+
+### Internal improvements
+
+* Bugfix: DataMigration scripts are not applied when deploying LightDMS package v1.5.0 (issue Rhetos#80).
+
 ## 1.5.0 (2018-09-21)
 
 ### Internal improvements
