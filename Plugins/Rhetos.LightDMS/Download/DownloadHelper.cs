@@ -66,19 +66,11 @@ namespace Rhetos.LightDMS
             }
             catch (Exception ex)
             {
-                string customError = (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
-                    ? "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface."
-                    : null;
 
-                _logger.Error(customError ?? ex.ToString());
-                context.Response.ContentType = "application/json;";
-                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(
-                    new
-                    {
-                        error = customError ?? ex.Message,
-                        trace = ex.ToString()
-                    }));
+                if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
+                    Respond.BadRequest(context, "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.");
+                else
+                    Respond.InternalError(context, ex);
             }
         }
 

@@ -37,7 +37,7 @@ namespace Rhetos.LightDMS
 
         public DownloadPreviewHandler()
         {
-            var logProvider = Activator.CreateInstance<NLogProvider>();
+            var logProvider = new NLogProvider();
             _performanceLogger = logProvider.GetLogger("Performance");
         }
 
@@ -55,9 +55,7 @@ namespace Rhetos.LightDMS
 
             var query = HttpUtility.ParseQueryString(context.Request.Url.Query);
             if (!query.AllKeys.Any(name => name.ToLower() == "filename")) {
-                context.Response.ContentType = "application/json;";
-                context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = "Fetching file preview requires filename as query parameter." }));
-                context.Response.StatusCode = 400;
+                Respond.BadRequest(context, "Fetching file preview requires filename as query parameter.");
                 return;
             }
 

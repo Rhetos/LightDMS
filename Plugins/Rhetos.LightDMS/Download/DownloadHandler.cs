@@ -28,13 +28,11 @@ namespace Rhetos.LightDMS
     public class DownloadHandler : IHttpHandler
     {
         private ILogger _performanceLogger;
-        private ILogger _logger;
 
         public DownloadHandler()
         {
             var logProvider = new NLogProvider();
             _performanceLogger = logProvider.GetLogger("Performance");
-            _logger = logProvider.GetLogger(GetType().Name);
         }
 
         public bool IsReusable

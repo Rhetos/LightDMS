@@ -34,13 +34,11 @@ namespace Rhetos.LightDMS
     public class UploadHandler : IHttpHandler
     {
         private ILogger _performanceLogger;
-        private ILogger _logger;
 
         public UploadHandler()
         {
             var logProvider = new NLogProvider();
             _performanceLogger = logProvider.GetLogger("Performance");
-            _logger = logProvider.GetLogger(GetType().Name);
         }
 
         public bool IsReusable
@@ -55,9 +53,7 @@ namespace Rhetos.LightDMS
         {
             if (context.Request.Files.Count != 1)
             {
-                context.Response.ContentType = "application/json;";
-                context.Response.Write(Newtonsoft.Json.JsonConvert.SerializeObject(new { error = "Exactly one file has to be sent as request in Multipart format. There were " + context.Request.Files.Count + " files in upload request." }));
-                context.Response.StatusCode = 400;
+                Respond.BadRequest(context, "Exactly one file has to be sent as request in Multipart format. There were " + context.Request.Files.Count + " files in upload request.");
                 return;
             }
             var id = Guid.NewGuid();
@@ -131,29 +127,24 @@ namespace Rhetos.LightDMS
                 }
 
                 _performanceLogger.Write(sw, "Rhetos.LightDMS: UploadFile (" + id + ") Executed.");
-                context.Response.ContentType = "application/json;";
-                context.Response.Write(JsonConvert.SerializeObject(new { ID = id }));
-                context.Response.StatusCode = 200;
+                Respond.Ok(context, new { ID = id });
             }
             catch (Exception ex)
             {
-                _logger.Error(ex.ToString());
+                try
+                {
+                    // Try to discard the database transaction (if still open and working).
+                    if (sqlTransaction != null) sqlTransaction.Rollback();
+                    sqlConnection.Close();
+                }
+                catch
+                {
+                }
 
-                if (sqlTransaction != null) sqlTransaction.Rollback();
-                sqlConnection.Close();
-
-                context.Response.ContentType = "application/json;";
                 if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
-                {
-                    var errorMessage = "FILESTREAM is not enabled on Database, or FileStream FileGroup is missing on database, or FILESTREAM attribute is missing from LightDMS.FileContent.Content column. Try with enabling FileStream on database, add FileGroup to database and transform Content column to VARBINARY(MAX) FILESTREAM type.";
-                    _logger.Error(errorMessage);
-                    context.Response.Write(JsonConvert.SerializeObject(new { error = errorMessage }));
-                }
+                    Respond.BadRequest(context, "FILESTREAM is not enabled on Database, or FileStream FileGroup is missing on database, or FILESTREAM attribute is missing from LightDMS.FileContent.Content column. Try with enabling FileStream on database, add FileGroup to database and transform Content column to VARBINARY(MAX) FILESTREAM type.");
                 else
-                {
-                    context.Response.Write(JsonConvert.SerializeObject(new { Message = ex.Message, StackTrace = ex.StackTrace }));
-                }
-                context.Response.StatusCode = 400;
+                    Respond.InternalError(context, ex);
             }
         }
     }

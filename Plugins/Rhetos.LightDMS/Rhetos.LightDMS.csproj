@@ -258,6 +258,7 @@
     <Compile Include="Storage\SqlFileStreamProvider.cs" />
     <Compile Include="Download\DownloadHandler.cs" />
     <Compile Include="Upload\UploadHandler.cs" />
+    <Compile Include="Respond.cs" />
     <Compile Include="WebServiceInterface.cs" />
   </ItemGroup>
   <ItemGroup>

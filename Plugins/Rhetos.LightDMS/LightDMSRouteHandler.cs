@@ -33,13 +33,17 @@ namespace Rhetos.LightDMS
 
         public IHttpHandler GetHttpHandler(RequestContext requestContext)
         {
-            if (_operation == "Upload")
-                return Activator.CreateInstance(typeof(UploadHandler)) as IHttpHandler;
-            if (_operation == "Download")
-                return Activator.CreateInstance(typeof(DownloadHandler)) as IHttpHandler;
-            if (_operation == "DownloadPreview")
-                return Activator.CreateInstance(typeof(DownloadPreviewHandler)) as IHttpHandler;
-            throw new InvalidOperationException("Only Upload & Download & DownloadPreview operations are allowed.");
+            switch (_operation)
+            {
+                case "Upload":
+                    return new UploadHandler();
+                case "Download":
+                    return new DownloadHandler();
+                case "DownloadPreview":
+                    return new DownloadPreviewHandler();
+                default:
+                    throw new InvalidOperationException("Only Upload & Download & DownloadPreview operations are allowed.");
+            }
         }
     }
 }
