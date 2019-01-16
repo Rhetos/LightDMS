@@ -197,29 +197,37 @@ namespace Rhetos.LightDMS
                 WHERE 
                     fc.ID = '{file.FileContentId}'";
 
-            SqlCommand sqlCommand = new SqlCommand(sqlQuery, sqlConnection);
-            using (var reader = sqlCommand.ExecuteReader())
+            SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadCommitted); // Explicit transaction is required when working with SqlFileStream class.
+            try
             {
-                if (reader.Read())
+                SqlCommand sqlCommand = new SqlCommand(sqlQuery, sqlConnection, sqlTransaction);
+                using (var reader = sqlCommand.ExecuteReader())
                 {
-                    var path = reader.GetString(0);
-                    byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
-                    using (var fileStream = new SqlFileStream(path, transactionContext, FileAccess.Read, FileOptions.SequentialScan, 0))
+                    if (reader.Read())
                     {
-                        byte[] buffer = new byte[BUFFER_SIZE];
-                        int bytesRead;
-                        while ((bytesRead = fileStream.Read(buffer, 0, BUFFER_SIZE)) > 0)
+                        var path = reader.GetString(0);
+                        byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
+                        using (var fileStream = new SqlFileStream(path, transactionContext, FileAccess.Read, FileOptions.SequentialScan, 0))
                         {
-                            context.Response.OutputStream.Write(buffer, 0, bytesRead);
-                            context.Response.Flush();
+                            byte[] buffer = new byte[BUFFER_SIZE];
+                            int bytesRead;
+                            PopulateHeader(context, file.FileName, file.Size);
+                            while ((bytesRead = fileStream.Read(buffer, 0, BUFFER_SIZE)) > 0)
+                            {
+                                context.Response.OutputStream.Write(buffer, 0, bytesRead);
+                                context.Response.Flush();
+                            }
                         }
                     }
+                    else
+                        throw new ClientException($"Missing LightDMS.FileContent '{file.FileContentId}'.");
                 }
-                else
-                    throw new ClientException($"Missing LightDMS.FileContent '{file.FileContentId}'.");
+            }
+            finally
+            {
+                try { sqlTransaction.Rollback(); } catch { }
             }
 
-            PopulateHeader(context, file.FileName, file.Size);
             return true;
         }
 
