@@ -31,14 +31,19 @@ namespace Rhetos.LightDms.Storage
     /// </summary>
     public class SqlFileStreamProvider
     {
-        public static SqlFileStream GetSqlFileStreamForUpload(string insertSqlText, Guid id, SqlTransaction sqlTransaction)
+        public static SqlFileStream GetSqlFileStreamForUpload(Guid fileContentId, string createdDate, SqlTransaction sqlTransaction)
         {
-            SqlCommand sqlCommand = new SqlCommand(insertSqlText, sqlTransaction.Connection)
-            {
-                Transaction = sqlTransaction
-            };
-            
-            sqlCommand.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
+            string insertSqlText =
+                @"INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate]) 
+                VALUES(@id, CAST('' AS VARBINARY(MAX)), @createdDate);
+
+                SELECT Content.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT()
+                FROM LightDMS.FileContent
+                WHERE ID = @id";
+
+            SqlCommand sqlCommand = new SqlCommand(insertSqlText, sqlTransaction.Connection, sqlTransaction);
+            sqlCommand.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = fileContentId;
+            sqlCommand.Parameters.Add("@createdDate", SqlDbType.NVarChar, 100).Value = createdDate;
 
             using (var reader = sqlCommand.ExecuteReader())
             {
@@ -49,6 +54,33 @@ namespace Rhetos.LightDms.Storage
                     return new SqlFileStream(path, transactionContext, FileAccess.Write, FileOptions.SequentialScan, 0);
                 }
                 else return null;
+            }
+        }
+
+        public static SqlFileStream GetSqlFileStreamForDownload(Guid fileContentId, SqlTransaction sqlTransaction)
+        {
+            string sqlQuery = $@"
+                SELECT 
+                    fc.Content.PathName(),
+                    GET_FILESTREAM_TRANSACTION_CONTEXT()
+                FROM 
+                    LightDMS.FileContent fc
+                WHERE 
+                    fc.ID = @fileContentId";
+
+            SqlCommand sqlCommand = new SqlCommand(sqlQuery, sqlTransaction.Connection, sqlTransaction);
+            sqlCommand.Parameters.Add("@fileContentId", SqlDbType.UniqueIdentifier).Value = fileContentId;
+
+            using (var reader = sqlCommand.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    var path = reader.GetString(0);
+                    byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
+                    return new SqlFileStream(path, transactionContext, FileAccess.Read, FileOptions.SequentialScan, 0);
+                }
+                else
+                    throw new ClientException($"Missing LightDMS.FileContent ID '{fileContentId}'.");
             }
         }
     }

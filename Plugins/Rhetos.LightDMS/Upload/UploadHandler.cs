@@ -71,7 +71,7 @@ namespace Rhetos.LightDMS
                 System.IO.Stream fileStream = context.Request.Files[0].InputStream;
 
                 SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
-                var createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
                 if (checkFileStreamEnabled.ExecuteScalar() == null)
                 {   //FileStream is not supported
@@ -108,20 +108,16 @@ namespace Rhetos.LightDMS
                 }
                 else
                 {
-                    SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForUpload(@"
-                    INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate]) 
-                    VALUES(@id, CAST('' AS VARBINARY(MAX)), '" + createdDate + @"');
-
-                    SELECT Content.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT()
-                    FROM LightDMS.FileContent
-                    WHERE ID = @id", id, sqlTransaction);
-                    while (totalbytesRead < context.Request.Files[0].ContentLength)
+                    using (SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForUpload(id, createdDate, sqlTransaction))
                     {
-                        var readed = context.Request.Files[0].InputStream.Read(buffer, 0, bufferSize);
-                        sfs.Write(buffer, 0, readed);
-                        totalbytesRead += readed;
+                        while (totalbytesRead < context.Request.Files[0].ContentLength)
+                        {
+                            var readed = context.Request.Files[0].InputStream.Read(buffer, 0, bufferSize);
+                            sfs.Write(buffer, 0, readed);
+                            totalbytesRead += readed;
+                        }
+                        sfs.Close();
                     }
-                    sfs.Close();
                     sqlTransaction.Commit();
                     sqlConnection.Close();
                 }

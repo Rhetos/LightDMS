@@ -19,6 +19,7 @@
 
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Rhetos.LightDms.Storage;
 using Rhetos.Logging;
 using Rhetos.Utilities;
 using System;
@@ -188,39 +189,21 @@ namespace Rhetos.LightDMS
             if (checkFileStreamEnabled.ExecuteScalar() == null)
                 return false;
 
-            string sqlQuery = $@"
-                SELECT 
-                    fc.Content.PathName(),
-                    GET_FILESTREAM_TRANSACTION_CONTEXT()
-                FROM 
-                    LightDMS.FileContent fc
-                WHERE 
-                    fc.ID = '{file.FileContentId}'";
-
             SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadCommitted); // Explicit transaction is required when working with SqlFileStream class.
             try
             {
-                SqlCommand sqlCommand = new SqlCommand(sqlQuery, sqlConnection, sqlTransaction);
-                using (var reader = sqlCommand.ExecuteReader())
+                using (var fileStream = SqlFileStreamProvider.GetSqlFileStreamForDownload(file.FileContentId, sqlTransaction))
                 {
-                    if (reader.Read())
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int bytesRead;
+                    PopulateHeader(context, file.FileName, file.Size);
+                    while ((bytesRead = fileStream.Read(buffer, 0, BUFFER_SIZE)) > 0)
                     {
-                        var path = reader.GetString(0);
-                        byte[] transactionContext = reader.GetSqlBytes(1).Buffer;
-                        using (var fileStream = new SqlFileStream(path, transactionContext, FileAccess.Read, FileOptions.SequentialScan, 0))
-                        {
-                            byte[] buffer = new byte[BUFFER_SIZE];
-                            int bytesRead;
-                            PopulateHeader(context, file.FileName, file.Size);
-                            while ((bytesRead = fileStream.Read(buffer, 0, BUFFER_SIZE)) > 0)
-                            {
-                                context.Response.OutputStream.Write(buffer, 0, bytesRead);
-                                context.Response.Flush();
-                            }
-                        }
+                        if (!context.Response.IsClientConnected)
+                            break;
+                        context.Response.OutputStream.Write(buffer, 0, bytesRead);
+                        context.Response.Flush();
                     }
-                    else
-                        throw new ClientException($"Missing LightDMS.FileContent '{file.FileContentId}'.");
                 }
             }
             finally
