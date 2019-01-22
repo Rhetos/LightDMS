@@ -6,12 +6,12 @@ IF NOT DEFINED VisualStudioVersion CALL "%VS140COMNTOOLS%VsDevCmd.bat" || ECHO E
 @ECHO ON
 
 REM Packing the files with an older version of nuget.exe for backward compatibility (spaces in file names, https://github.com/Rhetos/Rhetos/issues/80).
+IF NOT EXIST Install MD Install
 IF NOT EXIST Install\NuGet.exe POWERSHELL (New-Object System.Net.WebClient).DownloadFile('https://dist.nuget.org/win-x86-commandline/v4.5.1/nuget.exe', 'Install\NuGet.exe') || GOTO Error0
 
 PowerShell .\ChangeVersion.ps1 %Version% %Prerelease% || GOTO Error0
 Install\NuGet.exe restore -NonInteractive || GOTO Error0
 MSBuild /target:rebuild /p:Configuration=Debug /verbosity:minimal /fileLogger || GOTO Error0
-IF NOT EXIST Install md Install
 Install\NuGet.exe pack -OutputDirectory Install || GOTO Error0
 REM Updating the version of all projects back to "dev" (internal development build), to avoid spamming git history with timestamped prerelease versions.
 PowerShell .\ChangeVersion.ps1 %Version% dev || GOTO Error0
