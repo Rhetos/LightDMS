@@ -68,7 +68,6 @@ namespace Rhetos.LightDMS
             try
             {
                 sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-                System.IO.Stream fileStream = context.Request.Files[0].InputStream;
 
                 SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
                 string createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
@@ -83,6 +82,7 @@ namespace Rhetos.LightDMS
                     fileUpdateCommand.Parameters.AddWithValue("@ID", id);
                     fileUpdateCommand.Parameters.AddWithValue("@Offset", 0);
 
+                    var fileStream = context.Request.Files[0].InputStream;
                     var bytesRead = fileStream.Read(buffer, 0, buffer.Length);
                     while (bytesRead > 0)
                     {
@@ -102,9 +102,6 @@ namespace Rhetos.LightDMS
 
                     fileUpdateCommand.Dispose();
                     fileStream.Close();
-
-                    sqlTransaction.Commit();
-                    sqlConnection.Close();
                 }
                 else
                 {
@@ -118,10 +115,10 @@ namespace Rhetos.LightDMS
                         }
                         sfs.Close();
                     }
-                    sqlTransaction.Commit();
-                    sqlConnection.Close();
                 }
 
+                sqlTransaction.Commit();
+                sqlConnection.Close();
                 _performanceLogger.Write(sw, "Rhetos.LightDMS: UploadFile (" + id + ") Executed.");
                 Respond.Ok(context, new { ID = id });
             }
