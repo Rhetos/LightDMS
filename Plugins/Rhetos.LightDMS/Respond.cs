@@ -55,9 +55,20 @@ namespace Rhetos.LightDMS
             var logger = new NLogProvider().GetLogger(loggerName);
             logger.Write(logEventType, logMessage);
 
-            context.Response.ContentType = "application/json;";
-            context.Response.StatusCode = (int)statusCode;
-            context.Response.Write(JsonConvert.SerializeObject(new { error = userMessage }));
+            if (!logMessage.Contains(DownloadHelper.ResponseBlockedMessage))
+            {
+                context.Response.Clear();
+                try
+                {
+                    context.Response.ContentType = "application/json;";
+                    context.Response.StatusCode = (int)statusCode;
+                }
+                catch (HttpException ex) when (ex.Message.StartsWith("Server cannot set content type after HTTP headers have been sent."))
+                {
+                    logger.Error(ex.ToString());
+                }
+                context.Response.Write(JsonConvert.SerializeObject(new { error = userMessage }));
+            }
         }
 
         public static void Ok<T>(HttpContext context, T response)

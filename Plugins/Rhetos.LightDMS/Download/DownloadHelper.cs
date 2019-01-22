@@ -26,8 +26,11 @@ using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace Rhetos.LightDMS
@@ -36,12 +39,17 @@ namespace Rhetos.LightDMS
     {
         private const int BUFFER_SIZE = 100 * 1024; // 100 kB buffer
 
-        private ILogger _logger;
+        private readonly ILogger _logger;
+        private readonly bool _detectResponseBlockingErrors;
+        private readonly int _detectResponseBlockingErrorsTimeoutMs;
 
         public DownloadHelper()
         {
             var logProvider = new NLogProvider();
             _logger = logProvider.GetLogger(GetType().Name);
+            var configuration = new Rhetos.Utilities.Configuration();
+            _detectResponseBlockingErrors = configuration.GetBool("LightDMS.DetectResponseBlockingErrors", true).Value;
+            _detectResponseBlockingErrorsTimeoutMs = configuration.GetInt("LightDMS.DetectResponseBlockingErrorsTimeoutMs", 60*1000).Value;
         }
 
         public void HandleDownload(HttpContext context, Guid? documentVersionId, Guid? fileContentId)
@@ -67,7 +75,6 @@ namespace Rhetos.LightDMS
             }
             catch (Exception ex)
             {
-
                 if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
                     Respond.BadRequest(context, "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.");
                 else
@@ -197,11 +204,32 @@ namespace Rhetos.LightDMS
                     byte[] buffer = new byte[BUFFER_SIZE];
                     int bytesRead;
                     PopulateHeader(context, file.FileName, file.Size);
+                    int totalBytesWritten = 0;
                     while ((bytesRead = fileStream.Read(buffer, 0, BUFFER_SIZE)) > 0)
                     {
                         if (!context.Response.IsClientConnected)
                             break;
-                        context.Response.OutputStream.Write(buffer, 0, bytesRead);
+
+                        Action writeResponse = () => context.Response.OutputStream.Write(buffer, 0, bytesRead);
+
+                        if (_detectResponseBlockingErrors)
+                        {
+                            // HACK: `Response.OutputStream.Write` sometimes blocks the process at System.Web.dll!System.Web.Hosting.IIS7WorkerRequest.ExplicitFlush();
+                            // Until the issue is solved, this hack allows 1. logging of the problem, and 2. closing the SQL transaction while the thread remains blocked.
+                            // Tried removing PreSendRequestHeaders, setting aspnet:UseTaskFriendlySynchronizationContext and disabling anitivirus, but it did not help.
+                            // Total performance overhead of Task.Run...Wait is around 0.01 sec when downloading 200MB file with BUFFER_SIZE 100kB.
+                            var task = Task.Run(writeResponse);
+                            if (!task.Wait(_detectResponseBlockingErrorsTimeoutMs))
+                            {
+                                throw new FrameworkException(ResponseBlockedMessage +
+                                    $" Process {Process.GetCurrentProcess().Id}, thread {Thread.CurrentThread.ManagedThreadId}," +
+                                    $" streamed {totalBytesWritten} bytes of {file.Size}, current batch {bytesRead} bytes.");
+                            }
+                        }
+                        else
+                            writeResponse();
+
+                        totalBytesWritten += bytesRead;
                         context.Response.Flush();
                     }
                 }
@@ -213,6 +241,8 @@ namespace Rhetos.LightDMS
 
             return true;
         }
+
+        public static readonly string ResponseBlockedMessage = $"Response.OutputStream.Write blocked.";
 
         private void DownloadFromVarbinary(HttpContext context, FileMetadata file, SqlConnection sqlConnection)
         {
