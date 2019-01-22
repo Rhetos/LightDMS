@@ -1,5 +1,16 @@
 # LightDMS release notes
 
+## 1.6.0 (2019-01-22)
+
+### Internal improvements
+
+* Bugfix: ArgumentNullException when downloading from FILESTREAM.
+  Introduced in v1.4.0.
+  Fixes Rhetos/LightDMS#1
+* Compatibility with Rhetos v2.10 polymorphic property implementation (The property X is not implemented in the polymorphic subtype).
+* Improved error handling to detect the response blocking issues.
+* Standardized error responses and logging, to match Rhetos framework.
+
 ## 1.5.1 (2019-01-11)
 
 ### Internal improvements
