@@ -1,5 +1,11 @@
 # LightDMS release notes
 
+## 1.7.0 (2019-04-03)
+
+### Internal improvements
+
+* Bugfix: Old data migration script fails when upgrading from version 1.5.0 to 1.6.0 (issue #2).
+
 ## 1.6.0 (2019-01-22)
 
 ### Internal improvements
