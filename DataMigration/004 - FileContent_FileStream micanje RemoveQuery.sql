@@ -6,7 +6,7 @@ EXEC Rhetos.DataMigrationUse 'Rhetos', 'AppliedConcept', 'RemoveQuery', 'nvarcha
 EXEC Rhetos.DataMigrationUse 'Rhetos', 'AppliedConcept', 'ConceptInfoKey', 'nvarchar(MAX)';
 GO
 
-UPDATE _Rhetos.AppliedConcept SET RemoveQuery = '-- Zbog performansi ne uklanjamo filestream. Potrebno je ručno napraviti ako se radi downgrade servera' 
+UPDATE _Rhetos.AppliedConcept SET RemoveQuery = '-- FILESTREAM should not be automatically removed when upgrading an old LightDms version, in order to avoid performance issues.'
 WHERE ConceptInfoKey = 'SqlObjectInfo LightDMS.FileContent_FileStream'
 
 EXEC Rhetos.DataMigrationApplyMultiple 'Rhetos', 'AppliedConcept', 'ID, RemoveQuery';

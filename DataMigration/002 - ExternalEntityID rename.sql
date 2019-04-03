@@ -15,10 +15,10 @@ EXEC Rhetos.DataMigrationUse 'LightDMS', 'UndoCheckout', 'DocumentID', 'uniqueid
 
 GO
 
-UPDATE _LightDMS.DocumentVersion SET DocumentID = ExternalEntityID
-UPDATE _LightDMS.Checkout SET DocumentID = ExternalEntityID
-UPDATE _LightDMS.UndoCheckout SET DocumentID = ExternalEntityID
+UPDATE _LightDMS.DocumentVersion SET DocumentID = ExternalEntityID WHERE DocumentID IS NULL AND ExternalEntityID IS NOT NULL;
+UPDATE _LightDMS.Checkout SET DocumentID = ExternalEntityID WHERE DocumentID IS NULL AND ExternalEntityID IS NOT NULL;
+UPDATE _LightDMS.UndoCheckout SET DocumentID = ExternalEntityID WHERE DocumentID IS NULL AND ExternalEntityID IS NOT NULL;
 
-EXEC Rhetos.DataMigrationApplyMultiple 'LightDMS', 'DocumentVersion', 'ID, ExternalEntityID, DocumentID';
-EXEC Rhetos.DataMigrationApplyMultiple 'LightDMS', 'Checkout', 'ID, ExternalEntityID, DocumentID';
-EXEC Rhetos.DataMigrationApplyMultiple 'LightDMS', 'UndoCheckout', 'ID, ExternalEntityID, DocumentID';
+EXEC Rhetos.DataMigrationApplyMultiple 'LightDMS', 'DocumentVersion', 'ID, DocumentID';
+EXEC Rhetos.DataMigrationApplyMultiple 'LightDMS', 'Checkout', 'ID, DocumentID';
+EXEC Rhetos.DataMigrationApplyMultiple 'LightDMS', 'UndoCheckout', 'ID, DocumentID';

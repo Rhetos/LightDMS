@@ -5,7 +5,7 @@ EXEC Rhetos.DataMigrationUse 'LightDMS', 'DocumentRepository', 'ID', 'uniqueiden
 EXEC Rhetos.DataMigrationUse 'LightDMS', 'DocumentRepository', 'RepositoryName', 'nvarchar(MAX)';
 GO
 
-IF NOT EXISTS(SELECT TOP 1 NULL FROM _LightDMS.DocumentRepository where ID = 'CE0FC816-A00F-4640-ABE3-7138B49A7815')
-INSERT INTO _LightDMS.DocumentRepository (ID, RepositoryName) VALUES ('CE0FC816-A00F-4640-ABE3-7138B49A7815', 'DefaultRepository')
+IF NOT EXISTS (SELECT * FROM _LightDMS.DocumentRepository where ID = 'CE0FC816-A00F-4640-ABE3-7138B49A7815')
+INSERT INTO _LightDMS.DocumentRepository (ID, RepositoryName) VALUES ('CE0FC816-A00F-4640-ABE3-7138B49A7815', 'DefaultRepository');
 
 EXEC Rhetos.DataMigrationApplyMultiple 'LightDMS', 'DocumentRepository', 'ID, RepositoryName';
