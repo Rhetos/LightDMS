@@ -20,6 +20,7 @@
   <files>
     <file src="Readme.md" target="" />
     <file src="ChangeLog.md" target="" />
+    <file src="AfterDeploy\**\*" target="AfterDeploy" />
     <file src="DataMigration\**\*" target="DataMigration" />
     <file src="DslScripts\**\*" target="DslScripts" />
     <file src="Resources\**\*" target="Resources" />
