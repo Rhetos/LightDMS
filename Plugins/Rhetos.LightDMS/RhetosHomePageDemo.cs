@@ -36,7 +36,7 @@ namespace Rhetos.LightDMS
                 if (_snippet == null)
                 {
                     string filePath = Path.Combine(Paths.ResourcesFolder, "LightDMS", "HomePageSnippet.html");
-                    _snippet = File.ReadAllText(filePath, Encoding.Default);
+                    _snippet = File.ReadAllText(filePath);
                 }
                 return _snippet;
             }
