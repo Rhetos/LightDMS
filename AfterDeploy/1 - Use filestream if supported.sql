@@ -1,3 +1,8 @@
+/*DatabaseGenerator:NoTransaction*/
+-- HACK: This script does not need to be executed without transaction, but this hack solves the
+-- issue with SqlTransactionBatches in Rhetos that would cause the following script (2 - Cleanup.sql)
+-- to be locked because executed in a different transaction while the current transaction is not yet completed.
+
 DECLARE @Error INT = 0;
 
 -- If the database supports filestream, use it (see how to enable it in Readme.md).
