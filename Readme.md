@@ -25,10 +25,12 @@ Download:
   * The *ID* parameter is GUID formatted file content ID.
   * The *filename* query parameter is a name that the browser will offer to the user when saving the downloaded file.
   * Example format `http://localhost/Rhetos/LightDMS/DownloadPreview/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D?filename=somefile.txt`
+  * Parametrized format `http://localhost/Rhetos/LightDMS/DownloadPreview?id=8EF65043-2E2A-424D-B76F-4DAA5A48CB3D&filename=somefile.txt` (since 1.8.0)
 
 * Downloading a file with given **document version ID**: `<RhetosSite>/LightDMS/Download/{{ID}}`
   * The *ID* parameter is GUID formatted document version ID.
   * Example format `http://localhost/Rhetos/LightDMS/Download/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
+  * Parametrized format `http://localhost/Rhetos/LightDMS/Download?id=8EF65043-2E2A-424D-B76F-4DAA5A48CB3D` (since 1.8.0)
 
 ### Storage options
 

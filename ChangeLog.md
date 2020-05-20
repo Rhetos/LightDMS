@@ -1,5 +1,9 @@
 # LightDMS release notes
 
+## 1.8.0 (TO BE RELEASED)
+
+* Download and DownloadPreview supports `id` as a query parameter instead of the route path, to simplify network analysis.
+
 ## 1.7.0 (2019-04-03)
 
 ### Internal improvements

@@ -25,7 +25,8 @@ namespace Rhetos.LightDMS
 {
     public class LightDMSRouteHandler : IRouteHandler
     {
-        private string _operation;
+        private readonly string _operation;
+
         public LightDMSRouteHandler(string operation)
         {
             _operation = operation;

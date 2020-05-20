@@ -28,6 +28,7 @@ using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -283,6 +284,15 @@ namespace Rhetos.LightDMS
             // Koristiti HttpUtility.UrlPathEncode umjesto HttpUtility.UrlEncode ili Uri.EscapeDataString jer drugačije handlea SPACE i specijalne znakove
             context.Response.AddHeader("Content-Disposition", "attachment; filename*=UTF-8''" + HttpUtility.UrlPathEncode(fileName) + "");
             context.Response.AddHeader("Content-Length", length.ToString());
+        }
+
+        public static Guid? GetId(HttpContext context)
+        {
+            var idString = context.Request.QueryString["id"] ?? context.Request.Url.LocalPath.Split('/').Last();
+            if (!string.IsNullOrEmpty(idString) && Guid.TryParse(idString, out Guid id))
+                return id;
+            else
+                return null;
         }
     }
 }

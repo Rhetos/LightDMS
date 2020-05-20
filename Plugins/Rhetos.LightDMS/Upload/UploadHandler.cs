@@ -17,7 +17,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using Newtonsoft.Json;
 using Rhetos.LightDms.Storage;
 using Rhetos.Logging;
 using Rhetos.Utilities;
@@ -33,12 +32,12 @@ namespace Rhetos.LightDMS
 {
     public class UploadHandler : IHttpHandler
     {
-        private ILogger _performanceLogger;
+        private readonly ILogger _performanceLogger;
 
         public UploadHandler()
         {
             var logProvider = new NLogProvider();
-            _performanceLogger = logProvider.GetLogger("Performance");
+            _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
         }
 
         public bool IsReusable
@@ -119,7 +118,7 @@ namespace Rhetos.LightDMS
 
                 sqlTransaction.Commit();
                 sqlConnection.Close();
-                _performanceLogger.Write(sw, "Rhetos.LightDMS: UploadFile (" + id + ") Executed.");
+                _performanceLogger.Write(sw, "UploadFile (" + id + ") Executed.");
                 Respond.Ok(context, new { ID = id });
             }
             catch (Exception ex)

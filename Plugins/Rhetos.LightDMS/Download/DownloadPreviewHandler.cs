@@ -17,28 +17,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using Rhetos.LightDms.Storage;
 using Rhetos.Logging;
-using Rhetos.Utilities;
-using System;
-using System.Data;
-using System.Data.SqlClient;
-using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Web;
 
 namespace Rhetos.LightDMS
 {
     public class DownloadPreviewHandler : IHttpHandler
     {
-        private ILogger _performanceLogger;
+        private readonly ILogger _performanceLogger;
 
         public DownloadPreviewHandler()
         {
             var logProvider = new NLogProvider();
-            _performanceLogger = logProvider.GetLogger("Performance");
+            _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
         }
 
         public bool IsReusable
@@ -48,20 +41,26 @@ namespace Rhetos.LightDMS
                 return false;
             }
         }
-        
+
         public void ProcessRequest(HttpContext context)
         {
-            var id = Guid.Parse(context.Request.Url.LocalPath.Split('/').Last());
+            var id = DownloadHelper.GetId(context);
+            if (id == null)
+            {
+                Respond.BadRequest(context, "The 'id' parameter is missing or incorrectly formatted.");
+                return;
+            }
 
             var query = HttpUtility.ParseQueryString(context.Request.Url.Query);
-            if (!query.AllKeys.Any(name => name.ToLower() == "filename")) {
+            if (!query.AllKeys.Any(name => name.ToLower() == "filename"))
+            {
                 Respond.BadRequest(context, "Fetching file preview requires filename as query parameter.");
                 return;
             }
 
             var sw = Stopwatch.StartNew();
             new DownloadHelper().HandleDownload(context, null, id);
-            _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (LightDMS.FileContent.ID = " + id + ") Executed.");
+            _performanceLogger.Write(sw, "Downloaded file (LightDMS.FileContent.ID = " + id + ") Executed.");
         }
     }
 }

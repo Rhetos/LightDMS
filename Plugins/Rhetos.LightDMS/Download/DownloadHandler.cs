@@ -18,21 +18,19 @@
 */
 
 using Rhetos.Logging;
-using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Web;
 
 namespace Rhetos.LightDMS
 {
     public class DownloadHandler : IHttpHandler
     {
-        private ILogger _performanceLogger;
+        private readonly ILogger _performanceLogger;
 
         public DownloadHandler()
         {
             var logProvider = new NLogProvider();
-            _performanceLogger = logProvider.GetLogger("Performance");
+            _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
         }
 
         public bool IsReusable
@@ -45,10 +43,16 @@ namespace Rhetos.LightDMS
         
         public void ProcessRequest(HttpContext context)
         {
-            var id = Guid.Parse(context.Request.Url.LocalPath.Split('/').Last());
+            var id = DownloadHelper.GetId(context);
+            if (id == null)
+            {
+                Respond.BadRequest(context, "The 'id' parameter is missing or incorrectly formatted.");
+                return;
+            }
+
             var sw = Stopwatch.StartNew();
             new DownloadHelper().HandleDownload(context, id, null);
-            _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (DocumentVersionID = " + id + ") Executed.");
+            _performanceLogger.Write(sw, "Downloaded file (DocumentVersionID = " + id + ") Executed.");
         }
     }
 }

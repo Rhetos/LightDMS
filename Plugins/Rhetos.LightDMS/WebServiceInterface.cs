@@ -17,17 +17,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using Rhetos.Compiler;
-using Rhetos.Extensibility;
-using Rhetos.Logging;
-using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Routing;
 
 namespace Rhetos.LightDMS
@@ -39,7 +28,9 @@ namespace Rhetos.LightDMS
         {
             RouteTable.Routes.Add(new Route("LightDMS/Upload", new LightDMSRouteHandler("Upload")));
             RouteTable.Routes.Add(new Route("LightDMS/Download/{id}", new LightDMSRouteHandler("Download")));
+            RouteTable.Routes.Add(new Route("LightDMS/Download", new LightDMSRouteHandler("Download")));
             RouteTable.Routes.Add(new Route("LightDMS/DownloadPreview/{id}", new LightDMSRouteHandler("DownloadPreview")));
+            RouteTable.Routes.Add(new Route("LightDMS/DownloadPreview", new LightDMSRouteHandler("DownloadPreview")));
         }
 
         public void InitializeApplicationInstance(System.Web.HttpApplication context)
