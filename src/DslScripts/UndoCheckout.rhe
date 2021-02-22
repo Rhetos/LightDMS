@@ -14,7 +14,7 @@
 
 		SaveMethod
 		{
-			OnInitialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
+			Initialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
 		}
 
 		ComposableFilterBy DocumentNotCheckouted
@@ -29,7 +29,7 @@
         ComposableFilterBy OtherUserDocumentUndoCheckout '(items, repository, parameter, context) =>
 		{							
 			var claimCanUndoCheckoutForOtherUser = new List<Rhetos.Security.Claim>() { new Rhetos.Security.Claim("LightDMS.UndoCheckout", "CanUndoCheckoutForOtherUser") };
-			var canUndoCheckoutForOtherUser = context.AuthorizationManager.GetAuthorizations(claimCanUndoCheckoutForOtherUser).FirstOrDefault();
+			var canUndoCheckoutForOtherUser = _executionContext.AuthorizationManager.GetAuthorizations(claimCanUndoCheckoutForOtherUser).FirstOrDefault();
 			if(canUndoCheckoutForOtherUser)
 			{
 				return items.Where(i => false);
@@ -45,11 +45,7 @@
 					)
 					.Select(de => de.UndoCheckout);
 			}
-		}
-		'
-		{
-            UseExecutionContext;
-        }
+		}';
 
 		InvalidData OtherUserDocumentUndoCheckout 'Akcija nije moguća jer je sadržaj rezerviran za uređivanje od strane drugog korisnika.';
 	}

@@ -14,7 +14,7 @@
 		
 		SaveMethod
 		{
-			OnInitialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
+			Initialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
 		}
 
 		ComposableFilterBy MultipleDocumentCheckout

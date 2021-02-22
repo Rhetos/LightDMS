@@ -18,12 +18,10 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Rhetos.Dsl;
 using System.ComponentModel.Composition;
 using Rhetos.Dsl.DefaultConcepts;
+using Rhetos.Dom.DefaultConcepts;
 
 namespace Rhetos.LightDMS
 {
