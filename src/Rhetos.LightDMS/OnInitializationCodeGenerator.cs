@@ -17,12 +17,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Rhetos.Dsl.DefaultConcepts;
-using System.Globalization;
 using System.ComponentModel.Composition;
 using Rhetos.Compiler;
 using Rhetos.Extensibility;
@@ -31,6 +25,7 @@ using Rhetos.Dom.DefaultConcepts;
 
 namespace Rhetos.LightDMS
 {
+#pragma warning disable CS0618 // Type or member is obsolete
     [Export(typeof(IConceptCodeGenerator))]
     [ExportMetadata(MefProvider.Implements, typeof(OnInitializationInfo))]
     public class OnInitializationCodeGenerator : IConceptCodeGenerator
@@ -52,4 +47,5 @@ namespace Rhetos.LightDMS
                 info.RuleName, info.CsCodeSnippet.Trim());
         }
     }
+#pragma warning restore CS0618 // Type or member is obsolete
 }
