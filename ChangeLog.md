@@ -1,5 +1,11 @@
 # LightDMS release notes
 
+## 5.0.0
+
+### Breaking changes
+
+* Removed MimeTypeHelper class. Use the Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider class insetad.
+
 ## 1.7.0 (2019-04-03)
 
 ### Internal improvements

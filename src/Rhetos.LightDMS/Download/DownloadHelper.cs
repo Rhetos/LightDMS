@@ -17,6 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Rhetos.LightDms.Storage;
@@ -25,11 +28,7 @@ using Rhetos.Utilities;
 using System;
 using System.Data;
 using System.Data.SqlClient;
-using System.Data.SqlTypes;
-using System.Diagnostics;
-using System.IO;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -40,45 +39,41 @@ namespace Rhetos.LightDMS
         private const int BUFFER_SIZE = 100 * 1024; // 100 kB buffer
 
         private readonly ILogger _logger;
-        private readonly bool _detectResponseBlockingErrors;
-        private readonly int _detectResponseBlockingErrorsTimeoutMs;
+        private readonly ConnectionString _connectionString;
 
-        public DownloadHelper()
+        public DownloadHelper(ILogProvider logProvider, ConnectionString connectionString)
         {
-            var logProvider = new NLogProvider();
+            _connectionString = connectionString;
             _logger = logProvider.GetLogger(GetType().Name);
-            var configuration = new Rhetos.Utilities.Configuration();
-            _detectResponseBlockingErrors = configuration.GetBool("LightDMS.DetectResponseBlockingErrors", true).Value;
-            _detectResponseBlockingErrorsTimeoutMs = configuration.GetInt("LightDMS.DetectResponseBlockingErrorsTimeoutMs", 60*1000).Value;
         }
 
-        public void HandleDownload(HttpContext context, Guid? documentVersionId, Guid? fileContentId)
+        public async Task HandleDownload(HttpContext context, Guid? documentVersionId, Guid? fileContentId)
         {
             try
             {
-                using (var sqlConnection = new SqlConnection(SqlUtility.ConnectionString))
+                using (var sqlConnection = new SqlConnection(_connectionString))
                 {
                     sqlConnection.Open();
                     var fileMetadata = GetMetadata(context, documentVersionId, fileContentId, sqlConnection);
 
                     context.Response.StatusCode = (int)HttpStatusCode.OK;
 
-                    if (!TryDownloadFromAzureBlob(context, fileMetadata))
+                    if (!await TryDownloadFromAzureBlob(context, fileMetadata))
                     {
                         //If there is no document on AzureBlobStorage, take it from DB
-                        context.Response.BufferOutput = false;
-                        if (!TryDownloadFromFileStream(context, fileMetadata, sqlConnection))
+                        context.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
+                        if (!await TryDownloadFromFileStream(context, fileMetadata, sqlConnection))
                             // If FileStream is not available - read from VarBinary(MAX) column using buffer;
-                            DownloadFromVarbinary(context, fileMetadata, sqlConnection);
+                            await DownloadFromVarbinary(context, fileMetadata, sqlConnection);
                     }
                 }
             }
             catch (Exception ex)
             {
                 if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
-                    Respond.BadRequest(context, "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.");
+                    await Respond.BadRequest(context, "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.");
                 else
-                    Respond.InternalError(context, ex);
+                    await Respond.InternalError(context, ex);
             }
         }
 
@@ -93,9 +88,9 @@ namespace Rhetos.LightDMS
         private FileMetadata GetMetadata(HttpContext context, Guid? documentVersionId, Guid? fileContentId, SqlConnection sqlConnection)
         {
             // if "filename" is present in query, that one is used as download filename
-            var query = HttpUtility.ParseQueryString(context.Request.Url.Query);
+            var query = context.Request.Query;
             string queryFileName = null;
-            foreach (var key in query.AllKeys) if (key.ToLower() == "filename") queryFileName = query[key];
+            foreach (var key in query.Keys) if (key.ToLower() == "filename") queryFileName = query[key];
 
             SqlCommand getMetadata = null;
             if (documentVersionId != null)
@@ -135,7 +130,7 @@ namespace Rhetos.LightDMS
             }
         }
 
-        private bool TryDownloadFromAzureBlob(HttpContext context, FileMetadata file)
+        private async Task<bool> TryDownloadFromAzureBlob(HttpContext context, FileMetadata file)
         {
             if (file.AzureStorage == false)
                 return false;
@@ -160,20 +155,20 @@ namespace Rhetos.LightDMS
                     throw new FrameworkException("Azure blob storage container name is missing from configuration.");
 
                 CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference(storageContainerName);
-                if (!cloudBlobContainer.Exists())
+                if (!await cloudBlobContainer.ExistsAsync())
                     throw new FrameworkException("Azure blob storage container doesn't exist.");
 
                 CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference("doc-" + file.FileContentId.ToString());
-                if (cloudBlockBlob.Exists())
+                if (await cloudBlockBlob.ExistsAsync())
                 {
                     try
                     {
-                        cloudBlockBlob.FetchAttributes();
+                        await cloudBlockBlob.FetchAttributesAsync();
 
                         PopulateHeader(context, file.FileName, cloudBlockBlob.Properties.Length);
-                        cloudBlockBlob.DownloadToStream(context.Response.OutputStream);
+                        await cloudBlockBlob.DownloadToStreamAsync(context.Response.Body);
 
-                        context.Response.Flush();
+                        await context.Response.Body.FlushAsync();
                         return true;
                     }
                     catch (Exception ex)
@@ -190,7 +185,7 @@ namespace Rhetos.LightDMS
                 throw new FrameworkException("Azure Blob Storage environment variable missing.");
         }
 
-        private bool TryDownloadFromFileStream(HttpContext context, FileMetadata file, SqlConnection sqlConnection)
+        private async Task<bool> TryDownloadFromFileStream(HttpContext context, FileMetadata file, SqlConnection sqlConnection)
         {
             SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection);
             if (checkFileStreamEnabled.ExecuteScalar() == null)
@@ -207,30 +202,31 @@ namespace Rhetos.LightDMS
                     int totalBytesWritten = 0;
                     while ((bytesRead = fileStream.Read(buffer, 0, BUFFER_SIZE)) > 0)
                     {
-                        if (!context.Response.IsClientConnected)
+                        if (context.RequestAborted.IsCancellationRequested)
                             break;
 
-                        Action writeResponse = () => context.Response.OutputStream.Write(buffer, 0, bytesRead);
+                        //TODO: This locking issue might been solved on .NET 5. Removed this code after testing shows there is no issue here.
+                        //Action writeResponse = () => await context.Response.Body.Write(buffer, 0, bytesRead);
+                        //if (_detectResponseBlockingErrors)
+                        //{
+                        //    // HACK: `Response.OutputStream.Write` sometimes blocks the process at System.Web.dll!System.Web.Hosting.IIS7WorkerRequest.ExplicitFlush();
+                        //    // Until the issue is solved, this hack allows 1. logging of the problem, and 2. closing the SQL transaction while the thread remains blocked.
+                        //    // Tried removing PreSendRequestHeaders, setting aspnet:UseTaskFriendlySynchronizationContext and disabling anitivirus, but it did not help.
+                        //    // Total performance overhead of Task.Run...Wait is around 0.01 sec when downloading 200MB file with BUFFER_SIZE 100kB.
+                        //    var task = Task.Run(writeResponse);
+                        //    if (!task.Wait(_detectResponseBlockingErrorsTimeoutMs))
+                        //    {
+                        //        throw new FrameworkException(ResponseBlockedMessage +
+                        //            $" Process {Process.GetCurrentProcess().Id}, thread {Thread.CurrentThread.ManagedThreadId}," +
+                        //            $" streamed {totalBytesWritten} bytes of {file.Size}, current batch {bytesRead} bytes.");
+                        //    }
+                        //}
+                        //else
+                        //    writeResponse();
 
-                        if (_detectResponseBlockingErrors)
-                        {
-                            // HACK: `Response.OutputStream.Write` sometimes blocks the process at System.Web.dll!System.Web.Hosting.IIS7WorkerRequest.ExplicitFlush();
-                            // Until the issue is solved, this hack allows 1. logging of the problem, and 2. closing the SQL transaction while the thread remains blocked.
-                            // Tried removing PreSendRequestHeaders, setting aspnet:UseTaskFriendlySynchronizationContext and disabling anitivirus, but it did not help.
-                            // Total performance overhead of Task.Run...Wait is around 0.01 sec when downloading 200MB file with BUFFER_SIZE 100kB.
-                            var task = Task.Run(writeResponse);
-                            if (!task.Wait(_detectResponseBlockingErrorsTimeoutMs))
-                            {
-                                throw new FrameworkException(ResponseBlockedMessage +
-                                    $" Process {Process.GetCurrentProcess().Id}, thread {Thread.CurrentThread.ManagedThreadId}," +
-                                    $" streamed {totalBytesWritten} bytes of {file.Size}, current batch {bytesRead} bytes.");
-                            }
-                        }
-                        else
-                            writeResponse();
-
+                        await context.Response.Body.WriteAsync(buffer, 0, bytesRead);
                         totalBytesWritten += bytesRead;
-                        context.Response.Flush();
+                        await context.Response.Body.FlushAsync();
                     }
                 }
             }
@@ -244,7 +240,7 @@ namespace Rhetos.LightDMS
 
         public static readonly string ResponseBlockedMessage = $"Response.OutputStream.Write blocked.";
 
-        private void DownloadFromVarbinary(HttpContext context, FileMetadata file, SqlConnection sqlConnection)
+        private async Task DownloadFromVarbinary(HttpContext context, FileMetadata file, SqlConnection sqlConnection)
         {
             byte[] buffer = new byte[BUFFER_SIZE];
 
@@ -261,16 +257,16 @@ namespace Rhetos.LightDMS
                 // Continue while there are bytes beyond the size of the buffer.  
                 while (readed == BUFFER_SIZE)
                 {
-                    context.Response.OutputStream.Write(buffer, 0, (int)readed);
-                    context.Response.Flush();
+                    await context.Response.Body.WriteAsync(buffer, 0, (int)readed);
+                    await context.Response.Body.FlushAsync();
 
                     // Reposition start index to end of last buffer and fill buffer.  
                     startIndex += BUFFER_SIZE;
                     readed = reader.GetBytes(0, startIndex, buffer, 0, BUFFER_SIZE);
                 }
 
-                context.Response.OutputStream.Write(buffer, 0, (int)readed);
-                context.Response.Flush();
+                await context.Response.Body.WriteAsync(buffer, 0, (int)readed);
+                await context.Response.Body.FlushAsync();
             }
 
             reader.Close();
@@ -279,10 +275,11 @@ namespace Rhetos.LightDMS
 
         private void PopulateHeader(HttpContext context, string fileName, long length)
         {
-            context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
+            new FileExtensionContentTypeProvider().TryGetContentType(fileName, out string contentType);
+            context.Response.ContentType = contentType;
             // Koristiti HttpUtility.UrlPathEncode umjesto HttpUtility.UrlEncode ili Uri.EscapeDataString jer drugačije handlea SPACE i specijalne znakove
-            context.Response.AddHeader("Content-Disposition", "attachment; filename*=UTF-8''" + HttpUtility.UrlPathEncode(fileName) + "");
-            context.Response.AddHeader("Content-Length", length.ToString());
+            context.Response.Headers.Add("Content-Disposition", "attachment; filename*=UTF-8''" + HttpUtility.UrlPathEncode(fileName) + "");
+            context.Response.Headers.Add("Content-Length", length.ToString());
         }
     }
 }

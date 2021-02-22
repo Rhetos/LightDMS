@@ -17,13 +17,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using Newtonsoft.Json;
+using Microsoft.AspNetCore.Http;
 using Rhetos.Logging;
 using System;
 using System.IO;
 using System.Net;
 using System.Runtime.CompilerServices;
-using System.Web;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Rhetos.LightDMS
 {
@@ -32,21 +33,21 @@ namespace Rhetos.LightDMS
         /// <summary>
         /// Logs the error details, and returns a generic error response with HTTP status code 500.
         /// </summary>
-        public static void InternalError(HttpContext context, Exception exception, [CallerFilePath] string sourceFilePath = null)
+        public static async Task InternalError(HttpContext context, Exception exception, [CallerFilePath] string sourceFilePath = null)
         {
             string userMessage = $"Internal server error occurred. See RhetosServer.log for more information. ({exception.GetType().Name}, {DateTime.Now.ToString("s")})";
-            LogAndReturnError(context, exception.ToString(), userMessage, sourceFilePath, HttpStatusCode.InternalServerError, EventType.Error);
+            await LogAndReturnError(context, exception.ToString(), userMessage, sourceFilePath, HttpStatusCode.InternalServerError, EventType.Error);
         }
 
         /// <summary>
         /// Logs the error details (if trace log enabled), and returns the provided error message with HTTP status code 400.
         /// </summary>
-        public static void BadRequest(HttpContext context, string error, [CallerFilePath] string sourceFilePath = null)
+        public static async Task BadRequest(HttpContext context, string error, [CallerFilePath] string sourceFilePath = null)
         {
-            LogAndReturnError(context, error, error, sourceFilePath, HttpStatusCode.BadRequest, EventType.Info);
+            await LogAndReturnError(context, error, error, sourceFilePath, HttpStatusCode.BadRequest, EventType.Info);
         }
 
-        private static void LogAndReturnError(HttpContext context, string logMessage, string userMessage, string sourceFilePath, HttpStatusCode statusCode, EventType logEventType)
+        private static async Task LogAndReturnError(HttpContext context, string logMessage, string userMessage, string sourceFilePath, HttpStatusCode statusCode, EventType logEventType)
         {
             string loggerName = !string.IsNullOrEmpty(sourceFilePath)
                 ? nameof(LightDMS) + "." + Path.GetFileNameWithoutExtension(sourceFilePath)
@@ -58,23 +59,16 @@ namespace Rhetos.LightDMS
             if (!logMessage.Contains(DownloadHelper.ResponseBlockedMessage))
             {
                 context.Response.Clear();
-                try
-                {
-                    context.Response.ContentType = "application/json;";
-                    context.Response.StatusCode = (int)statusCode;
-                }
-                catch (HttpException ex) when (ex.Message.StartsWith("Server cannot set content type after HTTP headers have been sent."))
-                {
-                    logger.Error(ex.ToString());
-                }
-                context.Response.Write(JsonConvert.SerializeObject(new { error = userMessage }));
+                context.Response.ContentType = "application/json;";
+                context.Response.StatusCode = (int)statusCode;
+                await JsonSerializer.SerializeAsync(context.Response.Body, new { error = userMessage });
             }
         }
 
-        public static void Ok<T>(HttpContext context, T response)
+        public static async Task Ok<T>(HttpContext context, T response)
         {
             context.Response.ContentType = "application/json;";
-            context.Response.Write(JsonConvert.SerializeObject(response));
+            await JsonSerializer.SerializeAsync(context.Response.Body, response);
             context.Response.StatusCode = 200;
         }
     }
