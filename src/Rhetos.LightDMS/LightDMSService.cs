@@ -18,6 +18,7 @@
 */
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.StaticFiles;
 using Rhetos.Logging;
 using Rhetos.Utilities;
 using System.Threading.Tasks;
@@ -29,21 +30,26 @@ namespace Rhetos.LightDMS
     {
         private readonly ILogProvider _logProvider;
         private readonly ConnectionString _connectionString;
+        private readonly IContentTypeProvider _contentTypeProvider;
 
-        public LightDMSService(IRhetosComponent<ILogProvider> logProvider, IRhetosComponent<ConnectionString> connectionString)
+        public LightDMSService(
+            IRhetosComponent<ILogProvider> logProvider,
+            IRhetosComponent<ConnectionString> connectionString,
+            IContentTypeProvider contentTypeProvider)
         {
             _logProvider = logProvider.Value;
             _connectionString = connectionString.Value;
+            _contentTypeProvider = contentTypeProvider;
         }
 
         public async Task ProcessDownloadRequestAsync(HttpContext context)
         {
-            await new DownloadHandler(_logProvider, _connectionString).ProcessRequest(context);
+            await new DownloadHandler(_logProvider, _connectionString, _contentTypeProvider).ProcessRequest(context);
         }
 
         public async Task ProcessDownloadPreviewRequestAsync(HttpContext context)
         {
-            await new DownloadPreviewHandler(_logProvider, _connectionString).ProcessRequest(context);
+            await new DownloadPreviewHandler(_logProvider, _connectionString, _contentTypeProvider).ProcessRequest(context);
         }
 
         public async Task ProcessUploadRequestAsync(HttpContext context)

@@ -31,9 +31,10 @@ namespace Rhetos.LightDMS
     /// </remarks>
     public static class LightDMSServiceCollectionExtensions
     {
-        public static RhetosAspNetServiceCollectionBuilder AddLightDMSApi(this RhetosAspNetServiceCollectionBuilder builder)
+        public static RhetosAspNetServiceCollectionBuilder AddLightDMS(this RhetosAspNetServiceCollectionBuilder builder)
         {
             builder.Services.AddScoped<LightDMSService>();
+            builder.Services.AddSingleton<IContentTypeProvider>((serviceProvider) => new FileExtensionContentTypeProvider());
             return builder;
         }
     }
