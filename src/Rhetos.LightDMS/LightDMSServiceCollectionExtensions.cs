@@ -17,6 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Rhetos.Extensions.AspNetCore;
 
@@ -30,9 +31,10 @@ namespace Rhetos.LightDMS
     /// </remarks>
     public static class LightDMSServiceCollectionExtensions
     {
-        public static RhetosAspNetServiceCollectionBuilder AddLightDMSApi(this RhetosAspNetServiceCollectionBuilder builder)
+        public static RhetosAspNetServiceCollectionBuilder AddLightDMS(this RhetosAspNetServiceCollectionBuilder builder)
         {
             builder.Services.AddScoped<LightDMSService>();
+            builder.Services.AddSingleton<IContentTypeProvider>((serviceProvider) => new FileExtensionContentTypeProvider());
             return builder;
         }
     }

@@ -40,11 +40,13 @@ namespace Rhetos.LightDMS
 
         private readonly ILogger _logger;
         private readonly ConnectionString _connectionString;
+        private readonly IContentTypeProvider _contentTypeProvider;
 
-        public DownloadHelper(ILogProvider logProvider, ConnectionString connectionString)
+        public DownloadHelper(ILogProvider logProvider, ConnectionString connectionString, IContentTypeProvider contentTypeProvider)
         {
             _connectionString = connectionString;
             _logger = logProvider.GetLogger(GetType().Name);
+            _contentTypeProvider = contentTypeProvider;
         }
 
         public async Task HandleDownload(HttpContext context, Guid? documentVersionId, Guid? fileContentId)
@@ -275,7 +277,7 @@ namespace Rhetos.LightDMS
 
         private void PopulateHeader(HttpContext context, string fileName, long length)
         {
-            new FileExtensionContentTypeProvider().TryGetContentType(fileName, out string contentType);
+            _contentTypeProvider.TryGetContentType(fileName, out string contentType);
             context.Response.ContentType = contentType;
             // Koristiti HttpUtility.UrlPathEncode umjesto HttpUtility.UrlEncode ili Uri.EscapeDataString jer drugačije handlea SPACE i specijalne znakove
             context.Response.Headers.Add("Content-Disposition", "attachment; filename*=UTF-8''" + HttpUtility.UrlPathEncode(fileName) + "");
