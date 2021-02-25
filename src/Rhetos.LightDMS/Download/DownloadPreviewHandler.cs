@@ -34,6 +34,7 @@ namespace Rhetos.LightDMS
         private readonly ILogProvider _logProvider;
         private readonly ConnectionString _connectionString;
         private readonly IContentTypeProvider _contentTypeProvider;
+        private readonly Respond _respond;
 
         public DownloadPreviewHandler(ILogProvider logProvider, ConnectionString connectionString, IContentTypeProvider contentTypeProvider)
         {
@@ -41,6 +42,7 @@ namespace Rhetos.LightDMS
             _logProvider = logProvider;
             _connectionString = connectionString;
             _contentTypeProvider = contentTypeProvider;
+            _respond = new Respond(logProvider);
         }
 
         public async Task ProcessRequest(HttpContext context)
@@ -48,7 +50,7 @@ namespace Rhetos.LightDMS
             var id = Guid.Parse(context.Request.Path.ToUriComponent().Split('/').Last());
 
             if (!context.Request.Query.Keys.Any(name => name.ToLower() == "filename")) {
-                await Respond.BadRequest(context, "Fetching file preview requires filename as query parameter.");
+                await _respond.BadRequest(context, "Fetching file preview requires filename as query parameter.");
                 return;
             }
 

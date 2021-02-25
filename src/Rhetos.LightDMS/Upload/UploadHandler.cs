@@ -35,18 +35,20 @@ namespace Rhetos.LightDMS
     {
         private readonly ILogger _performanceLogger;
         private readonly ConnectionString _connectionString;
+        private readonly Respond _respond;
 
         public UploadHandler(ILogProvider logProvider, ConnectionString connectionString)
         {
             _connectionString = connectionString;
             _performanceLogger = logProvider.GetLogger("Performance");
+            _respond = new Respond(logProvider);
         }
 
         public async Task ProcessRequest(HttpContext context)
         {
             if (context.Request.Form.Files.Count != 1)
             {
-                await Respond.BadRequest(context, "Exactly one file has to be sent as request in Multipart format. There were " + context.Request.Form.Files.Count + " files in upload request.");
+                await _respond.BadRequest(context, "Exactly one file has to be sent as request in Multipart format. There were " + context.Request.Form.Files.Count + " files in upload request.");
                 return;
             }
 
@@ -115,7 +117,7 @@ namespace Rhetos.LightDMS
                 sqlTransaction.Commit();
                 sqlConnection.Close();
                 _performanceLogger.Write(sw, "Rhetos.LightDMS: UploadFile (" + id + ") Executed.");
-                await Respond.Ok(context, new { ID = id });
+                await _respond.Ok(context, new { ID = id });
             }
             catch (Exception ex)
             {
@@ -130,9 +132,9 @@ namespace Rhetos.LightDMS
                 }
 
                 if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
-                    await Respond.BadRequest(context, "FILESTREAM is not enabled on Database, or FileStream FileGroup is missing on database, or FILESTREAM attribute is missing from LightDMS.FileContent.Content column. Try with enabling FileStream on database, add FileGroup to database and transform Content column to VARBINARY(MAX) FILESTREAM type.");
+                    await _respond.BadRequest(context, "FILESTREAM is not enabled on Database, or FileStream FileGroup is missing on database, or FILESTREAM attribute is missing from LightDMS.FileContent.Content column. Try with enabling FileStream on database, add FileGroup to database and transform Content column to VARBINARY(MAX) FILESTREAM type.");
                 else
-                    await Respond.InternalError(context, ex);
+                    await _respond.InternalError(context, ex);
             }
         }
     }
