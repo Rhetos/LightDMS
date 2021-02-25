@@ -42,12 +42,14 @@ namespace Rhetos.LightDMS
         private readonly ILogger _logger;
         private readonly ConnectionString _connectionString;
         private readonly IContentTypeProvider _contentTypeProvider;
+        private readonly Respond _respond;
 
         public DownloadHelper(ILogProvider logProvider, ConnectionString connectionString, IContentTypeProvider contentTypeProvider)
         {
             _connectionString = connectionString;
             _logger = logProvider.GetLogger(GetType().Name);
             _contentTypeProvider = contentTypeProvider;
+            _respond = new Respond(logProvider);
         }
 
         public async Task HandleDownload(HttpContext context, Guid? documentVersionId, Guid? fileContentId)
@@ -74,9 +76,9 @@ namespace Rhetos.LightDMS
             catch (Exception ex)
             {
                 if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
-                    await Respond.BadRequest(context, "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.");
+                    await _respond.BadRequest(context, "FILESTREAM attribute is missing from LightDMS.FileContent.Content column. However, file is still available from download via REST interface.");
                 else
-                    await Respond.InternalError(context, ex);
+                    await _respond.InternalError(context, ex);
             }
         }
 
