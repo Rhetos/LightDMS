@@ -19,7 +19,7 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.StaticFiles;
-using Rhetos.Extensions.AspNetCore;
+using Rhetos.Host.AspNet;
 using Rhetos.Logging;
 using Rhetos.Utilities;
 using System.Threading.Tasks;

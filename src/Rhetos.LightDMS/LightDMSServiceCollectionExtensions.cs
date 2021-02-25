@@ -19,7 +19,7 @@
 
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
-using Rhetos.Extensions.AspNetCore;
+using Rhetos.Host.AspNet;
 
 namespace Rhetos.LightDMS
 {
