@@ -34,13 +34,18 @@ namespace Rhetos.LightDMS
         private readonly ILogProvider _logProvider;
         private readonly ConnectionString _connectionString;
         private readonly IContentTypeProvider _contentTypeProvider;
+        private readonly LightDMSOptions _lightDMSOptions;
 
-        public DownloadHandler(ILogProvider logProvider, ConnectionString connectionString, IContentTypeProvider contentTypeProvider)
+        public DownloadHandler(ILogProvider logProvider,
+            ConnectionString connectionString,
+            IContentTypeProvider contentTypeProvider,
+            LightDMSOptions lightDMSOptions)
         {
             _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
             _logProvider = logProvider;
             _connectionString = connectionString;
             _contentTypeProvider = contentTypeProvider;
+            _lightDMSOptions = lightDMSOptions;
         }
 
         public async Task ProcessRequest(HttpContext context)
@@ -53,7 +58,7 @@ namespace Rhetos.LightDMS
             }
 
             var sw = Stopwatch.StartNew();
-            await new DownloadHelper(_logProvider, _connectionString, _contentTypeProvider).HandleDownload(context, id, null);
+            await new DownloadHelper(_logProvider, _connectionString, _contentTypeProvider, _lightDMSOptions).HandleDownload(context, id, null);
             _performanceLogger.Write(sw, "Downloaded file (DocumentVersionID = " + id + ") Executed.");
         }
     }
