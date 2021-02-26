@@ -55,7 +55,7 @@ namespace Rhetos.LightDMS
             var id = DownloadHelper.GetId(context);
             if (id == null)
             {
-                await Respond.BadRequest(context, "The 'id' parameter is missing or incorrectly formatted.");
+                await _respond.BadRequest(context, "The 'id' parameter is missing or incorrectly formatted.");
                 return;
             }
 

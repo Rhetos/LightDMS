@@ -40,6 +40,7 @@ namespace Rhetos.LightDMS
         }
 
         [HttpPost]
+        [Route("LightDMS/Download")]
         [Route("LightDMS/Download/{id}")]
         public async Task Download()
         {
@@ -47,6 +48,7 @@ namespace Rhetos.LightDMS
         }
 
         [HttpPost]
+        [Route("LightDMS/DownloadPreview")]
         [Route("LightDMS/DownloadPreview/{id}")]
         public async Task DownloadPreview()
         {

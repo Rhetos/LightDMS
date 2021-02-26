@@ -35,6 +35,7 @@ namespace Rhetos.LightDMS
         private readonly ConnectionString _connectionString;
         private readonly IContentTypeProvider _contentTypeProvider;
         private readonly LightDMSOptions _lightDMSOptions;
+        private readonly Respond _respond;
 
         public DownloadHandler(ILogProvider logProvider,
             ConnectionString connectionString,
@@ -46,6 +47,7 @@ namespace Rhetos.LightDMS
             _connectionString = connectionString;
             _contentTypeProvider = contentTypeProvider;
             _lightDMSOptions = lightDMSOptions;
+            _respond = new Respond(logProvider);
         }
 
         public async Task ProcessRequest(HttpContext context)
@@ -53,7 +55,7 @@ namespace Rhetos.LightDMS
             var id = DownloadHelper.GetId(context);
             if (id == null)
             {
-                await Respond.BadRequest(context, "The 'id' parameter is missing or incorrectly formatted.");
+                await _respond.BadRequest(context, "The 'id' parameter is missing or incorrectly formatted.");
                 return;
             }
 
