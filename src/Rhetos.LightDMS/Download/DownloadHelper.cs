@@ -42,12 +42,17 @@ namespace Rhetos.LightDMS
         private readonly ConnectionString _connectionString;
         private readonly IContentTypeProvider _contentTypeProvider;
         private readonly Respond _respond;
+        private readonly LightDMSOptions _lightDMSOptions;
 
-        public DownloadHelper(ILogProvider logProvider, ConnectionString connectionString, IContentTypeProvider contentTypeProvider)
+        public DownloadHelper(ILogProvider logProvider,
+            ConnectionString connectionString,
+            IContentTypeProvider contentTypeProvider,
+            LightDMSOptions lightDMSOptions)
         {
             _connectionString = connectionString;
             _logger = logProvider.GetLogger(GetType().Name);
             _contentTypeProvider = contentTypeProvider;
+            _lightDMSOptions = lightDMSOptions;
             _respond = new Respond(logProvider);
         }
 
@@ -139,8 +144,8 @@ namespace Rhetos.LightDMS
             if (file.AzureStorage == false)
                 return false;
 
-            var storageConnectionVariable = System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.StorageConnectionVariable");
-            string storageConnectionString = null;
+            var storageConnectionVariable = _lightDMSOptions.StorageConnectionVariable;
+            string storageConnectionString;
             if (!string.IsNullOrWhiteSpace(storageConnectionVariable))
                 storageConnectionString = Environment.GetEnvironmentVariable(storageConnectionVariable, EnvironmentVariableTarget.Machine);
             else
@@ -149,12 +154,12 @@ namespace Rhetos.LightDMS
 
             if (!string.IsNullOrEmpty(storageConnectionString))
             {
-                CloudStorageAccount storageAccount = null;
+                CloudStorageAccount storageAccount;
                 if (!CloudStorageAccount.TryParse(storageConnectionString, out storageAccount))
                     throw new FrameworkException("Invalid Azure Blob Storage connection string.");
 
                 CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
-                var storageContainerName = System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.StorageContainer");
+                var storageContainerName = _lightDMSOptions.StorageContainer;
                 if (string.IsNullOrWhiteSpace(storageContainerName))
                     throw new FrameworkException("Azure blob storage container name is missing from configuration.");
 

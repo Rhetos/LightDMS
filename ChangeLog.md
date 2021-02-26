@@ -5,6 +5,7 @@
 ### Breaking changes
 
 * Removed MimeTypeHelper class. Use the Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider class insetad.
+* To configure the StorageContainer and StorageConnectionVariable use the Rhetos:LightDMS:StorageContainer and Rhetos:LightDMS:StorageConnectionVariable keys.
 
 ## 1.7.0 (2019-04-03)
 

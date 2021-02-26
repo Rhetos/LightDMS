@@ -34,14 +34,19 @@ namespace Rhetos.LightDMS
         private readonly ILogProvider _logProvider;
         private readonly ConnectionString _connectionString;
         private readonly IContentTypeProvider _contentTypeProvider;
+        private readonly LightDMSOptions _lightDMSOptions;
         private readonly Respond _respond;
 
-        public DownloadPreviewHandler(ILogProvider logProvider, ConnectionString connectionString, IContentTypeProvider contentTypeProvider)
+        public DownloadPreviewHandler(ILogProvider logProvider,
+            ConnectionString connectionString,
+            IContentTypeProvider contentTypeProvider,
+            LightDMSOptions lightDMSOptions)
         {
             _performanceLogger = logProvider.GetLogger("Performance");
             _logProvider = logProvider;
             _connectionString = connectionString;
             _contentTypeProvider = contentTypeProvider;
+            _lightDMSOptions = lightDMSOptions;
             _respond = new Respond(logProvider);
         }
 
@@ -55,7 +60,7 @@ namespace Rhetos.LightDMS
             }
 
             var sw = Stopwatch.StartNew();
-            await new DownloadHelper(_logProvider, _connectionString, _contentTypeProvider).HandleDownload(context, null, id);
+            await new DownloadHelper(_logProvider, _connectionString, _contentTypeProvider, _lightDMSOptions).HandleDownload(context, null, id);
             _performanceLogger.Write(sw, "Rhetos.LightDMS: Downloaded file (LightDMS.FileContent.ID = " + id + ") Executed.");
         }
     }

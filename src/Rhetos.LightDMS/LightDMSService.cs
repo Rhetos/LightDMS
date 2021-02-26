@@ -31,25 +31,28 @@ namespace Rhetos.LightDMS
         private readonly ILogProvider _logProvider;
         private readonly ConnectionString _connectionString;
         private readonly IContentTypeProvider _contentTypeProvider;
+        private readonly LightDMSOptions _lightDMSOptions;
 
         public LightDMSService(
             IRhetosComponent<ILogProvider> logProvider,
             IRhetosComponent<ConnectionString> connectionString,
+            IRhetosComponent<LightDMSOptions> lightDMSOptions,
             IContentTypeProvider contentTypeProvider)
         {
             _logProvider = logProvider.Value;
             _connectionString = connectionString.Value;
+            _lightDMSOptions = lightDMSOptions.Value;
             _contentTypeProvider = contentTypeProvider;
         }
 
         public async Task ProcessDownloadRequestAsync(HttpContext context)
         {
-            await new DownloadHandler(_logProvider, _connectionString, _contentTypeProvider).ProcessRequest(context);
+            await new DownloadHandler(_logProvider, _connectionString, _contentTypeProvider, _lightDMSOptions).ProcessRequest(context);
         }
 
         public async Task ProcessDownloadPreviewRequestAsync(HttpContext context)
         {
-            await new DownloadPreviewHandler(_logProvider, _connectionString, _contentTypeProvider).ProcessRequest(context);
+            await new DownloadPreviewHandler(_logProvider, _connectionString, _contentTypeProvider, _lightDMSOptions).ProcessRequest(context);
         }
 
         public async Task ProcessUploadRequestAsync(HttpContext context)
