@@ -66,8 +66,15 @@ namespace Rhetos.LightDMS
             if (!logMessage.Contains(DownloadHelper.ResponseBlockedMessage))
             {
                 context.Response.Clear();
-                context.Response.ContentType = "application/json;";
-                context.Response.StatusCode = (int)statusCode;
+                try
+                {
+                    context.Response.ContentType = "application/json;";
+                    context.Response.StatusCode = (int)statusCode;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex.ToString());
+                }
                 await JsonSerializer.SerializeAsync(context.Response.Body, new { error = userMessage });
             }
         }
