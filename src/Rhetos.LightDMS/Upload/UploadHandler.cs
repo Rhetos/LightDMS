@@ -17,6 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Microsoft.AspNetCore.Http;
 using Rhetos.LightDms.Storage;
 using Rhetos.Logging;
 using Rhetos.Utilities;
@@ -26,42 +27,36 @@ using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Linq;
-using System.Web;
+using System.Threading.Tasks;
 
 namespace Rhetos.LightDMS
 {
-    public class UploadHandler : IHttpHandler
+    public class UploadHandler
     {
         private readonly ILogger _performanceLogger;
+        private readonly ConnectionString _connectionString;
 
-        public UploadHandler()
+        public UploadHandler(ILogProvider logProvider, ConnectionString connectionString)
         {
-            var logProvider = new NLogProvider();
+            _connectionString = connectionString;
             _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
         }
 
-        public bool IsReusable
+        public async Task ProcessRequest(HttpContext context)
         {
-            get
+            if (context.Request.Form.Files.Count != 1)
             {
-                return false;
-            }
-        }
-
-        public void ProcessRequest(HttpContext context)
-        {
-            if (context.Request.Files.Count != 1)
-            {
-                Respond.BadRequest(context, "Exactly one file has to be sent as request in Multipart format. There were " + context.Request.Files.Count + " files in upload request.");
+                await Respond.BadRequest(context, "Exactly one file has to be sent as request in Multipart format. There were " + context.Request.Form.Files.Count + " files in upload request.");
                 return;
             }
+
             var id = Guid.NewGuid();
             var sw = Stopwatch.StartNew();
             int bufferSize = 100 * 1024; // 100 kB buffer
             byte[] buffer = new byte[bufferSize];
             long totalbytesRead = 0;
 
-            SqlConnection sqlConnection = new SqlConnection(SqlUtility.ConnectionString);
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
             sqlConnection.Open();
             SqlTransaction sqlTransaction = null;
             try
@@ -81,8 +76,8 @@ namespace Rhetos.LightDMS
                     fileUpdateCommand.Parameters.AddWithValue("@ID", id);
                     fileUpdateCommand.Parameters.AddWithValue("@Offset", 0);
 
-                    var fileStream = context.Request.Files[0].InputStream;
-                    var bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+                    var fileStream = context.Request.Form.Files[0].OpenReadStream();
+                    var bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length);
                     while (bytesRead > 0)
                     {
                         if (bytesRead < buffer.Length)
@@ -96,7 +91,7 @@ namespace Rhetos.LightDMS
                         fileUpdateCommand.Parameters["@Offset"].Value = totalbytesRead;
                         fileUpdateCommand.ExecuteNonQuery();
                         totalbytesRead += bytesRead;
-                        bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+                        bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length);
                     }
 
                     fileUpdateCommand.Dispose();
@@ -106,9 +101,10 @@ namespace Rhetos.LightDMS
                 {
                     using (SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForUpload(id, createdDate, sqlTransaction))
                     {
-                        while (totalbytesRead < context.Request.Files[0].ContentLength)
+                        var fileStream = context.Request.Form.Files[0].OpenReadStream();
+                        while (totalbytesRead < context.Request.Form.Files[0].Length)
                         {
-                            var readed = context.Request.Files[0].InputStream.Read(buffer, 0, bufferSize);
+                            var readed = await fileStream.ReadAsync(buffer, 0, bufferSize);
                             sfs.Write(buffer, 0, readed);
                             totalbytesRead += readed;
                         }
@@ -119,7 +115,7 @@ namespace Rhetos.LightDMS
                 sqlTransaction.Commit();
                 sqlConnection.Close();
                 _performanceLogger.Write(sw, "UploadFile (" + id + ") Executed.");
-                Respond.Ok(context, new { ID = id });
+                await Respond.Ok(context, new { ID = id });
             }
             catch (Exception ex)
             {
@@ -134,9 +130,9 @@ namespace Rhetos.LightDMS
                 }
 
                 if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
-                    Respond.BadRequest(context, "FILESTREAM is not enabled on Database, or FileStream FileGroup is missing on database, or FILESTREAM attribute is missing from LightDMS.FileContent.Content column. Try with enabling FileStream on database, add FileGroup to database and transform Content column to VARBINARY(MAX) FILESTREAM type.");
+                    await Respond.BadRequest(context, "FILESTREAM is not enabled on Database, or FileStream FileGroup is missing on database, or FILESTREAM attribute is missing from LightDMS.FileContent.Content column. Try with enabling FileStream on database, add FileGroup to database and transform Content column to VARBINARY(MAX) FILESTREAM type.");
                 else
-                    Respond.InternalError(context, ex);
+                    await Respond.InternalError(context, ex);
             }
         }
     }

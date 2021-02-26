@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2014 Omega software d.o.o.
+    Copyright (C) 2016 Omega software d.o.o.
 
     This file is part of Rhetos.
 
@@ -17,29 +17,24 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using Rhetos.Utilities;
-using System.ComponentModel.Composition;
-using System.IO;
-using System.Text;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.DependencyInjection;
+using Rhetos.Host.AspNet;
 
 namespace Rhetos.LightDMS
 {
-    [Export(typeof(Rhetos.IHomePageSnippet))]
-    public class RhetosHomePageDemo : Rhetos.IHomePageSnippet
+    /// <summary>
+    /// Adds the <see cref="LightDMSService"/> to the IServiceCollection.
+    /// </summary>
+    /// <remarks>
+    /// It registers <see cref="LightDMSService"/> and <see cref="FileExtensionContentTypeProvider"/> as <see cref="IContentTypeProvider"/> to the <see cref="IServiceCollection"/>.
+    /// </remarks>
+    public static class LightDMSServiceCollectionExtensions
     {
-        private string _snippet;
-
-        public string Html
+        public static RhetosAspNetServiceCollectionBuilder AddLightDMSApi(this RhetosAspNetServiceCollectionBuilder builder)
         {
-            get
-            {
-                if (_snippet == null)
-                {
-                    string filePath = Path.Combine(Paths.ResourcesFolder, "LightDMS", "HomePageSnippet.html");
-                    _snippet = File.ReadAllText(filePath);
-                }
-                return _snippet;
-            }
+            builder.Services.AddScoped<LightDMSService>();
+            return builder;
         }
     }
 }

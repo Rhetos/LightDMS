@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Rhetos.LightDMS</id>
-    <version>1.8.0-dev</version>
+    <version>5.0.0-dev</version>
     <authors>Omega software</authors>
     <owners>Omega software</owners>
     <licenseUrl>http://opensource.org/licenses/AGPL-3.0</licenseUrl>
@@ -12,9 +12,9 @@
     <copyright>Copyright Omega software 2016</copyright>
     <tags>Rhetos plugin</tags>
     <dependencies>
-      <dependency id="Rhetos.AfterDeploy" version="1.0.0" />
-      <dependency id="Rhetos.CommonConcepts" version="2.7.0" />
-      <dependency id="WindowsAzure.Storage" version="7.2.1" />
+      <dependency id="Rhetos.AfterDeploy" version="5.0.0-dev" />
+      <dependency id="Rhetos.CommonConcepts" version="5.0.0-dev" />
+      <dependency id="WindowsAzure.Storage" version="9.3.3" />
     </dependencies>
   </metadata>
   <files>
@@ -24,7 +24,7 @@
     <file src="src\DataMigration\**\*" target="DataMigration" />
     <file src="src\DslScripts\**\*" target="DslScripts" />
     <file src="src\Resources\**\*" target="Resources" />
-    <file src="src\Rhetos.LightDMS\bin\Debug\Rhetos.LightDMS.dll" target="lib\net451" />
-    <file src="src\Rhetos.LightDMS\bin\Debug\Rhetos.LightDMS.pdb" target="lib\net451" />
+    <file src="src\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.dll" target="lib\net5.0" />
+    <file src="src\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.pdb" target="lib\net5.0" />
   </files>
 </package>

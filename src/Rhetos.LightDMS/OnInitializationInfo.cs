@@ -27,6 +27,7 @@ using Rhetos.Dsl.DefaultConcepts;
 
 namespace Rhetos.LightDMS
 {
+    [Obsolete("Use 'Initialization' keyword instead.")]
     [Export(typeof(IConceptInfo))]
     [ConceptKeyword("OnInitialization")]
     public class OnInitializationInfo : IConceptInfo

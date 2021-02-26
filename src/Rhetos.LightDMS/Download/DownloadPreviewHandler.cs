@@ -17,49 +17,45 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Microsoft.AspNetCore.Http;
 using Rhetos.Logging;
+using Rhetos.Utilities;
+using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Web;
+using System.Threading.Tasks;
 
 namespace Rhetos.LightDMS
 {
-    public class DownloadPreviewHandler : IHttpHandler
+    public class DownloadPreviewHandler
     {
         private readonly ILogger _performanceLogger;
+        private readonly ILogProvider _logProvider;
+        private readonly ConnectionString _connectionString;
 
-        public DownloadPreviewHandler()
+        public DownloadPreviewHandler(ILogProvider logProvider, ConnectionString connectionString)
         {
-            var logProvider = new NLogProvider();
             _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
+            _logProvider = logProvider;
+            _connectionString = connectionString;
         }
 
-        public bool IsReusable
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public void ProcessRequest(HttpContext context)
+        public async Task ProcessRequest(HttpContext context)
         {
             var id = DownloadHelper.GetId(context);
             if (id == null)
             {
-                Respond.BadRequest(context, "The 'id' parameter is missing or incorrectly formatted.");
+                await Respond.BadRequest(context, "The 'id' parameter is missing or incorrectly formatted.");
                 return;
             }
 
-            var query = HttpUtility.ParseQueryString(context.Request.Url.Query);
-            if (!query.AllKeys.Any(name => name.ToLower() == "filename"))
-            {
-                Respond.BadRequest(context, "Fetching file preview requires filename as query parameter.");
+            if (!context.Request.Query.Keys.Any(name => name.ToLower() == "filename")) {
+                await Respond.BadRequest(context, "Fetching file preview requires filename as query parameter.");
                 return;
             }
 
             var sw = Stopwatch.StartNew();
-            new DownloadHelper().HandleDownload(context, null, id);
+            await new DownloadHelper(_logProvider, _connectionString).HandleDownload(context, null, id);
             _performanceLogger.Write(sw, "Downloaded file (LightDMS.FileContent.ID = " + id + ") Executed.");
         }
     }

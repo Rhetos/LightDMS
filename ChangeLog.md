@@ -1,5 +1,11 @@
 # LightDMS release notes
 
+## 5.0.0
+
+### Breaking changes
+
+* Removed MimeTypeHelper class. Use the Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider class insetad.
+
 ## 1.8.0 (TO BE RELEASED)
 
 * Download and DownloadPreview supports `id` as a query parameter instead of the route path, to simplify network analysis.

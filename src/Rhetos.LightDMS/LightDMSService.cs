@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2014 Omega software d.o.o.
+    Copyright (C) 2016 Omega software d.o.o.
 
     This file is part of Rhetos.
 
@@ -20,38 +20,35 @@
 using Microsoft.AspNetCore.Http;
 using Rhetos.Logging;
 using Rhetos.Utilities;
-using System;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
+using Rhetos.Host.AspNet;
 
 namespace Rhetos.LightDMS
 {
-    public class DownloadHandler
+    public class LightDMSService
     {
-        private readonly ILogger _performanceLogger;
         private readonly ILogProvider _logProvider;
         private readonly ConnectionString _connectionString;
 
-        public DownloadHandler(ILogProvider logProvider, ConnectionString connectionString)
+        public LightDMSService(IRhetosComponent<ILogProvider> logProvider, IRhetosComponent<ConnectionString> connectionString)
         {
-            _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
-            _logProvider = logProvider;
-            _connectionString = connectionString;
+            _logProvider = logProvider.Value;
+            _connectionString = connectionString.Value;
         }
 
-        public async Task ProcessRequest(HttpContext context)
+        public async Task ProcessDownloadRequestAsync(HttpContext context)
         {
-            var id = DownloadHelper.GetId(context);
-            if (id == null)
-            {
-                await Respond.BadRequest(context, "The 'id' parameter is missing or incorrectly formatted.");
-                return;
-            }
+            await new DownloadHandler(_logProvider, _connectionString).ProcessRequest(context);
+        }
 
-            var sw = Stopwatch.StartNew();
-            await new DownloadHelper(_logProvider, _connectionString).HandleDownload(context, id, null);
-            _performanceLogger.Write(sw, "Downloaded file (DocumentVersionID = " + id + ") Executed.");
+        public async Task ProcessDownloadPreviewRequestAsync(HttpContext context)
+        {
+            await new DownloadPreviewHandler(_logProvider, _connectionString).ProcessRequest(context);
+        }
+
+        public async Task ProcessUploadRequestAsync(HttpContext context)
+        {
+            await new UploadHandler(_logProvider, _connectionString).ProcessRequest(context);
         }
     }
 }
