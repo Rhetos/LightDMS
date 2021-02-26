@@ -17,17 +17,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Rhetos.Host.AspNet;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Rhetos.LightDMS
 {
     /// <summary>
-    /// Adds the <see cref="LightDMSService"/> to the IServiceCollection.
+    /// Adds the LightDMS Web API to the application.
     /// </summary>
     /// <remarks>
-    /// It registers <see cref="LightDMSService"/> and <see cref="FileExtensionContentTypeProvider"/> as <see cref="IContentTypeProvider"/> to the <see cref="IServiceCollection"/>.
+    /// It registers <see cref="LightDMSController"/>, <see cref="LightDMSService"/> and <see cref="FileExtensionContentTypeProvider"/> as <see cref="IContentTypeProvider"/> to the <see cref="IServiceCollection"/>.
     /// </remarks>
     public static class LightDMSServiceCollectionExtensions
     {
@@ -35,7 +39,23 @@ namespace Rhetos.LightDMS
         {
             builder.Services.AddScoped<LightDMSService>();
             builder.Services.AddSingleton<IContentTypeProvider>((serviceProvider) => new FileExtensionContentTypeProvider());
+
+            builder.Services
+                .AddControllers()
+                .ConfigureApplicationPartManager(p =>
+                {
+                    p.FeatureProviders.Add(new LightDMSApiControllerFeatureProvider());
+                });
+
             return builder;
+        }
+    }
+
+    internal class LightDMSApiControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
+    {
+        public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
+        {
+            feature.Controllers.Add(typeof(LightDMSController).GetTypeInfo());
         }
     }
 }
