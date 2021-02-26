@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 
 namespace Rhetos.LightDMS
 {
+    [NonController]
     public class LightDMSController : ControllerBase
     {
         private readonly LightDMSService _lightDMSService;
