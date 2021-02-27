@@ -26,7 +26,7 @@
 	  	}';
 		InvalidData DocumentNotCheckouted 'Akcija nije moguća jer sadržaj niste rezervirali za uređivanje.';
 
-        ComposableFilterBy OtherUserDocumentUndoCheckout '(items, repository, parameter, context) =>
+        ComposableFilterBy OtherUserDocumentUndoCheckout '(items, repository, parameter) =>
 		{							
 			var claimCanUndoCheckoutForOtherUser = new List<Rhetos.Security.Claim>() { new Rhetos.Security.Claim("LightDMS.UndoCheckout", "CanUndoCheckoutForOtherUser") };
 			var canUndoCheckoutForOtherUser = _executionContext.AuthorizationManager.GetAuthorizations(claimCanUndoCheckoutForOtherUser).FirstOrDefault();
