@@ -29,7 +29,7 @@ namespace Rhetos.LightDms.Storage
     /// <summary>
     /// SqlFileStreamProvider for SqlFileStream
     /// </summary>
-    public class SqlFileStreamProvider
+    public static class SqlFileStreamProvider
     {
         public static SqlFileStream GetSqlFileStreamForUpload(Guid fileContentId, string createdDate, SqlTransaction sqlTransaction)
         {

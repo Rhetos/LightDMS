@@ -233,9 +233,6 @@
       <HintPath>..\..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.3\lib\net45\System.Web.Http.WebHost.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Web.Mvc">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -243,6 +240,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Download\FileMetadata.cs" />
     <Compile Include="Download\DownloadHelper.cs" />
     <Compile Include="Download\DownloadPreviewHandler.cs" />
     <Compile Include="Helpers\MimeTypeHelper.cs" />
@@ -253,6 +251,7 @@
     <Compile Include="RhetosHomePageDemo.cs" />
     <Compile Include="Storage\SqlFileStreamProvider.cs" />
     <Compile Include="Download\DownloadHandler.cs" />
+    <Compile Include="Upload\UploadHelper.cs" />
     <Compile Include="Upload\UploadHandler.cs" />
     <Compile Include="Respond.cs" />
     <Compile Include="WebServiceInterface.cs" />

@@ -1,6 +1,17 @@
 # LightDMS release notes
 
+## 1.9.0 (TO BE RELEASED)
+
+### Internal improvements
+
+* Rhetos.LightDMS.sln template upgrade to the latest "Visual Studio Version 16"
+* Removed unnecessary System.Web.Mvc.dll reference
+* Refactored DownloadHelper to return Stream object via ResolveFileDownloadResult method (adjusted HandleDownload method) 
+* Refactored UploadHandler to read from any stream object (not only hardcoded context.Request.Files[0].InputStream)
+
 ## 1.8.0 (2021-03-05)
+
+### Internal improvements
 
 * Download and DownloadPreview supports `id` as a query parameter instead of the route path, to simplify network analysis.
 

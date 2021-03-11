@@ -40,7 +40,7 @@ namespace Rhetos.LightDMS
                 return false;
             }
         }
-        
+
         public void ProcessRequest(HttpContext context)
         {
             var id = DownloadHelper.GetId(context);
