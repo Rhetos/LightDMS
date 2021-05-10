@@ -20,12 +20,11 @@
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.DependencyInjection;
-using Rhetos.Host.AspNet;
+using Rhetos.LightDMS;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Rhetos.LightDMS
+namespace Microsoft.Extensions.DependencyInjection
 {
     /// <summary>
     /// Adds the LightDMS Web API to the application.
@@ -33,7 +32,7 @@ namespace Rhetos.LightDMS
     /// <remarks>
     /// It registers <see cref="LightDMSController"/>, <see cref="LightDMSService"/> and <see cref="FileExtensionContentTypeProvider"/> as <see cref="IContentTypeProvider"/> to the <see cref="IServiceCollection"/>.
     /// </remarks>
-    public static class LightDMSServiceCollectionExtensions
+    public static class LightDMSRhetosServiceCollectionBuilderExtensions
     {
         public static RhetosServiceCollectionBuilder AddLightDMS(this RhetosServiceCollectionBuilder builder)
         {
