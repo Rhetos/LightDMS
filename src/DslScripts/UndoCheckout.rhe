@@ -24,7 +24,7 @@
     		var invalidItems = repository.LightDMS.DocumentStatusBeforeEvent.Query(i => itemsToCheck.Contains(i.ID) && i.CheckoutID == null).Select(i => i.ID).ToList();
     		return items.Where(i => invalidItems.Contains(i.ID));
 	  	}';
-		InvalidData DocumentNotCheckouted 'Akcija nije moguća jer sadržaj niste rezervirali za uređivanje.';
+		InvalidData DocumentNotCheckouted 'This operation is not available, because the document is not checked out for editing.';
 
         ComposableFilterBy OtherUserDocumentUndoCheckout '(items, repository, parameter) =>
 		{							
@@ -47,7 +47,7 @@
 			}
 		}';
 
-		InvalidData OtherUserDocumentUndoCheckout 'Akcija nije moguća jer je sadržaj rezerviran za uređivanje od strane drugog korisnika.';
+		InvalidData OtherUserDocumentUndoCheckout 'This operation is not allowed because the document content is checked out for editing by another user.';
 	}
 	
 	Parameter OtherUserDocumentUndoCheckout;
