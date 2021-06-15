@@ -17,6 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Amazon.S3.Model;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Rhetos.LightDms.Storage;
@@ -29,6 +30,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -126,7 +129,12 @@ namespace Rhetos.LightDMS
 
         public FileDownloadResult ResolveFileDownloadResult(FileMetadata fileMetadata, SqlConnection sqlConnection, Stream outputStream = null, HttpResponse httpResponse = null)
         {
+            var usingS3Storage = System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.UsingS3Storage");
+            bool isS3 = false;
+            if (!String.IsNullOrWhiteSpace(usingS3Storage)) bool.TryParse(usingS3Storage, out isS3);
+
             var fileDownloadResult =
+                    DownloadFromS3(fileMetadata.FileContentId, fileMetadata.AzureStorage, isS3, outputStream, httpResponse) ??
                     DownloadFromAzureBlob(fileMetadata.FileContentId, fileMetadata.AzureStorage, outputStream, httpResponse) ??
                     DownloadFromFileStream(fileMetadata.FileContentId, sqlConnection) ??
                     DownloadFromVarbinary(fileMetadata.FileContentId, sqlConnection);
@@ -239,6 +247,42 @@ namespace Rhetos.LightDMS
             }
             else
                 throw new FrameworkException("Azure Blob Storage environment variable missing.");
+        }
+
+        private FileDownloadResult DownloadFromS3(Guid fileContentId, bool azureStorage, bool isS3, Stream outputStream, HttpResponse httpResponse)
+        {
+            if (!azureStorage || !isS3)
+                return null;
+
+            System.Net.ServicePointManager.ServerCertificateValidationCallback +=
+                   delegate (
+                       object ssender,
+                       X509Certificate certificate,
+                       X509Chain chain,
+                       SslPolicyErrors sslPolicyErrors)
+                   {
+                       return true;
+                   };
+            using (var client = S3StorageClient.GetAmazonS3Client())
+            {
+                GetObjectRequest getObjRequest = new GetObjectRequest();
+                getObjRequest.BucketName = ConfigUtility.GetAppSetting("StorageBucketT1");
+                getObjRequest.Key = "doc-" + fileContentId.ToString();
+
+                try
+                {
+                    using (GetObjectResponse getObjResponse = client.GetObject(getObjRequest))
+                    {
+                        getObjResponse.ResponseStream.CopyTo(outputStream);
+                        return new FileDownloadResult();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("S3 storage error, falling back to DB. Error: " + ex.ToString());
+                    return null;
+                }
+            }
         }
 
         private FileDownloadResult DownloadFromFileStream(Guid fileContentId, SqlConnection sqlConnection)
