@@ -13,17 +13,11 @@ namespace Rhetos.LightDms.Storage
             {
                 ServiceURL = System.Configuration.ConfigurationManager.AppSettings.Get("ServiceURLS3")
             };
+            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(accessKeyID) || string.IsNullOrWhiteSpace(s3Config.ServiceURL))
+                throw new FrameworkException("Invalid S3 storage configuration parameters.");
 
             var client = new AmazonS3Client(accessKeyID, key, s3Config);
             return client;
-        }
-
-        public static void DownloadBlob(AmazonS3Client client, string path, string blobName, string bucketName)
-        {
-            using (TransferUtility fileTransferUtility = new TransferUtility(client))
-            {
-                fileTransferUtility.Download(path + @"\" + blobName, bucketName, blobName);
-            }
         }
     }
 }
