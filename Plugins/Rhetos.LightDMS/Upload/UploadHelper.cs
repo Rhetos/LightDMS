@@ -38,7 +38,7 @@ namespace Rhetos.LightDMS
         public UploadHelper()
         {
             var logProvider = new NLogProvider();
-            _performanceLogger = logProvider.GetLogger(GetType().Name);
+            _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
         }
 
         public FileUploadResult UploadStream(Stream inputStream)

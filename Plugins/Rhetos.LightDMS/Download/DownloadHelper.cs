@@ -59,8 +59,6 @@ namespace Rhetos.LightDMS
         {
             try
             {
-                FileDownloadResult fileDownloadResult = null;
-
                 using (var sqlConnection = new SqlConnection(SqlUtility.ConnectionString))
                 {
                     sqlConnection.Open();
@@ -68,10 +66,11 @@ namespace Rhetos.LightDMS
 
                     PopulateHeader(context, fileMetadata.FileName, fileMetadata.Size);
 
-                    fileDownloadResult = ResolveFileDownloadResult(fileMetadata, sqlConnection, context.Response.OutputStream, context.Response);
-
-                    if (fileDownloadResult.Stream != null)
-                        Download(fileDownloadResult, context);
+                    using (FileDownloadResult fileDownloadResult = ResolveFileDownloadResult(fileMetadata, sqlConnection, context.Response.OutputStream, context.Response))
+                    {
+                        if (fileDownloadResult.Stream != null)
+                            Download(fileDownloadResult, context);
+                    }
                 }
             }
             catch (Exception ex)
@@ -121,20 +120,16 @@ namespace Rhetos.LightDMS
                     context.Response.Flush();
                 }
             }
-            finally
+            catch (Exception ex)
             {
-                fileDownloadMetadata.Stream.Dispose();
+                _logger.Error("Download from FileDownloadResult.Stream error. Error: " + ex.ToString());
             }
         }
 
         public FileDownloadResult ResolveFileDownloadResult(FileMetadata fileMetadata, SqlConnection sqlConnection, Stream outputStream = null, HttpResponse httpResponse = null)
         {
-            var usingS3Storage = System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.UsingS3Storage");
-            bool isS3 = false;
-            if (!String.IsNullOrWhiteSpace(usingS3Storage)) bool.TryParse(usingS3Storage, out isS3);
-
             var fileDownloadResult =
-                    DownloadFromS3(fileMetadata.FileContentId, fileMetadata.AzureStorage, isS3, outputStream, httpResponse) ??
+                    DownloadFromS3(fileMetadata.FileContentId, fileMetadata.S3Storage, outputStream, httpResponse) ??
                     DownloadFromAzureBlob(fileMetadata.FileContentId, fileMetadata.AzureStorage, outputStream, httpResponse) ??
                     DownloadFromFileStream(fileMetadata.FileContentId, sqlConnection) ??
                     DownloadFromVarbinary(fileMetadata.FileContentId, sqlConnection);
@@ -162,7 +157,8 @@ namespace Rhetos.LightDMS
                             dv.FileName,
                             FileSize = DATALENGTH(Content),
                             dv.FileContentID,
-                            fc.AzureStorage
+                            fc.AzureStorage,
+                            fc.S3Storage
                         FROM
                             LightDMS.DocumentVersion dv
                             INNER JOIN LightDMS.FileContent fc ON dv.FileContentID = fc.ID
@@ -174,7 +170,8 @@ namespace Rhetos.LightDMS
                             FileName ='unknown.txt',
                             FileSize = DATALENGTH(Content),
                             FileContentID = fc.ID,
-                            AzureStorage = CAST(0 AS BIT)
+                            AzureStorage = CAST(0 AS BIT),
+                            S3Storage = CAST(0 AS BIT)
                         FROM 
                             LightDMS.FileContent fc 
                         WHERE 
@@ -188,6 +185,7 @@ namespace Rhetos.LightDMS
                     FileContentId = (Guid)result["FileContentID"],
                     FileName = queryStringFileName ?? (string)result["FileName"],
                     AzureStorage = result["AzureStorage"] != DBNull.Value && (bool)result["AzureStorage"],
+                    S3Storage = result["S3Storage"] != DBNull.Value && (bool)result["S3Storage"],
                     Size = (long)result["FileSize"]
                 };
             }
@@ -249,20 +247,23 @@ namespace Rhetos.LightDMS
                 throw new FrameworkException("Azure Blob Storage environment variable missing.");
         }
 
-        private FileDownloadResult DownloadFromS3(Guid fileContentId, bool azureStorage, bool isS3, Stream outputStream, HttpResponse httpResponse)
+        private FileDownloadResult DownloadFromS3(Guid fileContentId, bool s3Storage, Stream outputStream, HttpResponse httpResponse)
         {
-            if (!azureStorage || !isS3)
+            if (!s3Storage)
                 return null;
 
-            System.Net.ServicePointManager.ServerCertificateValidationCallback +=
-                   delegate (
-                       object ssender,
-                       X509Certificate certificate,
-                       X509Chain chain,
-                       SslPolicyErrors sslPolicyErrors)
-                   {
-                       return true;
-                   };
+            ServicePointManager.ServerCertificateValidationCallback +=
+                    delegate (
+                        object sender,
+                        X509Certificate certificate,
+                        X509Chain chain,
+                        SslPolicyErrors sslPolicyErrors)
+                    {
+                        if (certificate.Subject.IndexOf("ssc.gov.hr") > -1)
+                            return true;
+                        return sslPolicyErrors == SslPolicyErrors.None;
+                    };
+            
             using (var client = S3StorageClient.GetAmazonS3Client())
             {
                 GetObjectRequest getObjRequest = new GetObjectRequest();
@@ -303,17 +304,18 @@ namespace Rhetos.LightDMS
 
         private FileDownloadResult DownloadFromVarbinary(Guid fileContentId, SqlConnection sqlConnection)
         {
-            SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='" + fileContentId.ToString() + "'", sqlConnection);
-            var sqlDataReader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess);
-
-            sqlDataReader.Read();
-
-            // Cannot close/dispose sqlDataReader, otherwise the Stream cannot be read
-            // sqlDataReader will be disposed automatically after its sqlConnection is disposed
-            return new FileDownloadResult
+            using (SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='" + fileContentId.ToString() + "'", sqlConnection))
             {
-                Stream = sqlDataReader.GetStream(0)
-            };
+                FileDownloadResult fileDownloadResult = new FileDownloadResult();
+                using (var sqlDataReader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess))
+                {
+                    var success = sqlDataReader.Read();
+                    if (!success)
+                        return null;
+                    sqlDataReader.GetStream(0).CopyTo(fileDownloadResult.Stream);
+                }
+                return fileDownloadResult;
+            }
         }
 
         private void PopulateHeader(HttpContext context, string fileName, long length)

@@ -28,13 +28,19 @@ namespace Rhetos.LightDMS
         public Guid FileContentId { get; set; }
         public string FileName { get; set; }
         public bool AzureStorage { get; set; }
+        public bool S3Storage { get; set; }
         public long Size { get; set; }
     }
 
-    public class FileDownloadResult
+    public class FileDownloadResult : IDisposable
     {
         public Stream Stream { get; set; }
         public FileMetadata Metadata { get; set; }
+
+        public void Dispose()
+        {
+            Stream?.Dispose();
+        }
     }
 
     public class FileUploadResult
