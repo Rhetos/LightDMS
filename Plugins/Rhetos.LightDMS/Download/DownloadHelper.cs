@@ -66,11 +66,7 @@ namespace Rhetos.LightDMS
 
                     PopulateHeader(context, fileMetadata.FileName, fileMetadata.Size);
 
-                    using (FileDownloadResult fileDownloadResult = ResolveFileDownloadResult(fileMetadata, sqlConnection, context.Response.OutputStream, context.Response))
-                    {
-                        if (fileDownloadResult.Stream != null)
-                            Download(fileDownloadResult, context);
-                    }
+                    FileDownloadResult fileDownloadResult = ResolveFileDownloadResult(fileMetadata, sqlConnection, context.Response.OutputStream, context.Response, context);
                 }
             }
             catch (Exception ex)
@@ -82,57 +78,50 @@ namespace Rhetos.LightDMS
             }
         }
 
-        private void Download(FileDownloadResult fileDownloadMetadata, HttpContext context)
+        private void Download(FileDownloadResult fileDownloadMetadata, HttpContext context, Stream stream)
         {
-            try
+            context.Response.AddHeader("Content-Length", fileDownloadMetadata.Metadata.Size.ToString());
+
+            var buffer = new byte[BUFFER_SIZE];
+            int bytesRead;
+
+            int totalBytesWritten = 0;
+            while ((bytesRead = stream.Read(buffer, 0, BUFFER_SIZE)) > 0)
             {
-                context.Response.AddHeader("Content-Length", fileDownloadMetadata.Metadata.Size.ToString());
+                if (!context.Response.IsClientConnected)
+                    break;
 
-                var buffer = new byte[BUFFER_SIZE];
-                int bytesRead;
+                void writeResponse() => context.Response.OutputStream.Write(buffer, 0, bytesRead);
 
-                int totalBytesWritten = 0;
-                while ((bytesRead = fileDownloadMetadata.Stream.Read(buffer, 0, BUFFER_SIZE)) > 0)
+                if (_detectResponseBlockingErrors)
                 {
-                    if (!context.Response.IsClientConnected)
-                        break;
-
-                    void writeResponse() => context.Response.OutputStream.Write(buffer, 0, bytesRead);
-
-                    if (_detectResponseBlockingErrors)
+                    // HACK: `Response.OutputStream.Write` sometimes blocks the process at System.Web.dll!System.Web.Hosting.IIS7WorkerRequest.ExplicitFlush();
+                    // Until the issue is solved, this hack allows 1. logging of the problem, and 2. closing the SQL transaction while the thread remains blocked.
+                    // Tried removing PreSendRequestHeaders, setting aspnet:UseTaskFriendlySynchronizationContext and disabling anitivirus, but it did not help.
+                    // Total performance overhead of Task.Run...Wait is around 0.01 sec when downloading 200MB file with BUFFER_SIZE 100kB.
+                    var task = Task.Run(writeResponse);
+                    if (!task.Wait(_detectResponseBlockingErrorsTimeoutMs))
                     {
-                        // HACK: `Response.OutputStream.Write` sometimes blocks the process at System.Web.dll!System.Web.Hosting.IIS7WorkerRequest.ExplicitFlush();
-                        // Until the issue is solved, this hack allows 1. logging of the problem, and 2. closing the SQL transaction while the thread remains blocked.
-                        // Tried removing PreSendRequestHeaders, setting aspnet:UseTaskFriendlySynchronizationContext and disabling anitivirus, but it did not help.
-                        // Total performance overhead of Task.Run...Wait is around 0.01 sec when downloading 200MB file with BUFFER_SIZE 100kB.
-                        var task = Task.Run(writeResponse);
-                        if (!task.Wait(_detectResponseBlockingErrorsTimeoutMs))
-                        {
-                            throw new FrameworkException(ResponseBlockedMessage +
-                                $" Process {Process.GetCurrentProcess().Id}, thread {Thread.CurrentThread.ManagedThreadId}," +
-                                $" streamed {totalBytesWritten} bytes of {fileDownloadMetadata.Metadata.Size}, current batch {bytesRead} bytes.");
-                        }
+                        throw new FrameworkException(ResponseBlockedMessage +
+                            $" Process {Process.GetCurrentProcess().Id}, thread {Thread.CurrentThread.ManagedThreadId}," +
+                            $" streamed {totalBytesWritten} bytes of {fileDownloadMetadata.Metadata.Size}, current batch {bytesRead} bytes.");
                     }
-                    else
-                        writeResponse();
-
-                    totalBytesWritten += bytesRead;
-                    context.Response.Flush();
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error("Download from FileDownloadResult.Stream error. Error: " + ex.ToString());
+                else
+                    writeResponse();
+
+                totalBytesWritten += bytesRead;
+                context.Response.Flush();
             }
         }
 
-        public FileDownloadResult ResolveFileDownloadResult(FileMetadata fileMetadata, SqlConnection sqlConnection, Stream outputStream = null, HttpResponse httpResponse = null)
+        public FileDownloadResult ResolveFileDownloadResult(FileMetadata fileMetadata, SqlConnection sqlConnection, Stream outputStream = null, HttpResponse httpResponse = null, HttpContext context = null)
         {
             var fileDownloadResult =
                     DownloadFromS3(fileMetadata.FileContentId, fileMetadata.S3Storage, outputStream, httpResponse) ??
                     DownloadFromAzureBlob(fileMetadata.FileContentId, fileMetadata.AzureStorage, outputStream, httpResponse) ??
-                    DownloadFromFileStream(fileMetadata.FileContentId, sqlConnection) ??
-                    DownloadFromVarbinary(fileMetadata.FileContentId, sqlConnection);
+                    DownloadFromFileStream(fileMetadata, sqlConnection, context) ??
+                    DownloadFromVarbinary(fileMetadata, sqlConnection, context);
 
             fileDownloadResult.Metadata = fileMetadata;
 
@@ -267,15 +256,15 @@ namespace Rhetos.LightDMS
             using (var client = S3StorageClient.GetAmazonS3Client())
             {
                 GetObjectRequest getObjRequest = new GetObjectRequest();
-                getObjRequest.BucketName = ConfigUtility.GetAppSetting("StorageBucketT1");
+                getObjRequest.BucketName = ConfigUtility.GetAppSetting("LightDms.S3.BucketName");
                 if (string.IsNullOrWhiteSpace(getObjRequest.BucketName))
                     throw new FrameworkException("Missing S3 storage bucket name.");
                 
-                var s3Folder = ConfigUtility.GetAppSetting("StorageS3Folder");
+                var s3Folder = ConfigUtility.GetAppSetting("LightDms.S3.DestinationFolder");
                 if (string.IsNullOrWhiteSpace(s3Folder))
                     throw new FrameworkException("Missing S3 folder name.");
 
-                getObjRequest.Key = s3Folder + "/doc-" + fileContentId.ToString();
+                getObjRequest.Key = s3Folder + @"\doc-" + fileContentId.ToString();
 
                 try
                 {
@@ -293,33 +282,37 @@ namespace Rhetos.LightDMS
             }
         }
 
-        private FileDownloadResult DownloadFromFileStream(Guid fileContentId, SqlConnection sqlConnection)
+        private FileDownloadResult DownloadFromFileStream(FileMetadata fileMetadata, SqlConnection sqlConnection, HttpContext context)
         {
             SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection);
             if (checkFileStreamEnabled.ExecuteScalar() == null)
                 return null;
 
-            SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadCommitted); // Explicit transaction is required when working with SqlFileStream class.
-
-            return new FileDownloadResult
+            using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadCommitted)) // Explicit transaction is required when working with SqlFileStream class.
             {
-                Stream = SqlFileStreamProvider.GetSqlFileStreamForDownload(fileContentId, sqlTransaction)
-            };
+                using (var stream = SqlFileStreamProvider.GetSqlFileStreamForDownload(fileMetadata.FileContentId, sqlTransaction))
+                {
+                    var fileDownloadResult = new FileDownloadResult { Metadata = fileMetadata };
+
+                    Download(fileDownloadResult, context, stream);
+                    return fileDownloadResult;
+                }
+            }
         }
 
         public static readonly string ResponseBlockedMessage = $"Response.OutputStream.Write blocked.";
 
-        private FileDownloadResult DownloadFromVarbinary(Guid fileContentId, SqlConnection sqlConnection)
+        private FileDownloadResult DownloadFromVarbinary(FileMetadata fileMetadata, SqlConnection sqlConnection, HttpContext context)
         {
-            using (SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='" + fileContentId.ToString() + "'", sqlConnection))
+            using (SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='" + fileMetadata.FileContentId.ToString() + "'", sqlConnection))
             {
-                FileDownloadResult fileDownloadResult = new FileDownloadResult();
+                FileDownloadResult fileDownloadResult = new FileDownloadResult { Metadata = fileMetadata };
                 using (var sqlDataReader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess))
                 {
                     var success = sqlDataReader.Read();
                     if (!success)
                         return null;
-                    sqlDataReader.GetStream(0).CopyTo(fileDownloadResult.Stream);
+                    Download(fileDownloadResult, context, sqlDataReader.GetStream(0));
                 }
                 return fileDownloadResult;
             }

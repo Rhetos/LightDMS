@@ -32,15 +32,9 @@ namespace Rhetos.LightDMS
         public long Size { get; set; }
     }
 
-    public class FileDownloadResult : IDisposable
+    public class FileDownloadResult
     {
-        public Stream Stream { get; set; }
         public FileMetadata Metadata { get; set; }
-
-        public void Dispose()
-        {
-            Stream?.Dispose();
-        }
     }
 
     public class FileUploadResult

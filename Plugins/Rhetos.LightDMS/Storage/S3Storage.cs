@@ -7,11 +7,11 @@ namespace Rhetos.LightDms.Storage
     {
         public static AmazonS3Client GetAmazonS3Client()
         {
-            var key = System.Configuration.ConfigurationManager.AppSettings.Get("StorageKey");
-            var accessKeyID = System.Configuration.ConfigurationManager.AppSettings.Get("StorageAccessKeyID");
+            var key = System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.S3.Key");
+            var accessKeyID = System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.S3.AccessKeyID");
             var s3Config = new AmazonS3Config()
             {
-                ServiceURL = System.Configuration.ConfigurationManager.AppSettings.Get("ServiceURLS3")
+                ServiceURL = System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.S3.ServiceURL")
             };
             if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(accessKeyID) || string.IsNullOrWhiteSpace(s3Config.ServiceURL))
                 throw new FrameworkException("Invalid S3 storage configuration parameters.");
