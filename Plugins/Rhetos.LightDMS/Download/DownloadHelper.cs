@@ -66,7 +66,7 @@ namespace Rhetos.LightDMS
 
                     PopulateHeader(context, fileMetadata.FileName, fileMetadata.Size);
 
-                    FileDownloadResult fileDownloadResult = ResolveFileDownloadResult(fileMetadata, sqlConnection, context.Response.OutputStream, context.Response, context);
+                    ResolveDownload(fileMetadata, sqlConnection, context.Response.OutputStream, context.Response, context);
                 }
             }
             catch (Exception ex)
@@ -78,9 +78,9 @@ namespace Rhetos.LightDMS
             }
         }
 
-        private void Download(FileDownloadResult fileDownloadMetadata, HttpContext context, Stream stream)
+        private void Download(FileMetadata fileDownloadMetadata, HttpContext context, Stream stream)
         {
-            context.Response.AddHeader("Content-Length", fileDownloadMetadata.Metadata.Size.ToString());
+            context.Response.AddHeader("Content-Length", fileDownloadMetadata.Size.ToString());
 
             var buffer = new byte[BUFFER_SIZE];
             int bytesRead;
@@ -104,7 +104,7 @@ namespace Rhetos.LightDMS
                     {
                         throw new FrameworkException(ResponseBlockedMessage +
                             $" Process {Process.GetCurrentProcess().Id}, thread {Thread.CurrentThread.ManagedThreadId}," +
-                            $" streamed {totalBytesWritten} bytes of {fileDownloadMetadata.Metadata.Size}, current batch {bytesRead} bytes.");
+                            $" streamed {totalBytesWritten} bytes of {fileDownloadMetadata.Size}, current batch {bytesRead} bytes.");
                     }
                 }
                 else
@@ -115,17 +115,24 @@ namespace Rhetos.LightDMS
             }
         }
 
-        public FileDownloadResult ResolveFileDownloadResult(FileMetadata fileMetadata, SqlConnection sqlConnection, Stream outputStream = null, HttpResponse httpResponse = null, HttpContext context = null)
+        public void ResolveDownload(FileMetadata fileMetadata, SqlConnection sqlConnection, Stream outputStream = null, HttpResponse httpResponse = null, HttpContext context = null)
         {
-            var fileDownloadResult =
-                    DownloadFromS3(fileMetadata.FileContentId, fileMetadata.S3Storage, outputStream, httpResponse) ??
-                    DownloadFromAzureBlob(fileMetadata.FileContentId, fileMetadata.AzureStorage, outputStream, httpResponse) ??
-                    DownloadFromFileStream(fileMetadata, sqlConnection, context) ??
-                    DownloadFromVarbinary(fileMetadata, sqlConnection, context);
+            if (fileMetadata.S3Storage)
+                DownloadFromS3(fileMetadata, context);
+            else if (fileMetadata.AzureStorage)
+                DownloadFromAzureBlob(fileMetadata.FileContentId, outputStream, httpResponse);
+            else if (IsFileStream(sqlConnection))
+                DownloadFromFileStream(fileMetadata, sqlConnection, context);
+            else
+                DownloadFromVarbinary(fileMetadata, sqlConnection, context);
+        }
 
-            fileDownloadResult.Metadata = fileMetadata;
-
-            return fileDownloadResult;
+        private bool IsFileStream(SqlConnection sqlConnection)
+        {
+            using (var sqlCommand = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection))
+            {
+                return sqlCommand.ExecuteScalar() != null;
+            }
         }
 
         private static string GetFileNameFromQueryString(HttpContext context)
@@ -180,11 +187,8 @@ namespace Rhetos.LightDMS
             }
         }
 
-        private FileDownloadResult DownloadFromAzureBlob(Guid fileContentId, bool azureStorage, Stream outputStream, HttpResponse httpResponse)
+        private void DownloadFromAzureBlob(Guid fileContentId, Stream outputStream, HttpResponse httpResponse)
         {
-            if (!azureStorage)
-                return null;
-
             var storageConnectionVariable = System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.StorageConnectionVariable");
             string storageConnectionString;
             if (!string.IsNullOrWhiteSpace(storageConnectionVariable))
@@ -219,28 +223,19 @@ namespace Rhetos.LightDMS
 
                         // Downloads directly to outputStream
                         cloudBlockBlob.DownloadToStream(outputStream);
-                      
-                        return new FileDownloadResult();
                     }
                     catch (Exception ex)
                     {
-                        //when unexpected error occurs log it, then fall back to DB
-                        _logger.Error("Azure storage error, falling back to DB. Error: " + ex.ToString());
-                        return null;
+                        _logger.Error("Azure storage error. Error: " + ex.ToString());
                     }
                 }
-                else
-                    return null; //if no blob is present fall back to DB
             }
             else
                 throw new FrameworkException("Azure Blob Storage environment variable missing.");
         }
 
-        private FileDownloadResult DownloadFromS3(Guid fileContentId, bool s3Storage, Stream outputStream, HttpResponse httpResponse)
+        private void DownloadFromS3(FileMetadata fileMetadata, HttpContext context)
         {
-            if (!s3Storage)
-                return null;
-
             ServicePointManager.ServerCertificateValidationCallback +=
                     delegate (
                         object sender,
@@ -264,57 +259,47 @@ namespace Rhetos.LightDMS
                 if (string.IsNullOrWhiteSpace(s3Folder))
                     throw new FrameworkException("Missing S3 folder name.");
 
-                getObjRequest.Key = s3Folder + @"\doc-" + fileContentId.ToString();
+                getObjRequest.Key = s3Folder + "/doc-" + fileMetadata.FileContentId.ToString();
 
                 try
                 {
                     using (GetObjectResponse getObjResponse = client.GetObject(getObjRequest))
                     {
-                        getObjResponse.ResponseStream.CopyTo(outputStream);
-                        return new FileDownloadResult();
+                        fileMetadata.Size = getObjResponse.ContentLength;
+                        Download(fileMetadata, context, getObjResponse.ResponseStream);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error("S3 storage error, falling back to DB. Error: " + ex.ToString());
-                    return null;
+                    _logger.Error("S3 storage error. Error: " + ex.ToString());
                 }
             }
         }
 
-        private FileDownloadResult DownloadFromFileStream(FileMetadata fileMetadata, SqlConnection sqlConnection, HttpContext context)
+        private void DownloadFromFileStream(FileMetadata fileMetadata, SqlConnection sqlConnection, HttpContext context)
         {
-            SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection);
-            if (checkFileStreamEnabled.ExecuteScalar() == null)
-                return null;
-
             using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadCommitted)) // Explicit transaction is required when working with SqlFileStream class.
             {
                 using (var stream = SqlFileStreamProvider.GetSqlFileStreamForDownload(fileMetadata.FileContentId, sqlTransaction))
                 {
-                    var fileDownloadResult = new FileDownloadResult { Metadata = fileMetadata };
-
-                    Download(fileDownloadResult, context, stream);
-                    return fileDownloadResult;
+                    Download(fileMetadata, context, stream);
                 }
             }
         }
 
         public static readonly string ResponseBlockedMessage = $"Response.OutputStream.Write blocked.";
 
-        private FileDownloadResult DownloadFromVarbinary(FileMetadata fileMetadata, SqlConnection sqlConnection, HttpContext context)
+        private void DownloadFromVarbinary(FileMetadata fileMetadata, SqlConnection sqlConnection, HttpContext context)
         {
             using (SqlCommand readCommand = new SqlCommand("SELECT Content FROM LightDMS.FileContent WHERE ID='" + fileMetadata.FileContentId.ToString() + "'", sqlConnection))
             {
-                FileDownloadResult fileDownloadResult = new FileDownloadResult { Metadata = fileMetadata };
                 using (var sqlDataReader = readCommand.ExecuteReader(CommandBehavior.SequentialAccess))
                 {
                     var success = sqlDataReader.Read();
                     if (!success)
-                        return null;
-                    Download(fileDownloadResult, context, sqlDataReader.GetStream(0));
+                        return;
+                    Download(fileMetadata, context, sqlDataReader.GetStream(0));
                 }
-                return fileDownloadResult;
             }
         }
 

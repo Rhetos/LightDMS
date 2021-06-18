@@ -32,11 +32,6 @@ namespace Rhetos.LightDMS
         public long Size { get; set; }
     }
 
-    public class FileDownloadResult
-    {
-        public FileMetadata Metadata { get; set; }
-    }
-
     public class FileUploadResult
     {
         public Guid? ID { get; set; }
