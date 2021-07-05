@@ -1,13 +1,15 @@
 # LightDMS release notes
 
-## 1.9.0 (TO BE RELEASED)
+## 1.9.0 (2021-07-05)
+
+### New features
+
+* Support for external document storage with Amazon S3 API.
 
 ### Internal improvements
 
-* Rhetos.LightDMS.sln template upgrade to the latest "Visual Studio Version 16"
-* Removed unnecessary System.Web.Mvc.dll reference
-* Refactored DownloadHelper to return Stream object via ResolveFileDownloadResult method (adjusted HandleDownload method) 
-* Refactored UploadHandler to read from any stream object (not only hardcoded context.Request.Files[0].InputStream)
+* Removed unnecessary System.Web.Mvc.dll reference.
+* Internal refactoring to uniformly handle download and upload stream.
 
 ## 1.8.0 (2021-03-05)
 
