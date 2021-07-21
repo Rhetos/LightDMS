@@ -8,7 +8,20 @@
 * Removed MimeTypeHelper class. Use the Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider class instead.
 * To configure the StorageContainer and StorageConnectionVariable use the Rhetos:LightDMS:StorageContainer and Rhetos:LightDMS:StorageConnectionVariable keys.
 
-## 1.8.0 (TO BE RELEASED)
+## 1.9.0 (2021-07-05)
+
+### New features
+
+* Support for external document storage with Amazon S3 API.
+
+### Internal improvements
+
+* Removed unnecessary System.Web.Mvc.dll reference.
+* Internal refactoring to uniformly handle download and upload stream.
+
+## 1.8.0 (2021-03-05)
+
+### Internal improvements
 
 * Download and DownloadPreview supports `id` as a query parameter instead of the route path, to simplify network analysis.
 

@@ -64,8 +64,9 @@
 		Binary Content; // Important: This column is converted to FILESTREAM in the AfterDeploy script "Use filestream if supported.sql".
 		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; SqlIndex; }
 		Bool AzureStorage;
+		Bool S3Storage;
 
-		ItemFilter ContentIliAzureStorage 'item => item.Content == null && item.AzureStorage != true';
-		InvalidData ContentIliAzureStorage 'It is not allowed to upload FileContent without the content in database (Content == null) or in external storege (AzureStorage != true).';
+		ItemFilter ContentIliAzureStorage 'item => item.Content == null && item.AzureStorage != true && item.S3Storage != true';
+		InvalidData ContentIliAzureStorage 'It is not allowed to upload FileContent without the content in database (Content == null) or in external storege (AzureStorage or S3Storage).';
 	}
 }

@@ -42,7 +42,7 @@ namespace Rhetos.LightDMS
         /// </summary>
         public async Task InternalError(HttpContext context, Exception exception, [CallerFilePath] string sourceFilePath = null)
         {
-            string userMessage = $"Internal server error occurred. See server log for more information. ({exception.GetType().Name}, {DateTime.Now.ToString("s")})";
+            string userMessage = $"Internal server error occurred. See server log for more information. ({exception.GetType().Name}, {DateTime.Now:s})";
             await LogAndReturnError(context, exception.ToString(), userMessage, sourceFilePath, HttpStatusCode.InternalServerError, EventType.Error);
         }
 
