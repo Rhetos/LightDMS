@@ -20,7 +20,7 @@
 namespace Rhetos.LightDMS
 {
     [Options("Rhetos:LightDMS")]
-    public class LightDMSOptions
+    public class LightDmsOptions
     {
         public string StorageContainer { get; set; }
         public string StorageConnectionVariable { get; set; }

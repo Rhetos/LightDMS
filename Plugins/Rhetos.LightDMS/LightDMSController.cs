@@ -23,11 +23,11 @@ using System.Threading.Tasks;
 namespace Rhetos.LightDMS
 {
     [NonController]
-    public class LightDMSController : ControllerBase
+    public class LightDmsController : ControllerBase
     {
-        private readonly LightDMSService _lightDMSService;
+        private readonly LightDmsService _lightDMSService;
 
-        public LightDMSController(LightDMSService lightDMSService)
+        public LightDmsController(LightDmsService lightDMSService)
         {
             _lightDMSService = lightDMSService;
         }

@@ -48,7 +48,7 @@ namespace Rhetos.LightDMS
         private readonly ILogger _logger;
         private readonly ConnectionString _connectionString;
         private readonly IContentTypeProvider _contentTypeProvider;
-        private readonly LightDMSOptions _lightDMSOptions;
+        private readonly LightDmsOptions _lightDMSOptions;
         private readonly Respond _respond;
         private readonly S3Options _s3Options;
 
@@ -56,7 +56,7 @@ namespace Rhetos.LightDMS
             ILogProvider logProvider,
             ConnectionString connectionString,
             IContentTypeProvider contentTypeProvider,
-            LightDMSOptions lightDMSOptions,
+            LightDmsOptions lightDMSOptions,
             S3Options s3Options)
         {
             _logger = logProvider.GetLogger(GetType().Name);

@@ -24,11 +24,11 @@ using System.ComponentModel.Composition;
 namespace Rhetos.LightDMS
 {
     [Export(typeof(Module))]
-    public class LightDMSModuleConfiguration : Module
+    public class LightDmsModuleConfiguration : Module
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.Register(context => context.Resolve<IConfiguration>().GetOptions<LightDMSOptions>()).SingleInstance().PreserveExistingDefaults();
+            builder.Register(context => context.Resolve<IConfiguration>().GetOptions<LightDmsOptions>()).SingleInstance().PreserveExistingDefaults();
             builder.Register(context => context.Resolve<IConfiguration>().GetOptions<S3Options>()).SingleInstance().PreserveExistingDefaults();
             builder.RegisterType<DownloadHandler>().InstancePerLifetimeScope();
             builder.RegisterType<DownloadHelper>().InstancePerLifetimeScope();

@@ -30,31 +30,31 @@ namespace Microsoft.Extensions.DependencyInjection
     /// Adds the LightDMS Web API to the application.
     /// </summary>
     /// <remarks>
-    /// It registers <see cref="LightDMSController"/>, <see cref="LightDMSService"/> and <see cref="FileExtensionContentTypeProvider"/> as <see cref="IContentTypeProvider"/> to the <see cref="IServiceCollection"/>.
+    /// It registers <see cref="LightDmsController"/>, <see cref="LightDmsService"/> and <see cref="FileExtensionContentTypeProvider"/> as <see cref="IContentTypeProvider"/> to the <see cref="IServiceCollection"/>.
     /// </remarks>
-    public static class LightDMSRhetosServiceCollectionBuilderExtensions
+    public static class LightDmsRhetosServiceCollectionBuilderExtensions
     {
         public static RhetosServiceCollectionBuilder AddLightDMS(this RhetosServiceCollectionBuilder builder)
         {
-            builder.Services.AddScoped<LightDMSService>();
+            builder.Services.AddScoped<LightDmsService>();
             builder.Services.AddSingleton<IContentTypeProvider>((serviceProvider) => new FileExtensionContentTypeProvider());
 
             builder.Services
                 .AddControllers()
                 .ConfigureApplicationPartManager(p =>
                 {
-                    p.FeatureProviders.Add(new LightDMSApiControllerFeatureProvider());
+                    p.FeatureProviders.Add(new LightDmsApiControllerFeatureProvider());
                 });
 
             return builder;
         }
     }
 
-    internal class LightDMSApiControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
+    internal class LightDmsApiControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
     {
         public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
         {
-            feature.Controllers.Add(typeof(LightDMSController).GetTypeInfo());
+            feature.Controllers.Add(typeof(LightDmsController).GetTypeInfo());
         }
     }
 }

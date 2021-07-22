@@ -22,13 +22,13 @@ using System.Threading.Tasks;
 
 namespace Rhetos.LightDMS
 {
-    public class LightDMSService
+    public class LightDmsService
     {
         private readonly IRhetosComponent<DownloadHandler> _downloadHandler;
         private readonly IRhetosComponent<DownloadPreviewHandler> _downloadPreviewHandler;
         private readonly IRhetosComponent<UploadHandler> _uploadHandler;
 
-        public LightDMSService(
+        public LightDmsService(
             IRhetosComponent<DownloadHandler> downloadHandler,
             IRhetosComponent<DownloadPreviewHandler> downloadPreviewHandler,
             IRhetosComponent<UploadHandler> uploadHandler)
