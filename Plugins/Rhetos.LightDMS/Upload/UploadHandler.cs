@@ -17,36 +17,44 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Microsoft.AspNetCore.Http;
+using Rhetos.Logging;
 using System.Net;
-using System.Web;
+using System.Threading.Tasks;
 
 namespace Rhetos.LightDMS
 {
-    public class UploadHandler : IHttpHandler
+    public class UploadHandler
     {
-        public bool IsReusable => false;
+        private readonly Respond _respond;
+        private readonly UploadHelper _uploadHelper;
 
-        public void ProcessRequest(HttpContext context)
+        public UploadHandler(ILogProvider logProvider, UploadHelper uploadHelper)
         {
-            if (context.Request.Files.Count != 1)
+            _respond = new Respond(logProvider);
+            _uploadHelper = uploadHelper;
+        }
+
+        public async Task ProcessRequest(HttpContext context)
+        {
+            if (context.Request.Form.Files.Count != 1)
             {
-                Respond.BadRequest(context, "Exactly one file has to be sent as request in Multipart format. There were " + context.Request.Files.Count + " files in upload request.");
+                await _respond.BadRequest(context, "Exactly one file has to be sent as request in Multipart format. There were " + context.Request.Form.Files.Count + " files in upload request.");
                 return;
             }
 
-            var uploadHelper = new UploadHelper();
-            var fileUploadResult = uploadHelper.UploadStream(context.Request.Files[0].InputStream);
+            var fileUploadResult = await _uploadHelper.UploadStream(context.Request.Form.Files[0].OpenReadStream());
 
             switch (fileUploadResult.StatusCode)
             {
                 case HttpStatusCode.OK:
-                    Respond.Ok(context, new { fileUploadResult.ID });
+                    await _respond.Ok(context, new { fileUploadResult.ID });
                     break;
                 case HttpStatusCode.BadRequest:
-                    Respond.BadRequest(context, fileUploadResult.Error);
+                    await _respond.BadRequest(context, fileUploadResult.Error);
                     break;
                 default:
-                    Respond.InternalError(context, fileUploadResult.Exception);
+                    await _respond.InternalError(context, fileUploadResult.Exception);
                     break;
             }
         }

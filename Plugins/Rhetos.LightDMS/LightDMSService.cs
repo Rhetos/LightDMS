@@ -18,46 +18,39 @@
 */
 
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.StaticFiles;
-using Rhetos.Logging;
-using Rhetos.Utilities;
 using System.Threading.Tasks;
-using Rhetos.Host.AspNet;
 
 namespace Rhetos.LightDMS
 {
     public class LightDMSService
     {
-        private readonly ILogProvider _logProvider;
-        private readonly ConnectionString _connectionString;
-        private readonly IContentTypeProvider _contentTypeProvider;
-        private readonly LightDMSOptions _lightDMSOptions;
+        private readonly IRhetosComponent<DownloadHandler> _downloadHandler;
+        private readonly IRhetosComponent<DownloadPreviewHandler> _downloadPreviewHandler;
+        private readonly IRhetosComponent<UploadHandler> _uploadHandler;
 
         public LightDMSService(
-            IRhetosComponent<ILogProvider> logProvider,
-            IRhetosComponent<ConnectionString> connectionString,
-            IRhetosComponent<LightDMSOptions> lightDMSOptions,
-            IContentTypeProvider contentTypeProvider)
+            IRhetosComponent<DownloadHandler> downloadHandler,
+            IRhetosComponent<DownloadPreviewHandler> downloadPreviewHandler,
+            IRhetosComponent<UploadHandler> uploadHandler)
         {
-            _logProvider = logProvider.Value;
-            _connectionString = connectionString.Value;
-            _lightDMSOptions = lightDMSOptions.Value;
-            _contentTypeProvider = contentTypeProvider;
+            _downloadHandler = downloadHandler;
+            _downloadPreviewHandler = downloadPreviewHandler;
+            _uploadHandler = uploadHandler;
         }
 
         public async Task ProcessDownloadRequestAsync(HttpContext context)
         {
-            await new DownloadHandler(_logProvider, _connectionString, _contentTypeProvider, _lightDMSOptions).ProcessRequest(context);
+            await _downloadHandler.Value.ProcessRequest(context);
         }
 
         public async Task ProcessDownloadPreviewRequestAsync(HttpContext context)
         {
-            await new DownloadPreviewHandler(_logProvider, _connectionString, _contentTypeProvider, _lightDMSOptions).ProcessRequest(context);
+            await _downloadPreviewHandler.Value.ProcessRequest(context);
         }
 
         public async Task ProcessUploadRequestAsync(HttpContext context)
         {
-            await new UploadHandler(_logProvider, _connectionString).ProcessRequest(context);
+            await _uploadHandler.Value.ProcessRequest(context);
         }
     }
 }

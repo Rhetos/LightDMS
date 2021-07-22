@@ -6,7 +6,8 @@
 
 * Migrated from .NET Framework to .NET 5 and Rhetos 5.
 * Removed MimeTypeHelper class. Use the Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider class instead.
-* To configure the StorageContainer and StorageConnectionVariable use the Rhetos:LightDMS:StorageContainer and Rhetos:LightDMS:StorageConnectionVariable keys.
+* To configure the StorageContainer and StorageConnectionVariable use the `Rhetos:LightDMS:StorageContainer` and `Rhetos:LightDMS:StorageConnectionVariable` keys.
+* Azure S3 configuration settings are read from configuration section `Rhetos:LightDMS:S3` instead of `LightDMS:S3`.
 
 ## 1.9.0 (2021-07-05)
 

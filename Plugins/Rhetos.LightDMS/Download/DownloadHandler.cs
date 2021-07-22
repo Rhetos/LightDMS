@@ -18,12 +18,8 @@
 */
 
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.StaticFiles;
 using Rhetos.Logging;
-using Rhetos.Utilities;
-using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Rhetos.LightDMS
@@ -31,22 +27,13 @@ namespace Rhetos.LightDMS
     public class DownloadHandler
     {
         private readonly ILogger _performanceLogger;
-        private readonly ILogProvider _logProvider;
-        private readonly ConnectionString _connectionString;
-        private readonly IContentTypeProvider _contentTypeProvider;
-        private readonly LightDMSOptions _lightDMSOptions;
         private readonly Respond _respond;
+        private readonly DownloadHelper _downloadHelper;
 
-        public DownloadHandler(ILogProvider logProvider,
-            ConnectionString connectionString,
-            IContentTypeProvider contentTypeProvider,
-            LightDMSOptions lightDMSOptions)
+        public DownloadHandler(ILogProvider logProvider, DownloadHelper downloadHelper)
         {
             _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
-            _logProvider = logProvider;
-            _connectionString = connectionString;
-            _contentTypeProvider = contentTypeProvider;
-            _lightDMSOptions = lightDMSOptions;
+            _downloadHelper = downloadHelper;
             _respond = new Respond(logProvider);
         }
 
@@ -60,7 +47,7 @@ namespace Rhetos.LightDMS
             }
 
             var sw = Stopwatch.StartNew();
-            await new DownloadHelper(_logProvider, _connectionString, _contentTypeProvider, _lightDMSOptions).HandleDownload(context, id, null);
+            await _downloadHelper.HandleDownload(context, id, null);
             _performanceLogger.Write(sw, "Downloaded file (DocumentVersionID = " + id + ") Executed.");
         }
     }

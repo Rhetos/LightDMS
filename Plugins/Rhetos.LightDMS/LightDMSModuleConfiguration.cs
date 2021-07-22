@@ -29,6 +29,12 @@ namespace Rhetos.LightDMS
         protected override void Load(ContainerBuilder builder)
         {
             builder.Register(context => context.Resolve<IConfiguration>().GetOptions<LightDMSOptions>()).SingleInstance().PreserveExistingDefaults();
+            builder.Register(context => context.Resolve<IConfiguration>().GetOptions<S3Options>()).SingleInstance().PreserveExistingDefaults();
+            builder.RegisterType<DownloadHandler>().InstancePerLifetimeScope();
+            builder.RegisterType<DownloadHelper>().InstancePerLifetimeScope();
+            builder.RegisterType<DownloadPreviewHandler>().InstancePerLifetimeScope();
+            builder.RegisterType<UploadHandler>().InstancePerLifetimeScope();
+            builder.RegisterType<UploadHelper>().InstancePerLifetimeScope();
 
             base.Load(builder);
         }

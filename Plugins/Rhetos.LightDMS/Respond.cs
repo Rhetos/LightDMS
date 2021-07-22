@@ -63,7 +63,8 @@ namespace Rhetos.LightDMS
             var logger = _logProvider.GetLogger(loggerName);
             logger.Write(logEventType, logMessage);
 
-            if (!logMessage.Contains(DownloadHelper.ResponseBlockedMessage))
+            //TODO: This locking issue might been solved on .NET 5. Removed this code after testing shows there is no issue here.
+            //if (!logMessage.Contains(DownloadHelper.ResponseBlockedMessage))
             {
                 context.Response.Clear();
                 try

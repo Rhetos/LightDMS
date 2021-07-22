@@ -28,20 +28,22 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Rhetos.LightDMS
 {
     public class UploadHelper
     {
         private readonly ILogger _performanceLogger;
+        private readonly ConnectionString _connectionString;
 
-        public UploadHelper()
+        public UploadHelper(ILogProvider logProvider, ConnectionString connectionString)
         {
-            var logProvider = new NLogProvider();
             _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
+            _connectionString = connectionString;
         }
 
-        public FileUploadResult UploadStream(Stream inputStream)
+        public async Task<FileUploadResult> UploadStream(Stream inputStream)
         {
             var id = Guid.NewGuid();
             var sw = Stopwatch.StartNew();
@@ -49,7 +51,7 @@ namespace Rhetos.LightDMS
             byte[] buffer = new byte[bufferSize];
             long totalbytesRead = 0;
 
-            SqlConnection sqlConnection = new SqlConnection(SqlUtility.ConnectionString);
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
             sqlConnection.Open();
             SqlTransaction sqlTransaction = null;
             try
@@ -70,7 +72,7 @@ namespace Rhetos.LightDMS
                     fileUpdateCommand.Parameters.AddWithValue("@Offset", 0);
 
                     var fileStream = inputStream;
-                    var bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+                    var bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length);
                     while (bytesRead > 0)
                     {
                         if (bytesRead < buffer.Length)
@@ -84,7 +86,7 @@ namespace Rhetos.LightDMS
                         fileUpdateCommand.Parameters["@Offset"].Value = totalbytesRead;
                         fileUpdateCommand.ExecuteNonQuery();
                         totalbytesRead += bytesRead;
-                        bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+                        bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length);
                     }
 
                     fileUpdateCommand.Dispose();
@@ -96,7 +98,7 @@ namespace Rhetos.LightDMS
                     {
                         while (totalbytesRead < inputStream.Length)
                         {
-                            var readed = inputStream.Read(buffer, 0, bufferSize);
+                            var readed = await inputStream.ReadAsync(buffer, 0, bufferSize);
                             sfs.Write(buffer, 0, readed);
                             totalbytesRead += readed;
                         }
@@ -119,6 +121,7 @@ namespace Rhetos.LightDMS
                 }
                 catch
                 {
+                    // No need to report an additional error when closing a failed transaction, because it might already be closed or rolled back.
                 }
 
                 if (ex.Message == "Function PathName is only valid on columns with the FILESTREAM attribute.")
