@@ -45,6 +45,7 @@ LightDMS allows the following storage options:
     The files are uploaded to FILESTREAM.
     A custom scheduled process is expected to migrate the files to Azure Blob Storage (archive).
     LightDMS will then download the archived file from Azure.
+4. Document storage with Amazon S3 API (currently download-only)
 
 ## Database preparation
 
