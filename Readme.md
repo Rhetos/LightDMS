@@ -11,7 +11,7 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 ### File web API
 
 LightDMS plugin provides the following web API methods.
-Check out your Rhetos server homepage (http://localhost/Rhetos) for sample code and demonstration of the LightDMS web API.
+Check out your application's Rhetos dashboard (for example http://localhos:5000/rhetos) for sample code and demonstration of the LightDMS web API.
 
 Upload:
 
@@ -21,13 +21,13 @@ Upload:
 
 Download:
 
-* Downloading a file with given **file content ID**: `<RhetosSite>/LightDMS/DownloadPreview/{{ID}}?filename={{filename}}`
+* Downloading a file with given **file content ID**: HTTP GET `<RhetosSite>/LightDMS/DownloadPreview/{{ID}}?filename={{filename}}`
   * The *ID* parameter is GUID formatted file content ID.
   * The *filename* query parameter is a name that the browser will offer to the user when saving the downloaded file.
   * Example format `http://localhost/Rhetos/LightDMS/DownloadPreview/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D?filename=somefile.txt`
   * Parametrized format `http://localhost/Rhetos/LightDMS/DownloadPreview?id=8EF65043-2E2A-424D-B76F-4DAA5A48CB3D&filename=somefile.txt` (since 1.8.0)
 
-* Downloading a file with given **document version ID**: `<RhetosSite>/LightDMS/Download/{{ID}}`
+* Downloading a file with given **document version ID**: HTTP GET `<RhetosSite>/LightDMS/Download/{{ID}}`
   * The *ID* parameter is GUID formatted document version ID.
   * Example format `http://localhost/Rhetos/LightDMS/Download/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
   * Parametrized format `http://localhost/Rhetos/LightDMS/Download?id=8EF65043-2E2A-424D-B76F-4DAA5A48CB3D` (since 1.8.0)
