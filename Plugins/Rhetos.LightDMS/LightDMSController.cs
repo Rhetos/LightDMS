@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2016 Omega software d.o.o.
+    Copyright (C) 2014 Omega software d.o.o.
 
     This file is part of Rhetos.
 
@@ -39,7 +39,7 @@ namespace Rhetos.LightDMS
             await _lightDMSService.ProcessUploadRequestAsync(HttpContext);
         }
 
-        [HttpPost]
+        [HttpGet]
         [Route("LightDMS/Download")]
         [Route("LightDMS/Download/{id}")]
         public async Task Download()
@@ -47,7 +47,7 @@ namespace Rhetos.LightDMS
             await _lightDMSService.ProcessDownloadRequestAsync(HttpContext);
         }
 
-        [HttpPost]
+        [HttpGet]
         [Route("LightDMS/DownloadPreview")]
         [Route("LightDMS/DownloadPreview/{id}")]
         public async Task DownloadPreview()
