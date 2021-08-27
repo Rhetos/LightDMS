@@ -29,7 +29,6 @@
     <file src="AfterDeploy\**\*" target="AfterDeploy" />
     <file src="DataMigration\**\*" target="DataMigration" />
     <file src="DslScripts\**\*" target="DslScripts" />
-    <file src="Resources\**\*" target="Resources" />
     <file src="Plugins\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.dll" target="lib\net5.0" />
     <file src="Plugins\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.pdb" target="lib\net5.0" />
   </files>
