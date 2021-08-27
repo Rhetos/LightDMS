@@ -83,8 +83,8 @@ namespace Rhetos.LightDMS
         public async Task Ok<T>(HttpContext context, T response)
         {
             context.Response.ContentType = "application/json;";
-            await JsonSerializer.SerializeAsync(context.Response.Body, response);
             context.Response.StatusCode = 200;
+            await JsonSerializer.SerializeAsync(context.Response.Body, response);
         }
     }
 }
