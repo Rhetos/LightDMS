@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright (C) 2016 Omega software d.o.o.
+    Copyright (C) 2014 Omega software d.o.o.
 
     This file is part of Rhetos.
 
@@ -30,14 +30,13 @@ namespace Microsoft.Extensions.DependencyInjection
     /// Adds the LightDMS Web API to the application.
     /// </summary>
     /// <remarks>
-    /// It registers <see cref="LightDmsController"/>, <see cref="LightDmsService"/> and <see cref="FileExtensionContentTypeProvider"/> as <see cref="IContentTypeProvider"/> to the <see cref="IServiceCollection"/>.
+    /// It registers <see cref="LightDmsController"/> and <see cref="LightDmsService"/> to the <see cref="IServiceCollection"/>.
     /// </remarks>
     public static class LightDmsRhetosServiceCollectionBuilderExtensions
     {
         public static RhetosServiceCollectionBuilder AddLightDMS(this RhetosServiceCollectionBuilder builder)
         {
             builder.Services.AddScoped<LightDmsService>();
-            builder.Services.AddSingleton<IContentTypeProvider>((serviceProvider) => new FileExtensionContentTypeProvider());
 
             builder.Services
                 .AddControllers()
@@ -45,6 +44,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     p.FeatureProviders.Add(new LightDmsApiControllerFeatureProvider());
                 });
+
+            builder.AddDashboardSnippet<LightDmdDashboardSnippet>();
 
             return builder;
         }
