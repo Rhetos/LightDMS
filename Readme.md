@@ -6,6 +6,15 @@ Aside entities, versioning, it also exposes additional web interface for uploadi
 
 See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 
+1. [Features](#features)
+   1. [File web API](#file-web-api)
+   2. [Storage options](#storage-options)
+2. [Database preparation](#database-preparation)
+   1. [Enable FILESTREAM on your application's database](#enable-filestream-on-your-applications-database)
+   2. [Activate FILESTREAM usage in LightDMS](#activate-filestream-usage-in-lightdms)
+3. [Installation and configuration](#installation-and-configuration)
+4. [Building and testing the source code](#building-and-testing-the-source-code)
+
 ## Features
 
 ### File web API
@@ -118,21 +127,19 @@ GO
 IF @@TRANCOUNT > 0 ROLLBACK;
 ```
 
-## Build
+## Installation and configuration
+
+Installing this package to a Rhetos web application:
+
+1. Add 'Rhetos.LightDMS' NuGet package, available at the [NuGet.org](https://www.nuget.org/) on-line gallery.
+2. Extend Rhetos services configuration (at `services.AddRhetosHost`) with the LightDMS service: `.AddLightDMS()`
+
+## Building and testing the source code
 
 **Note:** This package is already available at the [NuGet.org](https://www.nuget.org/) online gallery.
 You don't need to build it from source in order to use it in your application.
 
 To build the package from source, run `Build.bat`.
-The script will pause in case of an error.
 The build output is a NuGet package in the "Install" subfolder.
 
-## Installation
-
-To install this package to a Rhetos server, add it to the Rhetos server's *RhetosPackages.config* file
-and make sure the NuGet package location is listed in the *RhetosPackageSources.config* file.
-
-* The package ID is "**Rhetos.LightDMS**".
-  This package is available at the [NuGet.org](https://www.nuget.org/) online gallery.
-  It can be downloaded or installed directly from there.
-* For more information, see [Installing plugin packages](https://github.com/Rhetos/Rhetos/wiki/Installing-plugin-packages).
+For contributions guidelines see [How to Contribute](https://github.com/Rhetos/Rhetos/wiki/How-to-Contribute) on Rhetos wiki.
