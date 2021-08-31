@@ -26,10 +26,10 @@
   <files>
     <file src="Readme.md" target="" />
     <file src="ChangeLog.md" target="" />
-    <file src="AfterDeploy\**\*" target="AfterDeploy" />
-    <file src="DataMigration\**\*" target="DataMigration" />
-    <file src="DslScripts\**\*" target="DslScripts" />
-    <file src="Plugins\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.dll" target="lib\net5.0" />
-    <file src="Plugins\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.pdb" target="lib\net5.0" />
+    <file src="src\AfterDeploy\**\*" target="AfterDeploy" />
+    <file src="src\DataMigration\**\*" target="DataMigration" />
+    <file src="src\DslScripts\**\*" target="DslScripts" />
+    <file src="src\Plugins\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.dll" target="lib\net5.0" />
+    <file src="src\Plugins\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.pdb" target="lib\net5.0" />
   </files>
 </package>
