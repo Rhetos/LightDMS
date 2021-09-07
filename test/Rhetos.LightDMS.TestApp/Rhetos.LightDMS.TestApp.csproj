@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <RhetosBuild>True</RhetosBuild>
+    <RhetosDeploy>False</RhetosDeploy>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="DslScripts\AspNetFormsAuth\ComputeDocumentStatusSync.cs" />
+    <Compile Remove="DslScripts\AspNetFormsAuth\DeadlockPrevention.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Plugins\Rhetos.LightDMS\Rhetos.LightDMS.csproj" />
+    <PackageReference Include="Rhetos.Host" Version="5.0.0-dev*" />
+    <PackageReference Include="Rhetos.Host.AspNet" Version="5.0.0-dev*" />
+    <PackageReference Include="Rhetos.CommonConcepts" Version="5.0.0-dev*" />
+    <PackageReference Include="Rhetos.MSBuild" Version="5.0.0-dev*" />
+  </ItemGroup>
+
+  <Target Name="CopyDslScripts" BeforeTargets="ResolveRhetosBuildItems">
+    <ItemGroup>
+      <LightDMSDslScripts Include="..\..\src\DslScripts\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(LightDMSDslScripts)" DestinationFolder="DslScripts\LightDMS" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyDslScripts" BeforeTargets="ResolveRhetosBuildItems">
+    <ItemGroup>
+      <AfterDeploy Include="..\..\src\AfterDeploy\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(AfterDeploy)" DestinationFolder="AfterDeploy" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyDslScripts" BeforeTargets="ResolveRhetosBuildItems">
+    <ItemGroup>
+      <DataMigration Include="..\..\src\DataMigration\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(DataMigration)" DestinationFolder="DataMigration" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>
