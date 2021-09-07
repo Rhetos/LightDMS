@@ -15,6 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rhetos.LightDMS", "src\Plugins\Rhetos.LightDMS\Rhetos.LightDMS.csproj", "{94DD3043-0BC2-461D-A1D6-F50B4B5F68F0}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rhetos.LightDMS.IntegrationTest", "test\Rhetos.LightDMS.IntegrationTest\Rhetos.LightDMS.IntegrationTest.csproj", "{32BCC7CE-B5F5-4746-9281-0FB2FC65424D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rhetos.LightDMS.TestApp", "test\Rhetos.LightDMS.TestApp\Rhetos.LightDMS.TestApp.csproj", "{FCFEBE9B-2866-42BB-A713-AC6F5B744BB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +29,14 @@ Global
 		{94DD3043-0BC2-461D-A1D6-F50B4B5F68F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94DD3043-0BC2-461D-A1D6-F50B4B5F68F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94DD3043-0BC2-461D-A1D6-F50B4B5F68F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32BCC7CE-B5F5-4746-9281-0FB2FC65424D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32BCC7CE-B5F5-4746-9281-0FB2FC65424D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32BCC7CE-B5F5-4746-9281-0FB2FC65424D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32BCC7CE-B5F5-4746-9281-0FB2FC65424D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCFEBE9B-2866-42BB-A713-AC6F5B744BB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCFEBE9B-2866-42BB-A713-AC6F5B744BB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCFEBE9B-2866-42BB-A713-AC6F5B744BB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCFEBE9B-2866-42BB-A713-AC6F5B744BB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

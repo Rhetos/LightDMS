@@ -1,21 +1,33 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net.Http;
+using System.Text;
 
 namespace Rhetos.LightDMS.IntegrationTest.Utilities
 {
+    internal class UploadSuccessResponse
+    {
+        public Guid ID { get; set; }
+    }
+
     internal static class TestDataUtilities
     {
-        public static HttpRequestMessage GenerateUploadRequest()
-        {
-            using var fileStream = File.OpenRead("testfile.txt");
+        static byte[] fileContent = Encoding.UTF8.GetBytes("A test file content");
 
+        public static HttpRequestMessage GenerateUploadRequest(int fileCount = 1)
+        {
             var content = new MultipartFormDataContent();
-            var streamContent = new StreamContent(fileStream);
-            content.Add(streamContent, "file1", "testfile.txt");
+
+            for (var i = 0; i < fileCount; ++i)
+            {
+                var memoryStream = new MemoryStream(fileContent);
+                var streamContent = new StreamContent(memoryStream);
+                content.Add(streamContent, $"file{i}", $"testfile{i}.txt");
+            }
 
             var request = new HttpRequestMessage(HttpMethod.Post, "LightDMS/Upload")
             { 
-                Content = content 
+                Content = content
             };
 
             return request;
