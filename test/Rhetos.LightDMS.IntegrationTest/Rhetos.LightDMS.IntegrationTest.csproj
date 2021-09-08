@@ -19,10 +19,4 @@
     <ProjectReference Include="..\Rhetos.LightDMS.TestApp\Rhetos.LightDMS.TestApp.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="testfile.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
