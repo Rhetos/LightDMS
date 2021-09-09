@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DslScripts\AspNetFormsAuth\ComputeDocumentStatusSync.cs" />
-    <Compile Remove="DslScripts\AspNetFormsAuth\DeadlockPrevention.cs" />
+    <Compile Remove="DslScripts\LightDMS\ComputeDocumentStatusSync.cs" />
+    <Compile Remove="DslScripts\LightDMS\DeadlockPrevention.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,21 +23,25 @@
     <PackageReference Include="Rhetos.MSBuild" Version="5.0.0-dev*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DslScripts\LightDMS\" />
+  </ItemGroup>
+
   <Target Name="CopyDslScripts" BeforeTargets="ResolveRhetosBuildItems">
     <ItemGroup>
-      <LightDMSDslScripts Include="..\..\src\DslScripts\**\*" />
+      <LightDMSDslScripts Include="..\..\src\DslScripts\*" />
     </ItemGroup>
     <Copy SourceFiles="@(LightDMSDslScripts)" DestinationFolder="DslScripts\LightDMS" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="CopyDslScripts" BeforeTargets="ResolveRhetosBuildItems">
+  <Target Name="CopyAfterDeploy" BeforeTargets="ResolveRhetosBuildItems">
     <ItemGroup>
       <AfterDeploy Include="..\..\src\AfterDeploy\**\*" />
     </ItemGroup>
     <Copy SourceFiles="@(AfterDeploy)" DestinationFolder="AfterDeploy" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="CopyDslScripts" BeforeTargets="ResolveRhetosBuildItems">
+  <Target Name="CopyDataMigration" BeforeTargets="ResolveRhetosBuildItems">
     <ItemGroup>
       <DataMigration Include="..\..\src\DataMigration\**\*" />
     </ItemGroup>
