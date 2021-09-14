@@ -8,12 +8,11 @@ using Xunit;
 
 namespace Rhetos.LightDMS.IntegrationTest
 {
-    [Collection("SQL FILESTREAM enabled - local files")]
-    public class SQLFileStreamTests
+    public class UploadTests
     {
         private static WebApplicationFactory<Startup> _factory;
 
-        public SQLFileStreamTests()
+        public UploadTests()
         {
             _factory = new CustomWebApplicationFactory<Startup>();
         }
@@ -36,7 +35,7 @@ namespace Rhetos.LightDMS.IntegrationTest
         }
 
         [Fact]
-        public async Task UploadWithoutFile_ShouldFail()
+        public async Task Upload_WithoutFile_ShouldFail()
         {
             // Arrange
             var client = _factory.CreateClient();
@@ -52,7 +51,7 @@ namespace Rhetos.LightDMS.IntegrationTest
         }
 
         [Fact]
-        public async Task UploadWith2Files_ShouldFail()
+        public async Task Upload_2Files_ShouldFail()
         {
             // Arrange
             var client = _factory.CreateClient();
