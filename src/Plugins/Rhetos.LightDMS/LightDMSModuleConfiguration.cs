@@ -37,6 +37,7 @@ namespace Rhetos.LightDMS
             builder.RegisterType<UploadHandler>().InstancePerLifetimeScope();
             builder.RegisterType<UploadHelper>().InstancePerLifetimeScope();
             builder.RegisterType<FileExtensionContentTypeProvider>().As<IContentTypeProvider>().SingleInstance();
+            builder.RegisterType<DefaultBlobConnectionStringResolver>().AsImplementedInterfaces().InstancePerLifetimeScope();
 
             base.Load(builder);
         }

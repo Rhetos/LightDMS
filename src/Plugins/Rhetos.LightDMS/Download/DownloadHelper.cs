@@ -51,13 +51,15 @@ namespace Rhetos.LightDMS
         private readonly LightDmsOptions _lightDMSOptions;
         private readonly Respond _respond;
         private readonly S3Options _s3Options;
+        private readonly IAzureBlobConnectionStringResolver _azureBlobConnectionStringResolver;
 
         public DownloadHelper(
             ILogProvider logProvider,
             ConnectionString connectionString,
             IContentTypeProvider contentTypeProvider,
             LightDmsOptions lightDMSOptions,
-            S3Options s3Options)
+            S3Options s3Options,
+            IAzureBlobConnectionStringResolver azureBlobConnectionStringResolver)
         {
             _logger = logProvider.GetLogger(GetType().Name);
             _connectionString = connectionString;
@@ -65,6 +67,7 @@ namespace Rhetos.LightDMS
             _lightDMSOptions = lightDMSOptions;
             _respond = new Respond(logProvider);
             _s3Options = s3Options;
+            _azureBlobConnectionStringResolver = azureBlobConnectionStringResolver;
         }
 
         public async Task HandleDownload(HttpContext context, Guid? documentVersionId, Guid? fileContentId)
@@ -202,13 +205,7 @@ namespace Rhetos.LightDMS
 
         private async Task DownloadFromAzureBlob(Guid fileContentId, Stream outputStream, HttpResponse httpResponse)
         {
-            var storageConnectionVariable = _lightDMSOptions.StorageConnectionVariable;
-            string storageConnectionString;
-            if (!string.IsNullOrWhiteSpace(storageConnectionVariable))
-                storageConnectionString = Environment.GetEnvironmentVariable(storageConnectionVariable, EnvironmentVariableTarget.Machine);
-            else
-                //variable name has to be defined if AzureStorage bit is set to true
-                throw new FrameworkException("Azure Blob Storage connection variable name missing.");
+            var storageConnectionString = _azureBlobConnectionStringResolver.Resolve();
 
             if (!string.IsNullOrEmpty(storageConnectionString))
             {
