@@ -38,7 +38,8 @@ namespace Rhetos.LightDms.Storage
             var accessKeyID = _s3Options.AccessKeyID;
             var s3Config = new AmazonS3Config()
             {
-                ServiceURL = _s3Options.ServiceURL
+                ServiceURL = _s3Options.ServiceURL,
+                ForcePathStyle = _s3Options.ForcePathStyle
             };
             if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(accessKeyID) || string.IsNullOrWhiteSpace(s3Config.ServiceURL))
                 throw new FrameworkException("Invalid S3 storage configuration parameters.");

@@ -126,6 +126,31 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             blobClient.Upload(fileStream, true);
         }
 
+        public static void SeedS3StorageFile(WebApplicationFactory<Startup> factory,
+            Guid documentVersionId,
+            Guid fileContentId)
+        {
+            var fileName = $"doc-{fileContentId}";
+
+            var connectionString = GetHostConnectionString(factory);
+            using var connection = new SqlConnection(connectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
+
+            var insertFileContentCommand = new SqlCommand(
+                @"INSERT INTO [LightDMS].[FileContent] (ID, S3Storage, Content) 
+                VALUES (@ID, 1, CONVERT(varbinary(max), ''))",
+                connection,
+                transaction);
+            insertFileContentCommand.Parameters.Add(new SqlParameter("@ID", fileContentId));
+            insertFileContentCommand.ExecuteNonQuery();
+
+            InsertDocumentVersion(documentVersionId, fileContentId, fileName, connection, transaction);
+
+            transaction.Commit();
+            connection.Close();
+        }
+
         public static void CleanupBlobFile(WebApplicationFactory<Startup> factory,
             Guid documentVersionId,
             Guid fileContentId)

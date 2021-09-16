@@ -20,6 +20,7 @@
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.StaticFiles;
+using Rhetos;
 using Rhetos.LightDMS;
 using System.Collections.Generic;
 using System.Reflection;
