@@ -1,6 +1,9 @@
-﻿using Azure.Storage.Blobs;
+﻿using Amazon.S3;
+using Amazon.S3.Model;
+using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Rhetos.LightDms.Storage;
 using Rhetos.LightDMS.TestApp;
 using Rhetos.Utilities;
@@ -128,7 +131,8 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
 
         public static void SeedS3StorageFile(WebApplicationFactory<Startup> factory,
             Guid documentVersionId,
-            Guid fileContentId)
+            Guid fileContentId,
+            string fileContent)
         {
             var fileName = $"doc-{fileContentId}";
 
@@ -149,6 +153,30 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
 
             transaction.Commit();
             connection.Close();
+
+            // Upload file to S3 storage
+            using var scope = factory.Server.Services.CreateScope();
+            var s3Options = scope.ServiceProvider.GetService<IRhetosComponent<S3Options>>().Value;
+            UploadFileToS3Storage(fileContent, fileName, s3Options);
+        }
+
+        private static void UploadFileToS3Storage(string fileContent, string fileName, S3Options s3Options)
+        {
+            var config = new AmazonS3Config()
+            {
+                ServiceURL = s3Options.ServiceURL,
+                ForcePathStyle = s3Options.ForcePathStyle
+            };
+            var client = new AmazonS3Client(s3Options.AccessKeyID, s3Options.Key, config);
+
+            var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
+            var folder = string.IsNullOrEmpty(s3Options.DestinationFolder) ? string.Empty : $"{s3Options.DestinationFolder}/";
+            var result = client.PutObjectAsync(new PutObjectRequest
+            {
+                BucketName = s3Options.BucketName,
+                Key = $"{folder}{fileName}",
+                InputStream = fileStream
+            }).Result;
         }
 
         public static void CleanupBlobFile(WebApplicationFactory<Startup> factory,

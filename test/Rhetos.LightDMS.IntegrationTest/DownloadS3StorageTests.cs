@@ -9,24 +9,18 @@ using Xunit;
 
 namespace Rhetos.LightDMS.IntegrationTest
 {
-    public class RhetosEntiy
-    {
-        public string ID { get; set; }
-    }
-
-    [Collection("S3 Storage simulator - local files")]
     public class DownloadS3StorageTests : IDisposable
     {
         private static WebApplicationFactory<Startup> _factory;
 
+        private readonly string _fileContent = Guid.NewGuid().ToString();
         private readonly Guid _documentVersionId = Guid.NewGuid();
-        private readonly string _fileContent = "Test file content";
-        private readonly Guid _fileContentId = Guid.Parse("b83930a2-c8ab-4678-8457-e55bdcb18aa5");
+        private readonly Guid _fileContentId = Guid.NewGuid();
 
         public DownloadS3StorageTests()
         {
             _factory = new CustomWebApplicationFactory<Startup>();
-            TestDataUtilities.SeedS3StorageFile(_factory, _documentVersionId, _fileContentId);
+            TestDataUtilities.SeedS3StorageFile(_factory, _documentVersionId, _fileContentId, _fileContent);
         }
 
         public void Dispose()

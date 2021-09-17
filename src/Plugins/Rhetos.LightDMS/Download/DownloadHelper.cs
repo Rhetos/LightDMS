@@ -264,13 +264,12 @@ namespace Rhetos.LightDMS
                 getObjRequest.BucketName = _s3Options.BucketName;
                 if (string.IsNullOrWhiteSpace(getObjRequest.BucketName))
                     throw new FrameworkException("Missing S3 storage bucket name.");
-
-                getObjRequest.Key = string.Empty;
+                
                 var s3Folder = _s3Options.DestinationFolder;
-                if (!string.IsNullOrWhiteSpace(s3Folder))
-                    getObjRequest.Key = $"{s3Folder}/";
+                if (string.IsNullOrWhiteSpace(s3Folder))
+                    throw new FrameworkException("Missing S3 folder name.");
 
-                getObjRequest.Key += $"doc-{fileMetadata.FileContentId}";
+                getObjRequest.Key = s3Folder + "/doc-" + fileMetadata.FileContentId.ToString();
 
                 try
                 {
