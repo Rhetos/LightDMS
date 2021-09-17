@@ -167,9 +167,9 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
                 ServiceURL = s3Options.ServiceURL,
                 ForcePathStyle = s3Options.ForcePathStyle
             };
-            var client = new AmazonS3Client(s3Options.AccessKeyID, s3Options.Key, config);
+            using var client = new AmazonS3Client(s3Options.AccessKeyID, s3Options.Key, config);
+            using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
 
-            var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
             var folder = string.IsNullOrEmpty(s3Options.DestinationFolder) ? string.Empty : $"{s3Options.DestinationFolder}/";
             client.PutObjectAsync(new PutObjectRequest
             {
