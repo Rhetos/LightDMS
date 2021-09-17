@@ -171,12 +171,12 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
 
             var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
             var folder = string.IsNullOrEmpty(s3Options.DestinationFolder) ? string.Empty : $"{s3Options.DestinationFolder}/";
-            var result = client.PutObjectAsync(new PutObjectRequest
+            client.PutObjectAsync(new PutObjectRequest
             {
                 BucketName = s3Options.BucketName,
                 Key = $"{folder}{fileName}",
                 InputStream = fileStream
-            }).Result;
+            }).Wait();
         }
 
         public static void CleanupBlobFile(WebApplicationFactory<Startup> factory,
