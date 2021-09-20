@@ -31,5 +31,7 @@ namespace Rhetos.LightDMS
         public string BucketName { get; internal set; }
 
         public string DestinationFolder { get; internal set; }
+
+        public bool ForcePathStyle { get; set; }
     }
 }

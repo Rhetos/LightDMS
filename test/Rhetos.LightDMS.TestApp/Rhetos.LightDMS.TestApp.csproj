@@ -3,12 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <RhetosBuild>True</RhetosBuild>
-    <RhetosDeploy>False</RhetosDeploy>
+    <RhetosDeploy>True</RhetosDeploy>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DslScripts\LightDMS\ComputeDocumentStatusSync.cs" />
-    <Compile Remove="DslScripts\LightDMS\DeadlockPrevention.cs" />
+    <Compile Remove="DslScripts\*\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,7 +28,7 @@
 
   <Target Name="CopyDslScripts" BeforeTargets="ResolveRhetosBuildItems">
     <ItemGroup>
-      <LightDMSDslScripts Include="..\..\src\DslScripts\*" />
+      <LightDMSDslScripts Include="..\..\src\DslScripts\**\*" />
     </ItemGroup>
     <Copy SourceFiles="@(LightDMSDslScripts)" DestinationFolder="DslScripts\LightDMS" SkipUnchangedFiles="true" />
   </Target>
