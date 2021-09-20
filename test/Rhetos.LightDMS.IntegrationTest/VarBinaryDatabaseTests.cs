@@ -1,15 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Autofac;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Rhetos.LightDMS.IntegrationTest.Utilities;
 using Rhetos.LightDMS.TestApp;
+using Rhetos.Utilities;
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Rhetos.LightDMS.IntegrationTest
 {
-    public class DownloadSqlFileStreamTests : IDisposable
+    public class VarBinaryDatabaseTests : IDisposable
     {
         private static WebApplicationFactory<Startup> _factory;
 
@@ -18,14 +21,20 @@ namespace Rhetos.LightDMS.IntegrationTest
         private readonly string _fileContent = Guid.NewGuid().ToString();
         private readonly Guid _fileContentId = Guid.NewGuid();
 
-        public DownloadSqlFileStreamTests()
+        public VarBinaryDatabaseTests()
         {
-            _factory = new CustomWebApplicationFactory<Startup>();
+            var connectionString = new ConnectionString(TestConfigurations.Instance.VarBinaryDatabaseConnString);
+            _factory = new CustomWebApplicationFactory<Startup>(container =>
+            {
+                container.Register(context => connectionString).SingleInstance();
+            });
+
             TestDataUtilities.SeedDocumentVersionAndFileContent(_factory,
                 _documentVersionId,
                 _fileContentId,
                 _fileName,
-                _fileContent);
+                _fileContent,
+                useFileStream: false);
         }
 
         public void Dispose()
@@ -39,6 +48,23 @@ namespace Rhetos.LightDMS.IntegrationTest
                 _factory.Dispose();
             }
             GC.SuppressFinalize(this);
+        }
+
+        [Fact]
+        public async Task Upload_ShouldSucceed()
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+            using var request = TestDataUtilities.GenerateUploadRequest(1);
+
+            // Act
+            var response = await client.SendAsync(request);
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var uploadResponse = JsonSerializer.Deserialize<UploadSuccessResponse>(responseBody);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.NotNull(uploadResponse);
         }
 
         [Theory]

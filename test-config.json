@@ -1,0 +1,8 @@
+{
+    "MasterConnectionString": "Server=.\\SQL19;Database=master;Integrated Security=true;",
+    "SqlServerName": ".\\SQL19",
+    "FileStreamDatabaseName": "rhetos_lightdms_test_fs",
+    "FileStreamFileLocation": "C:\\LightDMS_Test_Files\\",
+    "VarBinaryDatabaseName": "rhetos_lightdms_test_varbin",
+    "VarBinaryDatabaseConnString": "Server=.\\SQL19;Database=rhetos_lightdms_test_varbin;Integrated Security=true;"
+}

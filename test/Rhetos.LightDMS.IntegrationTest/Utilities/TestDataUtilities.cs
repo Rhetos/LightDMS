@@ -3,7 +3,6 @@ using Amazon.S3.Model;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Rhetos.LightDms.Storage;
 using Rhetos.LightDMS.TestApp;
 using Rhetos.Utilities;
@@ -23,7 +22,7 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
 
     internal static class TestDataUtilities
     {
-        public const string BLOB_CONN_STRING = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;";
+        public const string BLOB_CONN_STRING = "UseDevelopmentStorage=true;";
         public const string BLOB_CONTAINER_NAME = "lightdmstest";
         private static BlobServiceClient _blobServiceClient = new BlobServiceClient(BLOB_CONN_STRING);
 
@@ -51,7 +50,8 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             Guid documentVersionId,
             Guid fileContentId,
             string fileName,
-            string fileContent)
+            string fileContent,
+            bool useFileStream = true)
         {
             var fileContentStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
             var createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
@@ -62,10 +62,10 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
 
             using var transaction = connection.BeginTransaction(IsolationLevel.ReadUncommitted);
 
-            // Upload
-            var uploadStream = SqlFileStreamProvider.GetSqlFileStreamForUpload(fileContentId, createdDate, transaction);
-            fileContentStream.CopyTo(uploadStream);
-            uploadStream.Close();
+            if (useFileStream)
+                InsertFileContentAsFileStream(fileContentId, fileContentStream, createdDate, transaction);
+            else
+                InsertFileContentAsVarBinary(fileContentId, connection, transaction, fileContent);
 
             InsertDocumentVersion(documentVersionId, fileContentId, fileName, connection, transaction);
 
@@ -105,14 +105,7 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             connection.Open();
             using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
 
-            var insertFileContentCommand = new SqlCommand(
-                @"INSERT INTO [LightDMS].[FileContent] (ID, AzureStorage, Content) 
-                VALUES (@ID, 1, CONVERT(varbinary(max), ''))",
-                connection,
-                transaction);
-            insertFileContentCommand.Parameters.Add(new SqlParameter("@ID", fileContentId));
-            insertFileContentCommand.ExecuteNonQuery();
-
+            InsertFileContentAsVarBinary(fileContentId, connection, transaction, isAzureBlob: true);
             InsertDocumentVersion(documentVersionId, fileContentId, fileName, connection, transaction);
 
             transaction.Commit();
@@ -120,10 +113,8 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
 
             // Upload file to Azure blob
             BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(BLOB_CONTAINER_NAME);
-            if (containerClient == null)
-            {
-                containerClient = _blobServiceClient.CreateBlobContainerAsync(BLOB_CONTAINER_NAME).Result;
-            }
+            containerClient.CreateIfNotExists();
+
             var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
             BlobClient blobClient = containerClient.GetBlobClient(fileName);
             blobClient.Upload(fileStream, true);
@@ -141,14 +132,7 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             connection.Open();
             using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
 
-            var insertFileContentCommand = new SqlCommand(
-                @"INSERT INTO [LightDMS].[FileContent] (ID, S3Storage, Content) 
-                VALUES (@ID, 1, CONVERT(varbinary(max), ''))",
-                connection,
-                transaction);
-            insertFileContentCommand.Parameters.Add(new SqlParameter("@ID", fileContentId));
-            insertFileContentCommand.ExecuteNonQuery();
-
+            InsertFileContentAsVarBinary(fileContentId, connection, transaction, isS3: true);
             InsertDocumentVersion(documentVersionId, fileContentId, fileName, connection, transaction);
 
             transaction.Commit();
@@ -210,6 +194,37 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             insertDocumentVersionCommand.Parameters.Add(new SqlParameter("@FileName", fileName));
             insertDocumentVersionCommand.Parameters.Add(new SqlParameter("@FileContentID", fileContentId));
             insertDocumentVersionCommand.ExecuteNonQuery();
+        }
+
+        private static void InsertFileContentAsVarBinary(Guid fileContentId, SqlConnection connection, SqlTransaction transaction,
+            string fileContent = "",
+            bool isAzureBlob = false,
+            bool isS3 = false)
+        {
+            var insertFileContentCommand = new SqlCommand(
+                @"INSERT INTO [LightDMS].[FileContent] (ID, AzureStorage, S3Storage, Content) 
+                VALUES (@ID, @IsAzureBlob, @IsS3, @FileContent)",
+                connection,
+                transaction);
+
+            insertFileContentCommand.Parameters.AddWithValue("@ID", fileContentId);
+            insertFileContentCommand.Parameters.AddWithValue("@IsAzureBlob", isAzureBlob ? 1 : 0);
+            insertFileContentCommand.Parameters.AddWithValue("@IsS3", isS3 ? 1 : 0);
+
+            var fileContentParam = new SqlParameter("@FileContent", SqlDbType.VarBinary)
+            {
+                Value = Encoding.UTF8.GetBytes(fileContent)
+            };
+            insertFileContentCommand.Parameters.Add(fileContentParam);
+
+            insertFileContentCommand.ExecuteNonQuery();
+        }
+
+        private static void InsertFileContentAsFileStream(Guid fileContentId, MemoryStream fileContentStream, string createdDate, SqlTransaction transaction)
+        {
+            using var uploadStream = SqlFileStreamProvider.GetSqlFileStreamForUpload(fileContentId, createdDate, transaction);
+            fileContentStream.CopyTo(uploadStream);
+            uploadStream.Close();
         }
     }
 }
