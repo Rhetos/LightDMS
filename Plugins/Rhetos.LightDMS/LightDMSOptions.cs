@@ -24,5 +24,6 @@ namespace Rhetos.LightDMS
     {
         public string StorageContainer { get; set; }
         public string StorageConnectionVariable { get; set; }
+        public string UploadTarget { get; set; }
     }
 }

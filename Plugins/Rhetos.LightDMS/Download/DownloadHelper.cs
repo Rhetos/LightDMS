@@ -140,7 +140,7 @@ namespace Rhetos.LightDMS
                 await DownloadFromVarbinary(fileMetadata, sqlConnection, context);
         }
 
-        private bool IsFileStream(SqlConnection sqlConnection)
+        private static bool IsFileStream(SqlConnection sqlConnection)
         {
             using (var sqlCommand = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection))
             {
@@ -179,8 +179,8 @@ namespace Rhetos.LightDMS
                             FileName ='unknown.txt',
                             FileSize = DATALENGTH(Content),
                             FileContentID = fc.ID,
-                            AzureStorage = CAST(0 AS BIT),
-                            S3Storage = CAST(0 AS BIT)
+                            AzureStorage = fc.AzureStorage,
+                            S3Storage = fc.S3Storage
                         FROM 
                             LightDMS.FileContent fc 
                         WHERE 
@@ -202,69 +202,51 @@ namespace Rhetos.LightDMS
 
         private async Task DownloadFromAzureBlob(Guid fileContentId, Stream outputStream, HttpResponse httpResponse)
         {
-            var storageConnectionVariable = _lightDMSOptions.StorageConnectionVariable;
-            string storageConnectionString;
-            if (!string.IsNullOrWhiteSpace(storageConnectionVariable))
-                storageConnectionString = Environment.GetEnvironmentVariable(storageConnectionVariable, EnvironmentVariableTarget.Machine);
-            else
-                //variable name has to be defined if AzureStorage bit is set to true
-                throw new FrameworkException("Azure Blob Storage connection variable name missing.");
+            var cloudBlobContainer = await AzureStorageClient.GetCloudBlobContainer(_lightDMSOptions);
 
-            if (!string.IsNullOrEmpty(storageConnectionString))
+            CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference("doc-" + fileContentId.ToString());
+            if (await cloudBlockBlob.ExistsAsync())
             {
-                if (!CloudStorageAccount.TryParse(storageConnectionString, out CloudStorageAccount storageAccount))
-                    throw new FrameworkException("Invalid Azure Blob Storage connection string.");
-
-                CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
-                var storageContainerName = _lightDMSOptions.StorageContainer;
-                if (string.IsNullOrWhiteSpace(storageContainerName))
-                    throw new FrameworkException("Azure blob storage container name is missing from configuration.");
-
-                CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference(storageContainerName);
-                if (!await cloudBlobContainer.ExistsAsync())
-                    throw new FrameworkException("Azure blob storage container doesn't exist.");
-
-                CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference("doc-" + fileContentId.ToString());
-                if (await cloudBlockBlob.ExistsAsync())
+                try
                 {
-                    try
-                    {
-                        await cloudBlockBlob.FetchAttributesAsync();
+                    await cloudBlockBlob.FetchAttributesAsync();
 
-                        if (httpResponse != null)
-                            httpResponse.Headers.Add("Content-Length", cloudBlockBlob.Properties.Length.ToString());
+                    if (httpResponse != null)
+                        httpResponse.Headers.Add("Content-Length", cloudBlockBlob.Properties.Length.ToString());
 
-                        // Downloads directly to outputStream
-                        await cloudBlockBlob.DownloadToStreamAsync(outputStream);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error("Azure storage error. Error: " + ex.ToString());
-                    }
+                    // Downloads directly to outputStream
+                    await cloudBlockBlob.DownloadToStreamAsync(outputStream);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("Azure storage error. Error: " + ex.ToString());
                 }
             }
-            else
-                throw new FrameworkException("Azure Blob Storage environment variable missing.");
         }
 
         private async Task DownloadFromS3(FileMetadata fileMetadata, HttpContext context)
         {
-            ServicePointManager.ServerCertificateValidationCallback +=
-                    delegate (
-                        object sender,
-                        X509Certificate certificate,
-                        X509Chain chain,
-                        SslPolicyErrors sslPolicyErrors)
-                    {
-                        if (certificate.Subject.IndexOf("ssc.gov.hr") > -1)
-                            return true;
-                        return sslPolicyErrors == SslPolicyErrors.None;
-                    };
-
-            using (var client = new S3StorageClient(_s3Options).GetAmazonS3Client())
+            if (!string.IsNullOrEmpty(_s3Options.CertificateSubject))
             {
-                GetObjectRequest getObjRequest = new GetObjectRequest();
-                getObjRequest.BucketName = _s3Options.BucketName;
+                ServicePointManager.ServerCertificateValidationCallback +=
+                        delegate (
+                            object sender,
+                            X509Certificate certificate,
+                            X509Chain chain,
+                            SslPolicyErrors sslPolicyErrors)
+                        {
+                            if (certificate.Subject.IndexOf(_s3Options.CertificateSubject) > -1)
+                                return true;
+                            return sslPolicyErrors == SslPolicyErrors.None;
+                        };
+            }
+
+            using (var client = S3StorageClient.GetAmazonS3Client(_s3Options))
+            {
+                GetObjectRequest getObjRequest = new GetObjectRequest
+                {
+                    BucketName = _s3Options.BucketName
+                };
                 if (string.IsNullOrWhiteSpace(getObjRequest.BucketName))
                     throw new FrameworkException("Missing S3 storage bucket name.");
                 

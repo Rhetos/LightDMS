@@ -23,22 +23,17 @@ using Rhetos.LightDMS;
 
 namespace Rhetos.LightDms.Storage
 {
-    public class S3StorageClient
+    public static class S3StorageClient
     {
-        private readonly S3Options _s3Options;
-
-        public S3StorageClient(S3Options s3Options)
+        public static AmazonS3Client GetAmazonS3Client(S3Options s3Options)
         {
-            _s3Options = s3Options;
-        }
-
-        public AmazonS3Client GetAmazonS3Client()
-        {
-            var key = _s3Options.Key;
-            var accessKeyID = _s3Options.AccessKeyID;
+            var key = s3Options.Key;
+            var accessKeyID = s3Options.AccessKeyID;
+            _ = bool.TryParse(s3Options.ForcePathStyle, out bool forcePathStyle);
             var s3Config = new AmazonS3Config()
             {
-                ServiceURL = _s3Options.ServiceURL
+                ServiceURL = s3Options.ServiceURL,
+                ForcePathStyle = forcePathStyle
             };
             if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(accessKeyID) || string.IsNullOrWhiteSpace(s3Config.ServiceURL))
                 throw new FrameworkException("Invalid S3 storage configuration parameters.");
