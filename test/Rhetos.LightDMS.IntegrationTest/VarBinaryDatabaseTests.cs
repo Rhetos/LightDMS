@@ -23,7 +23,11 @@ namespace Rhetos.LightDMS.IntegrationTest
 
         public VarBinaryDatabaseTests()
         {
-            var connectionString = new ConnectionString(TestConfigurations.Instance.VarBinaryDatabaseConnString);
+            var rawConnectionString = string.Format("Server={0};Database={1};{2};",
+                TestConfigurations.Instance.SqlServerName,
+                TestConfigurations.Instance.VarBinaryDatabaseName,
+                TestConfigurations.Instance.SqlServerCredential);
+            var connectionString = new ConnectionString(rawConnectionString);
             _factory = new CustomWebApplicationFactory<Startup>(container =>
             {
                 container.Register(context => connectionString).SingleInstance();

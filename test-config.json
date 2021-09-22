@@ -1,5 +1,5 @@
 {
-    "MasterConnectionString": "Server=.\\SQL19;Database=master;Integrated Security=true;",
+    "SqlServerCredential": "Integrated Security=true",
     "SqlServerName": ".\\SQL19",
     "FileStreamDatabaseName": "rhetos_lightdms_test_fs",
     "FileStreamFileLocation": "C:\\LightDMS_Test_Files\\",

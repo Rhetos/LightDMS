@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 
 namespace Rhetos.LightDMS.IntegrationTest.Utilities
 {
@@ -33,7 +29,7 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             public string FileStreamDatabaseName { get; set; }
             public string FileStreamFileLocation { get; set; }
             public string VarBinaryDatabaseName { get; set; }
-            public string VarBinaryDatabaseConnString { get; set; }
+            public string SqlServerCredential { get; set; }
         }
     }
 }

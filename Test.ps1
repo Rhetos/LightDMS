@@ -4,14 +4,15 @@
 $config = Get-Content .\test-config.json -Raw | ConvertFrom-Json
 
 $sqlServerName = $config.SqlServerName
+$sqlCredential = $config.SqlServerCredential
 $fsDbName = $config.FileStreamDatabaseName
 $fsLocation = $config.FileStreamFileLocation
 $varbinDbName = $config.VarBinaryDatabaseName
-$masterConnString = $config.MasterConnectionString
 
 # Computed parameters
-$fsDbConnString = "Server=$($sqlServerName);Database=$($fsDbName);Integrated Security=true;"
-$varbinDbConnString = "Server=$($sqlServerName);Database=$($varbinDbName);Integrated Security=true;"
+$masterConnString = "Server=$($sqlServerName);Database=master;$($sqlCredential);"
+$fsDbConnString = "Server=$($sqlServerName);Database=$($fsDbName);$($sqlCredential);"
+$varbinDbConnString = "Server=$($sqlServerName);Database=$($varbinDbName);$($sqlCredential);"
 
 Write-Prompt "Setting up database without FILESTREAM enabled (use varbinary to store file content)... "
 $cmd = "IF DB_ID('$($varbinDbName)') IS NULL CREATE DATABASE $($varbinDbName)"
