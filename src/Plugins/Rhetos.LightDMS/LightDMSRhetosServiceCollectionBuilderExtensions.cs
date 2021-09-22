@@ -20,12 +20,12 @@
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.StaticFiles;
-using Rhetos;
+using Microsoft.Extensions.DependencyInjection;
 using Rhetos.LightDMS;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Rhetos
 {
     /// <summary>
     /// Adds the LightDMS Web API to the application.
