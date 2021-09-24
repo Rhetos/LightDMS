@@ -43,13 +43,23 @@ namespace Rhetos.LightDMS
         private readonly ConnectionString _connectionString;
         private readonly LightDmsOptions _lightDmsOptions;
         private readonly S3Options _s3Options;
+        private readonly AzureStorageClient _azureStorageClient;
+        private readonly S3StorageClient _s3StorageClient;
 
-        public UploadHelper(ILogProvider logProvider, ConnectionString connectionString, LightDmsOptions lightDmsOptions, S3Options s3Options)
+        public UploadHelper(
+            ILogProvider logProvider, 
+            ConnectionString connectionString, 
+            LightDmsOptions lightDmsOptions, 
+            S3Options s3Options,
+            AzureStorageClient azureStorageClient,
+            S3StorageClient s3StorageClient)
         {
             _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
             _connectionString = connectionString;
             _lightDmsOptions = lightDmsOptions;
             _s3Options = s3Options;
+            _azureStorageClient = azureStorageClient;
+            _s3StorageClient = s3StorageClient;
         }
 
         public async Task<FileUploadResult> UploadStream(Stream inputStream)
@@ -61,28 +71,21 @@ namespace Rhetos.LightDMS
             sqlConnection.Open();
             SqlTransaction sqlTransaction = null;
 
-            SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
             string createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            bool fileStreamEnabled = checkFileStreamEnabled.ExecuteScalar() != null;
             bool isS3 = _lightDmsOptions.UploadTarget == UploadTarget.S3;
             bool isAzure = _lightDmsOptions.UploadTarget == UploadTarget.Azure;
             try
             {
                 sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-                
-                if (!fileStreamEnabled ||
-                    isS3 ||
-                    isAzure)
-                {
-                    SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate], [AzureStorage], [S3Storage]) VALUES('" + id + "', 0x0, '" + createdDate + "', " + (isAzure ? 1 : 0) + ", " + (isS3 ? 1 : 0) + ")", sqlConnection, sqlTransaction);
-                    createEmptyFileContent.ExecuteNonQuery();
-                }
+                SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate], [AzureStorage], [S3Storage]) VALUES('" + id + "', 0x0, '" + createdDate + "', " + (isAzure ? 1 : 0) + ", " + (isS3 ? 1 : 0) + ")", sqlConnection, sqlTransaction);
+                createEmptyFileContent.ExecuteNonQuery();
+
                 if (_lightDmsOptions.UploadTarget == UploadTarget.S3)
                     await UploadStreamToS3(inputStream, id);
                 else if (_lightDmsOptions.UploadTarget == UploadTarget.Azure)
                     await UploadStreamToAzure(inputStream, id);
                 else
-                    await UploadStreamToDatabase(inputStream, id, sqlConnection, sqlTransaction, fileStreamEnabled, createdDate);
+                    await UploadStreamToDatabase(inputStream, id, sqlConnection, sqlTransaction, createdDate);
 
                 sqlTransaction.Commit();
                 sqlConnection.Close();
@@ -119,7 +122,7 @@ namespace Rhetos.LightDMS
 
         private async Task UploadStreamToAzure(Stream inputStream, Guid id)
         {
-            var cloudBlobContainer = await AzureStorageClient.GetCloudBlobContainer(_lightDmsOptions);
+            var cloudBlobContainer = await _azureStorageClient.GetCloudBlobContainer();
             CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference("doc-" + id.ToString());
             await cloudBlockBlob.UploadFromStreamAsync(inputStream);
         }
@@ -141,7 +144,7 @@ namespace Rhetos.LightDMS
                     };
             }
             
-            using (var client = S3StorageClient.GetAmazonS3Client(_s3Options))
+            using (var client = _s3StorageClient.GetAmazonS3Client())
             {
                 using (var transferUtility = new TransferUtility(client))
                 {
@@ -158,13 +161,13 @@ namespace Rhetos.LightDMS
             }
         }
 
-        private static async Task UploadStreamToDatabase(Stream inputStream, Guid id, SqlConnection sqlConnection, SqlTransaction sqlTransaction, bool fileStreamEnabled, string createdDate)
+        private static async Task UploadStreamToDatabase(Stream inputStream, Guid id, SqlConnection sqlConnection, SqlTransaction sqlTransaction, string createdDate)
         {
             int bufferSize = 100 * 1024; // 100 kB buffer
             byte[] buffer = new byte[bufferSize];
             long totalbytesRead = 0;
-
-            if (!fileStreamEnabled)
+            SqlCommand checkFileStreamEnabled = new SqlCommand("SELECT TOP 1 1 FROM sys.columns c WHERE OBJECT_SCHEMA_NAME(C.object_id) = 'LightDMS' AND OBJECT_NAME(C.object_id) = 'FileContent' AND c.Name = 'Content' AND c.is_filestream = 1", sqlConnection, sqlTransaction);
+            if (checkFileStreamEnabled.ExecuteScalar() == null)
             {   //FileStream is not supported
                 SqlCommand fileUpdateCommand = new SqlCommand("update LightDMS.FileContent set Content.WRITE(@Data, @Offset, null) where ID = @ID", sqlConnection, sqlTransaction);
 

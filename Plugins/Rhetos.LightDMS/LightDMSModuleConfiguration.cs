@@ -19,6 +19,7 @@
 
 using Autofac;
 using Microsoft.AspNetCore.StaticFiles;
+using Rhetos.LightDms.Storage;
 using Rhetos.Utilities;
 using System.ComponentModel.Composition;
 
@@ -36,6 +37,8 @@ namespace Rhetos.LightDMS
             builder.RegisterType<DownloadPreviewHandler>().InstancePerLifetimeScope();
             builder.RegisterType<UploadHandler>().InstancePerLifetimeScope();
             builder.RegisterType<UploadHelper>().InstancePerLifetimeScope();
+            builder.RegisterType<S3StorageClient>().InstancePerLifetimeScope();
+            builder.RegisterType<AzureStorageClient>().InstancePerLifetimeScope();
             builder.RegisterType<FileExtensionContentTypeProvider>().As<IContentTypeProvider>().SingleInstance();
 
             base.Load(builder);

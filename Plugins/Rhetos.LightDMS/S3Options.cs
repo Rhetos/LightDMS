@@ -34,6 +34,6 @@ namespace Rhetos.LightDMS
 
         public string CertificateSubject { get; internal set; }
 
-        public string ForcePathStyle { get; set; }
+        public bool ForcePathStyle { get; set; }
     }
 }

@@ -1,8 +1,9 @@
 ﻿namespace Rhetos.LightDMS.Storage
 {
-    public static class UploadTarget
+    public enum UploadTarget
     {
-        public const string S3 = "S3";
-        public const string Azure = "Azure";
+        Database,
+        Azure,
+        S3
     }
 }

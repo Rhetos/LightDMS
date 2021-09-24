@@ -21,7 +21,6 @@ using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Rhetos.LightDms.Storage;
 using Rhetos.Logging;
@@ -29,13 +28,11 @@ using Rhetos.Utilities;
 using System;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -48,23 +45,27 @@ namespace Rhetos.LightDMS
         private readonly ILogger _logger;
         private readonly ConnectionString _connectionString;
         private readonly IContentTypeProvider _contentTypeProvider;
-        private readonly LightDmsOptions _lightDMSOptions;
         private readonly Respond _respond;
         private readonly S3Options _s3Options;
+        private readonly AzureStorageClient _azureStorageClient;
+        private readonly S3StorageClient _s3StorageClient;
 
         public DownloadHelper(
             ILogProvider logProvider,
             ConnectionString connectionString,
             IContentTypeProvider contentTypeProvider,
             LightDmsOptions lightDMSOptions,
-            S3Options s3Options)
+            S3Options s3Options,
+            AzureStorageClient azureStorageClient,
+            S3StorageClient s3StorageClient)
         {
             _logger = logProvider.GetLogger(GetType().Name);
             _connectionString = connectionString;
             _contentTypeProvider = contentTypeProvider;
-            _lightDMSOptions = lightDMSOptions;
             _respond = new Respond(logProvider);
             _s3Options = s3Options;
+            _azureStorageClient = azureStorageClient;
+            _s3StorageClient = s3StorageClient;
         }
 
         public async Task HandleDownload(HttpContext context, Guid? documentVersionId, Guid? fileContentId)
@@ -202,7 +203,7 @@ namespace Rhetos.LightDMS
 
         private async Task DownloadFromAzureBlob(Guid fileContentId, Stream outputStream, HttpResponse httpResponse)
         {
-            var cloudBlobContainer = await AzureStorageClient.GetCloudBlobContainer(_lightDMSOptions);
+            var cloudBlobContainer = await _azureStorageClient.GetCloudBlobContainer();
 
             CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference("doc-" + fileContentId.ToString());
             if (await cloudBlockBlob.ExistsAsync())
@@ -241,7 +242,7 @@ namespace Rhetos.LightDMS
                         };
             }
 
-            using (var client = S3StorageClient.GetAmazonS3Client(_s3Options))
+            using (var client = _s3StorageClient.GetAmazonS3Client())
             {
                 GetObjectRequest getObjRequest = new GetObjectRequest
                 {

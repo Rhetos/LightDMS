@@ -25,9 +25,16 @@ using System.Threading.Tasks;
 
 namespace Rhetos.LightDms.Storage
 {
-    public static class AzureStorageClient
+    public class AzureStorageClient
     {
-        public static async Task<CloudBlobContainer> GetCloudBlobContainer(LightDmsOptions _lightDmsOptions)
+        private readonly LightDmsOptions _lightDmsOptions;
+
+        public AzureStorageClient(LightDmsOptions lightDmsOptions)
+        {
+            _lightDmsOptions = lightDmsOptions;
+        }
+
+        public async Task<CloudBlobContainer> GetCloudBlobContainer()
         {
             var storageConnectionVariable = _lightDmsOptions.StorageConnectionVariable;
             string storageConnectionString;
