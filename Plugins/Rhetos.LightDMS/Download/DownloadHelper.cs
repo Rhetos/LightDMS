@@ -54,7 +54,6 @@ namespace Rhetos.LightDMS
             ILogProvider logProvider,
             ConnectionString connectionString,
             IContentTypeProvider contentTypeProvider,
-            LightDmsOptions lightDMSOptions,
             S3Options s3Options,
             AzureStorageClient azureStorageClient,
             S3StorageClient s3StorageClient)
