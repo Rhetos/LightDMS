@@ -6,20 +6,19 @@ Aside entities, versioning, it also exposes additional web interface for uploadi
 
 See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 
-- [LightDMS](#lightdms)
-  - [Features](#features)
-    - [File web API](#file-web-api)
-    - [Storage options](#storage-options)
-  - [Database preparation](#database-preparation)
-    - [Enable FILESTREAM on your application's database](#enable-filestream-on-your-applications-database)
-    - [Activate FILESTREAM usage in LightDMS](#activate-filestream-usage-in-lightdms)
-  - [Installation and configuration](#installation-and-configuration)
-  - [Building and testing the source code](#building-and-testing-the-source-code)
-    - [Build](#build)
-    - [Test](#test)
-      - [Prerequisites](#prerequisites)
-      - [Configurations and run test](#configurations-and-run-test)
-      - [How it works](#how-it-works)
+1. [Features](#features)
+   1. [File web API](#file-web-api)
+   2. [Storage options](#storage-options)
+2. [Database preparation](#database-preparation)
+   1. [Enable FILESTREAM on your application's database](#enable-filestream-on-your-applications-database)
+   2. [Activate FILESTREAM usage in LightDMS](#activate-filestream-usage-in-lightdms)
+3. [Installation and configuration](#installation-and-configuration)
+4. [Building and testing the source code](#building-and-testing-the-source-code)
+   1. [Build](#build)
+   2. [Test](#test)
+      1. [Prerequisites](#prerequisites)
+      2. [Configuration and run test](#configuration-and-run-test)
+      3. [How it works](#how-it-works)
 
 ## Features
 
@@ -66,7 +65,8 @@ LightDMS allows the following storage options:
 
 ### Enable FILESTREAM on your application's database
 
-1. Enable FileStream on SqlServer instance - Sql Server Configuration Manager [Steps](https://msdn.microsoft.com/en-us/library/cc645923.aspx)
+1. Enable FileStream on SQL Server instance -
+   SQL Server Configuration Manager [Steps](https://msdn.microsoft.com/en-us/library/cc645923.aspx)
 
 2. Enable FileStream on database level:
 
@@ -158,39 +158,44 @@ For contributions guidelines see [How to Contribute](https://github.com/Rhetos/R
 
 - Powershell
 - Docker with Linux container mode (for Azure Blob and S3 Storage emulators)
-- MS SQL database with FILESTREAM enabled
+- MS SQL Server instance with FILESTREAM enabled
 
-#### Configurations and run test
+#### Configuration and run test
 
-You can find and modify all test configurations in [test-config.json](.\test-config.json)
+1. Enable FileStream on the test SQL Server instance -
+   SQL Server Configuration Manager [Steps](https://msdn.microsoft.com/en-us/library/cc645923.aspx)
 
-```json
-{
-  // SQL server credential that has DDL grants on master database
-  // This credential will be used to create and configure necessary databases
-  "SqlServerCredential": "Integrated Security=true",
-  "SqlServerName": "",
-  // Name of the database WITH FILESTREAM enabled
-  // You should only modify it if you find the name is duplicate with your existing database
-  "FileStreamDatabaseName": "rhetos_lightdms_test_fs",
-  // Absolute path to the folder where the file stream will store
-  "FileStreamFileLocation": "C:\\LightDMS_Test_Files\\",
-  // Name of the database WITHOUT FILESTREAM
-  // You should only modify it if you find the name is duplicate with your existing database
-  "VarBinaryDatabaseName": "rhetos_lightdms_test_varbin",
-}
-```
+2. Configure test settings in [test-config.json](.\test-config.json).
+   The test script will create and configure two test databases from this configuration,
+   if not created already.
 
-Once you have everything configured properly, you can run the test:
+    ```js
+    {
+      // SQL server credential that has DDL grants on master database
+      // This credential will be used to create and configure necessary databases
+      "SqlServerCredential": "Integrated Security=true",
+      "SqlServerName": "localhost",
+      // Name of the database WITH FILESTREAM enabled
+      // You should only modify it if you find the name is duplicate with your existing database
+      "FileStreamDatabaseName": "rhetos_lightdms_test_fs",
+      // Absolute path to the folder where the file stream will store
+      "FileStreamFileLocation": "C:\\LightDMS_Test_Files\\",
+      // Name of the database WITHOUT FILESTREAM
+      // You should only modify it if you find the name is duplicate with your existing database
+      "VarBinaryDatabaseName": "rhetos_lightdms_test_varbin",
+    }
+    ```
 
-```powershell
-powershell .\Test.ps1
-```
+3. Once you have everything configured properly, you can run the test:
+
+    ```powershell
+    powershell .\Test.ps1
+    ```
 
 #### How it works
 
-1. `Test` interacts with SQL databases and storage emulators to prepare necessary file contents
-2. `Test` interacts with `TestApp` via `WebApplicationFactory` to perform assertions. Learn more about integration test with ASP.NET Core at: <https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-5.0>
+1. `Test.ps1` interacts with SQL databases and storage emulators to prepare necessary file contents
+2. `Test.ps1` interacts with `TestApp` via `WebApplicationFactory` to perform assertions. Learn more about integration test with ASP.NET Core at: <https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-5.0>
 3. `TestApp` interacts with databases and storage emulators to perform its core functionalities.
 
 ```bash

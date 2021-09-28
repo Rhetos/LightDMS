@@ -8,9 +8,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 		Build.bat = Build.bat
 		ChangeLog.md = ChangeLog.md
+		Clean.bat = Clean.bat
 		Directory.Build.props = Directory.Build.props
 		Readme.md = Readme.md
 		Rhetos.LightDMS.nuspec = Rhetos.LightDMS.nuspec
+		Test.ps1 = Test.ps1
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rhetos.LightDMS", "src\Plugins\Rhetos.LightDMS\Rhetos.LightDMS.csproj", "{94DD3043-0BC2-461D-A1D6-F50B4B5F68F0}"

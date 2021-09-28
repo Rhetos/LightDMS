@@ -35,16 +35,16 @@
 
   <Target Name="CopyAfterDeploy" BeforeTargets="ResolveRhetosBuildItems">
     <ItemGroup>
-      <AfterDeploy Include="..\..\src\AfterDeploy\**\*" />
+      <LightDMSAfterDeploy Include="..\..\src\AfterDeploy\**\*" />
     </ItemGroup>
-    <Copy SourceFiles="@(AfterDeploy)" DestinationFolder="AfterDeploy" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LightDMSAfterDeploy)" DestinationFolder="AfterDeploy" SkipUnchangedFiles="true" />
   </Target>
 
   <Target Name="CopyDataMigration" BeforeTargets="ResolveRhetosBuildItems">
     <ItemGroup>
-      <DataMigration Include="..\..\src\DataMigration\**\*" />
+      <LightDMSDataMigration Include="..\..\src\DataMigration\**\*" />
     </ItemGroup>
-    <Copy SourceFiles="@(DataMigration)" DestinationFolder="DataMigration" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(LightDMSDataMigration)" DestinationFolder="DataMigration" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
