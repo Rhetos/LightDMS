@@ -165,9 +165,11 @@ For contributions guidelines see [How to Contribute](https://github.com/Rhetos/R
 1. Enable FileStream on the test SQL Server instance -
    SQL Server Configuration Manager [Steps](https://msdn.microsoft.com/en-us/library/cc645923.aspx)
 
-2. Configure test settings in [test-config.json](.\test-config.json).
-   The test script will create and configure two test databases from this configuration,
+2. Create and configure test settings file `.\test-config.json`, with the following content.
+   Enter two database names that do not already exist on the test SQL Server.
+   The test script will create and configure this two databases from the configuration file,
    if not created already.
+   Note: **remove comments** from the created 'test-config.json' file.
 
     ```js
     {
@@ -182,13 +184,15 @@ For contributions guidelines see [How to Contribute](https://github.com/Rhetos/R
       "FileStreamFileLocation": "C:\\LightDMS_Test_Files\\",
       // Name of the database WITHOUT FILESTREAM
       // You should only modify it if you find the name is duplicate with your existing database
-      "VarBinaryDatabaseName": "rhetos_lightdms_test_varbin",
+      "VarBinaryDatabaseName": "rhetos_lightdms_test_varbin"
     }
     ```
 
 3. Once you have everything configured properly, you can run the test:
 
-    ```powershell
+    ```batch
+    Clean.bat
+    Build.bat
     powershell .\Test.ps1
     ```
 

@@ -236,10 +236,6 @@ _Pvt_Extensions
 # FAKE - F# Make
 .fake/
 
-# Omega software
-/Install/
-RhetosServerCommandsTrace.xml
-FileVersions.txt
-*.zip
-*.bak
-.nuget/NuGet.exe
+# Project-specific
+rhetos-app.local.settings.json
+/test-config.json

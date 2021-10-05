@@ -7,6 +7,11 @@ if (-Not (Test-Path 'test\Rhetos.LightDMS.TestApp\bin\Debug\net5.0\Rhetos.LightD
     throw "Please execute Build.bat successfully before running Test.ps1. Build output file 'Rhetos.LightDMS.TestApp.dll' does not exist."
 }
 
+# Testing if the test settings have been configured.
+if (-Not (Test-Path '.\test-config.json' -PathType Leaf)) {
+    throw "Please create and configure test settings in 'test-config.json'. See Readme.md for the instructions."
+}
+
 # Parameters
 $config = Get-Content .\test-config.json -Raw | ConvertFrom-Json
 
@@ -54,19 +59,21 @@ if ([string]::IsNullOrEmpty($r[0])) {
 
 Push-Location .\test\Rhetos.LightDMS.TestApp\bin\Debug\net5.0\
 
-$originalAppSettings = Get-Content appsettings.json -Raw
-
 Write-Host "Deploying test app to $($varbinDbName)..."
-$appSettingsObj = ConvertFrom-Json $originalAppSettings
+$appSettingsObj = [pscustomobject]@{
+    ConnectionStrings = [pscustomobject]@{
+        RhetosConnectionString = '';
+    }
+}
 
 $appSettingsObj.ConnectionStrings.RhetosConnectionString = $varbinDbConnString
-ConvertTo-Json $appSettingsObj -Depth 5 | Set-Content -Path appsettings.json
+ConvertTo-Json $appSettingsObj -Depth 5 | Set-Content -Path rhetos-app.local.settings.json
 & .\rhetos dbupdate .\Rhetos.LightDMS.TestApp.dll
 if ($LastExitCode -ne 0) { throw "rhetos dbupdate failed on varbinDbConnString." }
 
 Write-Host "Deploying test app to $($fsDbName)..."
 $appSettingsObj.ConnectionStrings.RhetosConnectionString = $fsDbConnString
-ConvertTo-Json $appSettingsObj -Depth 5 | Set-Content -Path appsettings.json
+ConvertTo-Json $appSettingsObj -Depth 5 | Set-Content -Path rhetos-app.local.settings.json
 & .\rhetos dbupdate .\Rhetos.LightDMS.TestApp.dll
 if ($LastExitCode -ne 0) { throw "rhetos dbupdate failed on fsDbConnString." }
 
@@ -102,7 +109,7 @@ if (-not ([string]::IsNullOrEmpty($containerId)))
 }
 
 # Using "no-build" option as optimization, because Test.bat should always be executed after Build.bat.
-& dotnet test .\test\Rhetos.LightDMS.IntegrationTest --no-build
+& dotnet test --no-build
 if ($LastExitCode -ne 0) { throw "dotnet test failed." }
 
-Set-Content -Path .\test\Rhetos.LightDMS.TestApp\appsettings.json $originalAppSettings
+Remove-Item '.\test\Rhetos.LightDMS.TestApp\bin\Debug\net5.0\rhetos-app.local.settings.json'

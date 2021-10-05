@@ -58,7 +58,8 @@ namespace Rhetos.LightDMS.TestApp
         {
             rhetosHostBuilder
                 .ConfigureRhetosAppDefaults()
-                .ConfigureConfiguration(cfg => cfg.MapNetCoreConfiguration(Configuration));
+                .ConfigureConfiguration(cfg => cfg.MapNetCoreConfiguration(Configuration)
+                    .AddJsonFile("rhetos-app.local.settings.json"));
         }
     }
 }
