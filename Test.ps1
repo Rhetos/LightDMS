@@ -1,4 +1,11 @@
-#Requires -Module SqlServer
+$ErrorActionPreference = 'Stop'
+
+# Prequisites
+
+# Testing if Build.bat has completed successfully.
+if (-Not (Test-Path 'test\Rhetos.LightDMS.TestApp\bin\Debug\net5.0\Rhetos.LightDMS.TestApp.dll' -PathType Leaf)) {
+    throw "Please execute Build.bat successfully before running Test.ps1. Build output file 'Rhetos.LightDMS.TestApp.dll' does not exist."
+}
 
 # Parameters
 $config = Get-Content .\test-config.json -Raw | ConvertFrom-Json
@@ -45,8 +52,7 @@ if ([string]::IsNullOrEmpty($r[0])) {
 }
 # END Create FS DB
 
-Push-Location .\test\Rhetos.LightDMS.TestApp\
-dotnet restore
+Push-Location .\test\Rhetos.LightDMS.TestApp\bin\Debug\net5.0\
 
 $originalAppSettings = Get-Content appsettings.json -Raw
 
@@ -55,14 +61,16 @@ $appSettingsObj = ConvertFrom-Json $originalAppSettings
 
 $appSettingsObj.ConnectionStrings.RhetosConnectionString = $varbinDbConnString
 ConvertTo-Json $appSettingsObj -Depth 5 | Set-Content -Path appsettings.json
-dotnet build
+& .\rhetos dbupdate .\Rhetos.LightDMS.TestApp.dll
+if ($LastExitCode -ne 0) { throw "rhetos dbupdate failed on varbinDbConnString." }
 
 Write-Host "Deploying test app to $($fsDbName)..."
 $appSettingsObj.ConnectionStrings.RhetosConnectionString = $fsDbConnString
 ConvertTo-Json $appSettingsObj -Depth 5 | Set-Content -Path appsettings.json
-dotnet build
+& .\rhetos dbupdate .\Rhetos.LightDMS.TestApp.dll
+if ($LastExitCode -ne 0) { throw "rhetos dbupdate failed on fsDbConnString." }
 
-$enableFileStreamCmd = Get-Content ".\AfterDeploy\Use filestream if supported.sql" -Raw
+$enableFileStreamCmd = Get-Content "..\..\..\AfterDeploy\Use filestream if supported.sql" -Raw
 Invoke-Sqlcmd -ConnectionString $fsDbConnString -Query $enableFileStreamCmd
 
 Pop-Location
@@ -93,8 +101,8 @@ if (-not ([string]::IsNullOrEmpty($containerId)))
     docker run --name lightdms_azurite -p 10000:10000 -d mcr.microsoft.com/azure-storage/azurite azurite-blob --blobHost 0.0.0.0
 }
 
-Push-Location .\test\Rhetos.LightDMS.IntegrationTest
-dotnet test
+# Using "no-build" option as optimization, because Test.bat should always be executed after Build.bat.
+& dotnet test .\test\Rhetos.LightDMS.IntegrationTest --no-build
+if ($LastExitCode -ne 0) { throw "dotnet test failed." }
 
-Pop-Location
 Set-Content -Path .\test\Rhetos.LightDMS.TestApp\appsettings.json $originalAppSettings
