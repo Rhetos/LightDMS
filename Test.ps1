@@ -12,6 +12,12 @@ if (-Not (Test-Path '.\test-config.json' -PathType Leaf)) {
     throw "Please create and configure test settings in 'test-config.json'. See Readme.md for the instructions."
 }
 
+# Testing if SQL commands are available.
+# Note that on some environments, the commands are available with SQL Server client tools, even without installing PowerShell Module 'SqlServer'.
+If ((Get-Command -CommandType Cmdlet -Name 'Invoke-Sqlcmd*').Count -eq 0) {
+    throw "Please install PowerShell module 'SqlServer'."
+}
+
 # Parameters
 $config = Get-Content .\test-config.json -Raw | ConvertFrom-Json
 
