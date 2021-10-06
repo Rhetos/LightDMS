@@ -34,9 +34,7 @@ namespace Rhetos.LightDms.Storage
         public static SqlFileStream GetSqlFileStreamForUpload(Guid fileContentId, string createdDate, SqlTransaction sqlTransaction)
         {
             string insertSqlText =
-                @"INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate]) 
-                VALUES(@id, CAST('' AS VARBINARY(MAX)), @createdDate);
-
+                @"
                 SELECT Content.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT()
                 FROM LightDMS.FileContent
                 WHERE ID = @id";

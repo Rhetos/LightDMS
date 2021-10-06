@@ -32,6 +32,8 @@ namespace Rhetos.LightDMS
 
         public string DestinationFolder { get; internal set; }
 
+        public string CertificateSubject { get; internal set; }
+
         public bool ForcePathStyle { get; set; }
     }
 }
