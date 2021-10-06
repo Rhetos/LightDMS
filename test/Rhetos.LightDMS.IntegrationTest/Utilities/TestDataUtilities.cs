@@ -54,7 +54,6 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             bool useFileStream = true)
         {
             var fileContentStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
-            var createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
             var connectionString = GetHostConnectionString(factory);
             using var connection = new SqlConnection(connectionString);
@@ -63,7 +62,7 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             using var transaction = connection.BeginTransaction(IsolationLevel.ReadUncommitted);
 
             if (useFileStream)
-                InsertFileContentAsFileStream(fileContentId, fileContentStream, createdDate, transaction);
+                InsertFileContentAsFileStream(fileContentId, fileContentStream, transaction);
             else
                 InsertFileContentAsVarBinary(fileContentId, connection, transaction, fileContent);
 
@@ -220,9 +219,10 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             insertFileContentCommand.ExecuteNonQuery();
         }
 
-        private static void InsertFileContentAsFileStream(Guid fileContentId, MemoryStream fileContentStream, string createdDate, SqlTransaction transaction)
+        private static void InsertFileContentAsFileStream(Guid fileContentId, MemoryStream fileContentStream, SqlTransaction transaction)
         {
-            using var uploadStream = SqlFileStreamProvider.GetSqlFileStreamForUpload(fileContentId, createdDate, transaction);
+            UploadHelper.InsertEmptyFileContent(fileContentId, transaction, false, false);
+            using var uploadStream = SqlFileStreamProvider.GetSqlFileStreamForUpload(fileContentId, transaction);
             fileContentStream.CopyTo(uploadStream);
             uploadStream.Close();
         }

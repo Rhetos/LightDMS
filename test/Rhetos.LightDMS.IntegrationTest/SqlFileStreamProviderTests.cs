@@ -10,17 +10,18 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhetos.LightDMS.IntegrationTest
 {
     [Collection("Utility classes")]
     public class SqlFileStreamProviderTests
     {
-        private static WebApplicationFactory<Startup> _factory;
+        private readonly WebApplicationFactory<Startup> _factory;
 
-        public SqlFileStreamProviderTests()
+        public SqlFileStreamProviderTests(ITestOutputHelper testOutputHelper)
         {
-            _factory = new CustomWebApplicationFactory<Startup>();
+            _factory = new CustomWebApplicationFactory<Startup>(testOutputHelper);
         }
 
         [Fact]
@@ -31,7 +32,6 @@ namespace Rhetos.LightDMS.IntegrationTest
 
             var fileId = Guid.NewGuid();
             var fileContentStream = new MemoryStream(Encoding.UTF8.GetBytes(uploadContent));
-            var createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
             using var scope = _factory.Server.Services.CreateScope();
             var connectionString = scope.ServiceProvider.GetService<IRhetosComponent<ConnectionString>>().Value;
@@ -42,7 +42,8 @@ namespace Rhetos.LightDMS.IntegrationTest
             using var transaction = connection.BeginTransaction(IsolationLevel.ReadUncommitted);
 
             // Upload
-            var uploadStream = SqlFileStreamProvider.GetSqlFileStreamForUpload(fileId, createdDate, transaction);
+            UploadHelper.InsertEmptyFileContent(fileId, transaction, false, false);
+            var uploadStream = SqlFileStreamProvider.GetSqlFileStreamForUpload(fileId, transaction);
             await fileContentStream.CopyToAsync(uploadStream);
             uploadStream.Close();
 

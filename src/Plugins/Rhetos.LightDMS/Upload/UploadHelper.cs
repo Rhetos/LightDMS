@@ -71,21 +71,19 @@ namespace Rhetos.LightDMS
             sqlConnection.Open();
             SqlTransaction sqlTransaction = null;
 
-            string createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             bool isS3 = _lightDmsOptions.UploadTarget == UploadTarget.S3;
             bool isAzure = _lightDmsOptions.UploadTarget == UploadTarget.Azure;
             try
             {
                 sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-                SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate], [AzureStorage], [S3Storage]) VALUES('" + id + "', 0x0, '" + createdDate + "', " + (isAzure ? 1 : 0) + ", " + (isS3 ? 1 : 0) + ")", sqlConnection, sqlTransaction);
-                createEmptyFileContent.ExecuteNonQuery();
+                InsertEmptyFileContent(id, sqlTransaction, isS3, isAzure);
 
                 if (_lightDmsOptions.UploadTarget == UploadTarget.S3)
                     await UploadStreamToS3(inputStream, id);
                 else if (_lightDmsOptions.UploadTarget == UploadTarget.Azure)
                     await UploadStreamToAzure(inputStream, id);
                 else
-                    await UploadStreamToDatabase(inputStream, id, sqlConnection, sqlTransaction, createdDate);
+                    await UploadStreamToDatabase(inputStream, id, sqlConnection, sqlTransaction);
 
                 sqlTransaction.Commit();
                 sqlConnection.Close();
@@ -118,6 +116,13 @@ namespace Rhetos.LightDMS
                         Exception = ex
                     };
             }
+        }
+
+        public static void InsertEmptyFileContent(Guid fileContentId, SqlTransaction sqlTransaction, bool isS3, bool isAzure)
+        {
+            string createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate], [AzureStorage], [S3Storage]) VALUES('" + fileContentId + "', 0x0, '" + createdDate + "', " + (isAzure ? 1 : 0) + ", " + (isS3 ? 1 : 0) + ")", sqlTransaction.Connection, sqlTransaction);
+            createEmptyFileContent.ExecuteNonQuery();
         }
 
         private async Task UploadStreamToAzure(Stream inputStream, Guid id)
@@ -161,7 +166,7 @@ namespace Rhetos.LightDMS
             }
         }
 
-        private static async Task UploadStreamToDatabase(Stream inputStream, Guid id, SqlConnection sqlConnection, SqlTransaction sqlTransaction, string createdDate)
+        private static async Task UploadStreamToDatabase(Stream inputStream, Guid id, SqlConnection sqlConnection, SqlTransaction sqlTransaction)
         {
             int bufferSize = 100 * 1024; // 100 kB buffer
             byte[] buffer = new byte[bufferSize];
@@ -198,7 +203,7 @@ namespace Rhetos.LightDMS
             }
             else
             {
-                using (SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForUpload(id, createdDate, sqlTransaction))
+                using (SqlFileStream sfs = SqlFileStreamProvider.GetSqlFileStreamForUpload(id, sqlTransaction))
                 {
                     while (totalbytesRead < inputStream.Length)
                     {

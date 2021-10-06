@@ -5,16 +5,17 @@ using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhetos.LightDMS.IntegrationTest
 {
     public class UploadTests
     {
-        private static WebApplicationFactory<Startup> _factory;
+        private readonly WebApplicationFactory<Startup> _factory;
 
-        public UploadTests()
+        public UploadTests(ITestOutputHelper testOutputHelper)
         {
-            _factory = new CustomWebApplicationFactory<Startup>();
+            _factory = new CustomWebApplicationFactory<Startup>(testOutputHelper);
         }
 
         [Fact]

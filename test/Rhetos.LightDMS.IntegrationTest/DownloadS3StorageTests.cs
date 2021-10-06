@@ -6,20 +6,21 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhetos.LightDMS.IntegrationTest
 {
     public class DownloadS3StorageTests : IDisposable
     {
-        private static WebApplicationFactory<Startup> _factory;
+        private readonly WebApplicationFactory<Startup> _factory;
 
         private readonly string _fileContent = Guid.NewGuid().ToString();
         private readonly Guid _documentVersionId = Guid.NewGuid();
         private readonly Guid _fileContentId = Guid.NewGuid();
 
-        public DownloadS3StorageTests()
+        public DownloadS3StorageTests(ITestOutputHelper testOutputHelper)
         {
-            _factory = new CustomWebApplicationFactory<Startup>();
+            _factory = new CustomWebApplicationFactory<Startup>(testOutputHelper);
             TestDataUtilities.SeedS3StorageFile(_factory, _documentVersionId, _fileContentId, _fileContent);
         }
 

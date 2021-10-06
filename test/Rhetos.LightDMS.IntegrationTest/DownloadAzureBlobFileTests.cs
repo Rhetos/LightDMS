@@ -7,28 +7,29 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhetos.LightDMS.IntegrationTest
 {
     public class DownloadAzureBlobFileTests : IDisposable
     {
-        private static WebApplicationFactory<Startup> _factory;
+        private readonly WebApplicationFactory<Startup> _factory;
         private readonly string _fileContent = Guid.NewGuid().ToString();
         private readonly Guid _documentVersionId = Guid.NewGuid();
         private readonly Guid _fileContentId = Guid.NewGuid();
 
-        public DownloadAzureBlobFileTests()
+        public DownloadAzureBlobFileTests(ITestOutputHelper testOutput)
         {
             var lightDmsOptions = new LightDmsOptions 
             { 
                 StorageContainer = TestDataUtilities.BLOB_CONTAINER_NAME
             };
 
-            _factory = new CustomWebApplicationFactory<Startup>((ContainerBuilder containerBuilder) =>
+            _factory = new CustomWebApplicationFactory<Startup>(configureRhetos: containerBuilder =>
             {
                 containerBuilder.RegisterType<HardcodedAzureBlobConnectionStringResolver>().AsImplementedInterfaces();
                 containerBuilder.Register(context => lightDmsOptions).SingleInstance();
-            });
+            }, testOutput: testOutput);
             TestDataUtilities.SeedAzureBlobFile(_factory, _documentVersionId, _fileContentId, _fileContent);
         }
 

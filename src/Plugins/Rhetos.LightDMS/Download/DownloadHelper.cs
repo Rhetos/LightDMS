@@ -47,7 +47,6 @@ namespace Rhetos.LightDMS
         private readonly IContentTypeProvider _contentTypeProvider;
         private readonly Respond _respond;
         private readonly S3Options _s3Options;
-        private readonly IAzureBlobConnectionStringResolver _azureBlobConnectionStringResolver;
         private readonly AzureStorageClient _azureStorageClient;
         private readonly S3StorageClient _s3StorageClient;
 
@@ -55,9 +54,7 @@ namespace Rhetos.LightDMS
             ILogProvider logProvider,
             ConnectionString connectionString,
             IContentTypeProvider contentTypeProvider,
-            LightDmsOptions lightDMSOptions,
             S3Options s3Options,
-            IAzureBlobConnectionStringResolver azureBlobConnectionStringResolver,
             AzureStorageClient azureStorageClient,
             S3StorageClient s3StorageClient)
         {
@@ -66,7 +63,6 @@ namespace Rhetos.LightDMS
             _contentTypeProvider = contentTypeProvider;
             _respond = new Respond(logProvider);
             _s3Options = s3Options;
-            _azureBlobConnectionStringResolver = azureBlobConnectionStringResolver;
             _azureStorageClient = azureStorageClient;
             _s3StorageClient = s3StorageClient;
         }
@@ -80,9 +76,13 @@ namespace Rhetos.LightDMS
                     sqlConnection.Open();
                     var fileMetadata = GetFileMetadata(documentVersionId, fileContentId, sqlConnection, GetFileNameFromQueryString(context));
 
-                    PopulateHeader(context, fileMetadata.FileName);
-
-                    await ResolveDownload(fileMetadata, sqlConnection, context.Response.Body, context.Response, context);
+                    if (fileMetadata == null)
+                        await _respond.BadRequest(context, "File metadata not found with provided ID.");
+                    else
+                    {
+                        PopulateHeader(context, fileMetadata.FileName);
+                        await ResolveDownload(fileMetadata, sqlConnection, context.Response.Body, context.Response, context);
+                    }
                 }
             }
             catch (Exception ex)
@@ -192,21 +192,22 @@ namespace Rhetos.LightDMS
 
             using (var result = getFileMetadata.ExecuteReader(CommandBehavior.SingleRow))
             {
-                result.Read();
-                return new FileMetadata
-                {
-                    FileContentId = (Guid)result["FileContentID"],
-                    FileName = queryStringFileName ?? (string)result["FileName"],
-                    AzureStorage = result["AzureStorage"] != DBNull.Value && (bool)result["AzureStorage"],
-                    S3Storage = result["S3Storage"] != DBNull.Value && (bool)result["S3Storage"],
-                    Size = (long)result["FileSize"]
-                };
+                if (result.Read())
+                    return new FileMetadata
+                    {
+                        FileContentId = (Guid)result["FileContentID"],
+                        FileName = queryStringFileName ?? (string)result["FileName"],
+                        AzureStorage = result["AzureStorage"] != DBNull.Value && (bool)result["AzureStorage"],
+                        S3Storage = result["S3Storage"] != DBNull.Value && (bool)result["S3Storage"],
+                        Size = (long)result["FileSize"]
+                    };
+                else
+                    return null;
             }
         }
 
         private async Task DownloadFromAzureBlob(Guid fileContentId, Stream outputStream, HttpResponse httpResponse)
         {
-            var storageConnectionString = _azureBlobConnectionStringResolver.Resolve();
             var cloudBlobContainer = await _azureStorageClient.GetCloudBlobContainer();
 
             CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference("doc-" + fileContentId.ToString());

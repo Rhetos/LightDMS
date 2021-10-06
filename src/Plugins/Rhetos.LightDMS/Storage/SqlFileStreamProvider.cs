@@ -31,7 +31,7 @@ namespace Rhetos.LightDms.Storage
     /// </summary>
     public static class SqlFileStreamProvider
     {
-        public static SqlFileStream GetSqlFileStreamForUpload(Guid fileContentId, string createdDate, SqlTransaction sqlTransaction)
+        public static SqlFileStream GetSqlFileStreamForUpload(Guid fileContentId, SqlTransaction sqlTransaction)
         {
             string insertSqlText =
                 @"
@@ -41,7 +41,6 @@ namespace Rhetos.LightDms.Storage
 
             SqlCommand sqlCommand = new SqlCommand(insertSqlText, sqlTransaction.Connection, sqlTransaction);
             sqlCommand.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = fileContentId;
-            sqlCommand.Parameters.Add("@createdDate", SqlDbType.NVarChar, 100).Value = createdDate;
 
             using (var reader = sqlCommand.ExecuteReader())
             {

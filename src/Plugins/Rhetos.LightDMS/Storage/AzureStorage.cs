@@ -28,21 +28,17 @@ namespace Rhetos.LightDms.Storage
     public class AzureStorageClient
     {
         private readonly LightDmsOptions _lightDmsOptions;
+        private readonly IAzureBlobConnectionStringResolver _azureBlobConnectionStringResolver;
 
-        public AzureStorageClient(LightDmsOptions lightDmsOptions)
+        public AzureStorageClient(LightDmsOptions lightDmsOptions, IAzureBlobConnectionStringResolver azureBlobConnectionStringResolver)
         {
             _lightDmsOptions = lightDmsOptions;
+            _azureBlobConnectionStringResolver = azureBlobConnectionStringResolver;
         }
 
         public async Task<CloudBlobContainer> GetCloudBlobContainer()
         {
-            var storageConnectionVariable = _lightDmsOptions.StorageConnectionVariable;
-            string storageConnectionString;
-            if (!string.IsNullOrWhiteSpace(storageConnectionVariable))
-                storageConnectionString = Environment.GetEnvironmentVariable(storageConnectionVariable, EnvironmentVariableTarget.Machine);
-            else
-                //variable name has to be defined if AzureStorage bit is set to true
-                throw new FrameworkException("Azure Blob Storage connection variable name missing.");
+            var storageConnectionString = _azureBlobConnectionStringResolver.Resolve();
 
             if (string.IsNullOrEmpty(storageConnectionString))
                 throw new FrameworkException("Azure Blob Storage environment variable missing.");

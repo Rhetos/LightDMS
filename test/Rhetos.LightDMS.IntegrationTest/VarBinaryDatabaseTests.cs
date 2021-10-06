@@ -9,26 +9,27 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhetos.LightDMS.IntegrationTest
 {
     public class VarBinaryDatabaseTests : IDisposable
     {
-        private static WebApplicationFactory<Startup> _factory;
+        private readonly WebApplicationFactory<Startup> _factory;
 
         private const string _fileName = "DownloadSqlFileStreamTest.txt";
         private readonly Guid _documentVersionId = Guid.NewGuid();
         private readonly string _fileContent = Guid.NewGuid().ToString();
         private readonly Guid _fileContentId = Guid.NewGuid();
 
-        public VarBinaryDatabaseTests()
+        public VarBinaryDatabaseTests(ITestOutputHelper testOutputHelper)
         {
             var rawConnectionString = string.Format("Server={0};Database={1};{2};",
                 TestConfigurations.Instance.SqlServerName,
                 TestConfigurations.Instance.VarBinaryDatabaseName,
                 TestConfigurations.Instance.SqlServerCredential);
             var connectionString = new ConnectionString(rawConnectionString);
-            _factory = new CustomWebApplicationFactory<Startup>(container =>
+            _factory = new CustomWebApplicationFactory<Startup>(testOutputHelper, configureRhetos: container =>
             {
                 container.Register(context => connectionString).SingleInstance();
             });

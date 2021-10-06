@@ -6,21 +6,22 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhetos.LightDMS.IntegrationTest
 {
     public class DownloadSqlFileStreamTests : IDisposable
     {
-        private static WebApplicationFactory<Startup> _factory;
+        private readonly WebApplicationFactory<Startup> _factory;
 
         private const string _fileName = "DownloadSqlFileStreamTest.txt";
         private readonly Guid _documentVersionId = Guid.NewGuid();
         private readonly string _fileContent = Guid.NewGuid().ToString();
         private readonly Guid _fileContentId = Guid.NewGuid();
 
-        public DownloadSqlFileStreamTests()
+        public DownloadSqlFileStreamTests(ITestOutputHelper testOutputHelper)
         {
-            _factory = new CustomWebApplicationFactory<Startup>();
+            _factory = new CustomWebApplicationFactory<Startup>(testOutputHelper);
             TestDataUtilities.SeedDocumentVersionAndFileContent(_factory,
                 _documentVersionId,
                 _fileContentId,
