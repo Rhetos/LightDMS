@@ -18,7 +18,6 @@
 */
 
 using Amazon.S3.Transfer;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Rhetos.LightDms.Storage;
 using Rhetos.LightDMS.Storage;
 using Rhetos.Logging;
@@ -127,9 +126,9 @@ namespace Rhetos.LightDMS
 
         private async Task UploadStreamToAzure(Stream inputStream, Guid id)
         {
-            var cloudBlobContainer = await _azureStorageClient.GetCloudBlobContainer();
-            CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference("doc-" + id.ToString());
-            await cloudBlockBlob.UploadFromStreamAsync(inputStream);
+            var containerClient = await _azureStorageClient.GetBlobContainerClientAsync();
+            var blobClient = containerClient.GetBlobClient("doc-" + id.ToString());
+            await blobClient.UploadAsync(inputStream);
         }
 
         private async Task UploadStreamToS3(Stream inputStream, Guid id)

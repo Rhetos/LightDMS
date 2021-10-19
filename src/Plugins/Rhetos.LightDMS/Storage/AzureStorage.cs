@@ -17,10 +17,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
+using Azure.Storage.Blobs;
 using Rhetos.LightDMS;
-using System;
 using System.Threading.Tasks;
 
 namespace Rhetos.LightDms.Storage
@@ -36,26 +34,21 @@ namespace Rhetos.LightDms.Storage
             _azureBlobConnectionStringResolver = azureBlobConnectionStringResolver;
         }
 
-        public async Task<CloudBlobContainer> GetCloudBlobContainer()
+        public async Task<BlobContainerClient> GetBlobContainerClientAsync()
         {
             var storageConnectionString = _azureBlobConnectionStringResolver.Resolve();
 
             if (string.IsNullOrEmpty(storageConnectionString))
                 throw new FrameworkException("Azure Blob Storage environment variable missing.");
 
-            if (!CloudStorageAccount.TryParse(storageConnectionString, out CloudStorageAccount storageAccount))
-                throw new FrameworkException("Invalid Azure Blob Storage connection string.");
-
-            CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
             var storageContainerName = _lightDmsOptions.StorageContainer;
             if (string.IsNullOrWhiteSpace(storageContainerName))
                 throw new FrameworkException("Azure blob storage container name is missing from configuration.");
 
-            CloudBlobContainer cloudBlobContainer = cloudBlobClient.GetContainerReference(storageContainerName);
-            if (!await cloudBlobContainer.ExistsAsync())
-                throw new FrameworkException("Azure blob storage container doesn't exist.");
+            var client = new BlobContainerClient(storageConnectionString, storageContainerName);
+            await client.CreateIfNotExistsAsync();
 
-            return cloudBlobContainer;
+            return client;
         }
     }
 }

@@ -5,10 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
     <PackageReference Include="Rhetos" Version="5.0.0-dev*" />
     <PackageReference Include="Rhetos.CommonConcepts" Version="5.0.0-dev*" />
     <PackageReference Include="Rhetos.Host.AspNet" Version="5.0.0-dev*" />
-    <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.1.2" />
   </ItemGroup>
   

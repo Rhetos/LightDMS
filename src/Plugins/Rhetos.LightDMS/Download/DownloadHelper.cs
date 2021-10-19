@@ -21,7 +21,6 @@ using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Rhetos.LightDms.Storage;
 using Rhetos.Logging;
 using Rhetos.Utilities;
@@ -208,20 +207,20 @@ namespace Rhetos.LightDMS
 
         private async Task DownloadFromAzureBlob(Guid fileContentId, Stream outputStream, HttpResponse httpResponse)
         {
-            var cloudBlobContainer = await _azureStorageClient.GetCloudBlobContainer();
+            var containerClient = await _azureStorageClient.GetBlobContainerClientAsync();
+            var blobClient = containerClient.GetBlobClient("doc-" + fileContentId.ToString());
 
-            CloudBlockBlob cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference("doc-" + fileContentId.ToString());
-            if (await cloudBlockBlob.ExistsAsync())
+            if (await blobClient.ExistsAsync())
             {
                 try
                 {
-                    await cloudBlockBlob.FetchAttributesAsync();
+                    var properties = await blobClient.GetPropertiesAsync();
 
                     if (httpResponse != null)
-                        httpResponse.Headers.Add("Content-Length", cloudBlockBlob.Properties.Length.ToString());
+                        httpResponse.Headers.Add("Content-Length", properties.Value.ContentLength.ToString());
 
                     // Downloads directly to outputStream
-                    await cloudBlockBlob.DownloadToStreamAsync(outputStream);
+                    await blobClient.DownloadToAsync(outputStream);
                 }
                 catch (Exception ex)
                 {
