@@ -118,4 +118,9 @@ if (-not ([string]::IsNullOrEmpty($containerId)))
 & dotnet test --no-build
 if ($LastExitCode -ne 0) { throw "dotnet test failed." }
 
+Write-Host 'Test completed, cleaning up test resources ...'
+
 Remove-Item '.\test\Rhetos.LightDMS.TestApp\bin\Debug\net5.0\rhetos-app.local.settings.json'
+docker stop lightdms_s3ninja lightdms_azurite
+
+Write-Host 'Done!'
