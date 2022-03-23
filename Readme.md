@@ -13,7 +13,7 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
    1. [Enable FILESTREAM on your application's database](#enable-filestream-on-your-applications-database)
    2. [Activate FILESTREAM usage in LightDMS](#activate-filestream-usage-in-lightdms)
 3. [Installation and configuration](#installation-and-configuration)
-4. [Building and testing the source code](#building-and-testing-the-source-code)
+4. [How to contribute](#how-to-contribute)
    1. [Build](#build)
    2. [Test](#test)
       1. [Prerequisites](#prerequisites)
@@ -25,7 +25,7 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 ### File web API
 
 LightDMS plugin provides the following web API methods.
-Check out your application's Rhetos dashboard (for example http://localhos:5000/rhetos) for sample code and demonstration of the LightDMS web API.
+Check out your application's Rhetos dashboard (for example <http://localhost:5000/rhetos>) for sample code and demonstration of the LightDMS web API.
 
 Upload:
 
@@ -135,12 +135,17 @@ IF @@TRANCOUNT > 0 ROLLBACK;
 
 ## Installation and configuration
 
-Installing this package to a Rhetos web application:
+Installing this package to a Rhetos application:
 
 1. Add 'Rhetos.LightDMS' NuGet package, available at the [NuGet.org](https://www.nuget.org/) on-line gallery.
 2. Extend Rhetos services configuration (at `services.AddRhetosHost`) with the LightDMS service: `.AddLightDMS()`
 
-## Building and testing the source code
+## How to contribute
+
+Contributions are very welcome. The easiest way is to fork this repo, and then
+make a pull request from your fork. The first time you make a pull request, you
+may be asked to sign a Contributor Agreement.
+For more info see [How to Contribute](https://github.com/Rhetos/Rhetos/wiki/How-to-Contribute) on Rhetos wiki.
 
 ### Build
 
@@ -150,15 +155,13 @@ You don't need to build it from source in order to use it in your application.
 To build the package from source, run `Build.bat`.
 The build output is a NuGet package in the "Install" subfolder.
 
-For contributions guidelines see [How to Contribute](https://github.com/Rhetos/Rhetos/wiki/How-to-Contribute) on Rhetos wiki.
-
 ### Test
 
 #### Prerequisites
 
-- Powershell
-- Docker with Linux container mode (for Azure Blob and S3 Storage emulators)
-- MS SQL Server instance with FILESTREAM enabled
+* PowerShell
+* Docker with Linux container mode (for Azure Blob and S3 Storage emulators)
+* MS SQL Server instance with FILESTREAM enabled
 
 #### Configuration and run test
 
