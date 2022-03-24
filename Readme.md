@@ -9,15 +9,15 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 1. [Features](#features)
    1. [File web API](#file-web-api)
    2. [Storage options](#storage-options)
-2. [Database preparation](#database-preparation)
+2. [Installation and configuration](#installation-and-configuration)
+3. [Database setup](#database-setup)
    1. [Enable FILESTREAM on your application's database](#enable-filestream-on-your-applications-database)
    2. [Activate FILESTREAM usage in LightDMS](#activate-filestream-usage-in-lightdms)
-3. [Installation and configuration](#installation-and-configuration)
 4. [How to contribute](#how-to-contribute)
    1. [Build](#build)
    2. [Test](#test)
       1. [Prerequisites](#prerequisites)
-      2. [Configuration and run test](#configuration-and-run-test)
+      2. [Configure and run test](#configure-and-run-test)
       3. [How it works](#how-it-works)
 
 ## Features
@@ -61,7 +61,36 @@ LightDMS allows the following storage options:
     LightDMS will then download the archived file from Azure.
 4. Document storage with Amazon S3 API (currently download-only)
 
-## Database preparation
+## Installation and configuration
+
+Installing this package to a Rhetos application:
+
+1. Add 'Rhetos.LightDMS' NuGet package, available at the [NuGet.org](https://www.nuget.org/) on-line gallery.
+2. Extend Rhetos services configuration (at `services.AddRhetosHost`) with the LightDMS service: `.AddLightDMS()`
+
+Select storage model for new uploaded files by configuring settings key `Rhetos:LightDMS:UploadTarget`. Set the value to `Database`, `Azure` or `S3`.
+On download, LightDMS will automatically use a storage where each file was uploaded.
+
+To configure the StorageContainer and StorageConnectionVariable use the `Rhetos:LightDMS:StorageContainer` and `Rhetos:LightDMS:StorageConnectionVariable` keys.
+
+Set Azure S3 configuration in section `Rhetos:LightDMS:S3`.
+
+```js
+"Rhetos": {
+  "LightDMS": {
+    "S3": {
+      "Key": "S3 Secret Key",
+      "AccessKeyID": "S3 Access Key",
+      "ServiceURL": "S3 Service url",
+      "BucketName": "S3 Bucket",
+      "DestinationFolder": "Optional folder of files",
+      "ForcePathStyle": true // if your bucket is url path not on subdomain
+    }
+  }
+}
+```
+
+## Database setup
 
 ### Enable FILESTREAM on your application's database
 
@@ -133,13 +162,6 @@ GO
 IF @@TRANCOUNT > 0 ROLLBACK;
 ```
 
-## Installation and configuration
-
-Installing this package to a Rhetos application:
-
-1. Add 'Rhetos.LightDMS' NuGet package, available at the [NuGet.org](https://www.nuget.org/) on-line gallery.
-2. Extend Rhetos services configuration (at `services.AddRhetosHost`) with the LightDMS service: `.AddLightDMS()`
-
 ## How to contribute
 
 Contributions are very welcome. The easiest way is to fork this repo, and then
@@ -163,7 +185,7 @@ The build output is a NuGet package in the "Install" subfolder.
 * Docker with Linux container mode (for Azure Blob and S3 Storage emulators)
 * MS SQL Server instance with FILESTREAM enabled
 
-#### Configuration and run test
+#### Configure and run test
 
 1. Enable FileStream on the test SQL Server instance -
    SQL Server Configuration Manager [Steps](https://msdn.microsoft.com/en-us/library/cc645923.aspx)

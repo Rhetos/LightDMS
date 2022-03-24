@@ -8,7 +8,7 @@
 * Removed MimeTypeHelper class. Use the Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider class instead.
 * To configure the StorageContainer and StorageConnectionVariable use the `Rhetos:LightDMS:StorageContainer` and `Rhetos:LightDMS:StorageConnectionVariable` keys.
 * Azure S3 configuration settings are read from configuration section `Rhetos:LightDMS:S3` instead of `LightDMS:S3`.
-```json
+  ```json
   "Rhetos": {
     "LightDMS": {
       "S3": {
@@ -21,7 +21,12 @@
       }
     }
   }
-```
+  ```
+
+### New features
+
+* Implemented option to directly upload to Azure or S3 storage;
+  In app settings set `Rhetos:LightDMS:UploadTarget` value to `Database`, `Azure` or `S3`.
 
 ## 1.9.0 (2021-07-05)
 
