@@ -12,6 +12,7 @@
     <copyright>Copyright Omega software 2016</copyright>
     <tags>Rhetos plugin</tags>
     <dependencies>
+      <dependency id="Azure.Storage.Blobs" version="12.10.0" />
       <dependency id="Rhetos.AfterDeploy" version="5.0.0" />
       <dependency id="Rhetos.CommonConcepts" version="5.0.0" />
       <dependency id="Rhetos.Host.AspNet" version="5.0.0" />
