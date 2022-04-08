@@ -1,4 +1,8 @@
-# LightDMS release notes
+# Rhetos.LightDMS release notes
+
+## 5.1.0 (2022-04-08)
+
+* Bugfix: Missing NuGet dependency on Azure.Storage.Blobs.
 
 ## 5.0.0 (2022-03-25)
 
