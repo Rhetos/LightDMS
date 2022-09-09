@@ -1,5 +1,10 @@
 # Rhetos.LightDMS release notes
 
+## 5.2.0 (TO BE RELEASED)
+
+* Updated Azure.Storage.Blobs dependency.
+  Note that Azure.RequestFailedException might occur on testing if the old version of Azurite container is used.
+
 ## 5.1.0 (2022-04-08)
 
 * Bugfix: Missing NuGet dependency on Azure.Storage.Blobs.
