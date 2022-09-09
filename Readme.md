@@ -24,27 +24,29 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 
 ### File web API
 
+Examples in this article will assume that your application's base URI is `https://localhost:5000`.
+
 LightDMS plugin provides the following web API methods.
-Check out your application's Rhetos dashboard (for example <http://localhost:5000/rhetos>) for sample code and demonstration of the LightDMS web API.
+Check out your application's Rhetos dashboard (for example <https://localhost:5000/rhetos>) for sample code and demonstration of the LightDMS web API.
 
 Upload:
 
-* Uploading a file: `<RhetosSite>/LightDMS/Upload`
-  * Example format `http://localhost/Rhetos/LightDMS/Upload/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
+* Uploading a file: `<baseURI>/LightDMS/Upload`
+  * Example format `https://localhost:5000/LightDMS/Upload/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
   * Response contains file content ID. Note that one LightDMS document may be related to many files, one for each version of the document.
 
 Download:
 
-* Downloading a file with given **file content ID**: HTTP GET `<RhetosSite>/LightDMS/DownloadPreview/{{ID}}?filename={{filename}}`
+* Downloading a file with given **file content ID**: HTTP GET `<baseURI>/LightDMS/DownloadPreview/{{ID}}?filename={{filename}}`
   * The *ID* parameter is GUID formatted file content ID.
   * The *filename* query parameter is a name that the browser will offer to the user when saving the downloaded file.
-  * Example format `http://localhost/Rhetos/LightDMS/DownloadPreview/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D?filename=somefile.txt`
-  * Parametrized format `http://localhost/Rhetos/LightDMS/DownloadPreview?id=8EF65043-2E2A-424D-B76F-4DAA5A48CB3D&filename=somefile.txt` (since 1.8.0)
+  * Example format `https://localhost:5000/LightDMS/DownloadPreview/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D?filename=somefile.txt`
+  * Parametrized format `https://localhost:5000/LightDMS/DownloadPreview?id=8EF65043-2E2A-424D-B76F-4DAA5A48CB3D&filename=somefile.txt` (since 1.8.0)
 
-* Downloading a file with given **document version ID**: HTTP GET `<RhetosSite>/LightDMS/Download/{{ID}}`
+* Downloading a file with given **document version ID**: HTTP GET `<baseURI>/LightDMS/Download/{{ID}}`
   * The *ID* parameter is GUID formatted document version ID.
-  * Example format `http://localhost/Rhetos/LightDMS/Download/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
-  * Parametrized format `http://localhost/Rhetos/LightDMS/Download?id=8EF65043-2E2A-424D-B76F-4DAA5A48CB3D` (since 1.8.0)
+  * Example format `https://localhost:5000/LightDMS/Download/8EF65043-2E2A-424D-B76F-4DAA5A48CB3D`
+  * Parametrized format `https://localhost:5000/LightDMS/Download?id=8EF65043-2E2A-424D-B76F-4DAA5A48CB3D` (since 1.8.0)
 
 ### Storage options
 
