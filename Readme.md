@@ -10,15 +10,16 @@ See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
    1. [File web API](#file-web-api)
    2. [Storage options](#storage-options)
 2. [Installation and configuration](#installation-and-configuration)
-3. [Database setup](#database-setup)
-   1. [Enable FILESTREAM on your application's database](#enable-filestream-on-your-applications-database)
-   2. [Activate FILESTREAM usage in LightDMS](#activate-filestream-usage-in-lightdms)
+3. [Optimize database storage with FILESTREAM](#optimize-database-storage-with-filestream)
+   1. [1. Enable FILESTREAM on your application's database](#1-enable-filestream-on-your-applications-database)
+   2. [2. Activate FILESTREAM usage in LightDMS](#2-activate-filestream-usage-in-lightdms)
+   3. [3. Database cleanup after dbupdate](#3-database-cleanup-after-dbupdate)
 4. [How to contribute](#how-to-contribute)
    1. [Build](#build)
    2. [Test](#test)
       1. [Prerequisites](#prerequisites)
       2. [Configure and run test](#configure-and-run-test)
-      3. [How it works](#how-it-works)
+      3. [How testing works](#how-testing-works)
 
 ## Features
 
@@ -92,9 +93,11 @@ Set Azure S3 configuration in section `Rhetos:LightDMS:S3`.
 }
 ```
 
-## Database setup
+## Optimize database storage with FILESTREAM
 
-### Enable FILESTREAM on your application's database
+When using **database** storage, instead of Azure BLOG storage or Amazon S3, is it advised to optimize your database by enabling FILESTREAM storage for files:
+
+### 1. Enable FILESTREAM on your application's database
 
 1. Enable FileStream on SQL Server instance -
    SQL Server Configuration Manager [Steps](https://msdn.microsoft.com/en-us/library/cc645923.aspx)
@@ -129,13 +132,17 @@ Set Azure S3 configuration in section `Rhetos:LightDMS:S3`.
     DROP TABLE dbo.Test_FS;
     ```
 
-### Activate FILESTREAM usage in LightDMS
+### 2. Activate FILESTREAM usage in LightDMS
 
-Option A:
+**Option A:**
+
 If you have enabled FILESTREAM on your database, it will **automatically** be used by LightDMS
-**after the next execution of *DeployPackages.exe***.
+on the **next deployment** of the Rhetos app.
 
-Option B:
+Instead of the full deployment, you can execute `DeployPackages.exe` or `rhetos.exe dbupdate`.
+
+**Option B:**
+
 If you have already executed *DeployPackages.exe* to deploy LightDMS package before enabling FILESTREAM on the database,
 and you do not want to execute *DeployPackages.exe* again,
 the FILESTREAM usage in LightDMS can be activated by running the following SQL script on the database:
@@ -162,6 +169,33 @@ IF @Error > 0 OR @@ERROR > 0 RETURN;
 COMMIT;
 GO
 IF @@TRANCOUNT > 0 ROLLBACK;
+```
+
+### 3. Database cleanup after dbupdate
+
+If your application have **used simple database storage before enabling FILESTREAM**, and it already contains
+some files in the database, your should execute this cleanup script to reclaim the old file storage space.
+
+**After** the Rhetos app deployment (rhetos dbupdate), execute the following SQL script to clean up database:
+
+```SQL
+-- Reclaims space from dropped variable-length columns in tables,
+-- after migrating old varbinary(max) column to FILESTREAM
+-- and dropping the old column.
+IF
+    -- Check if FILESTREAM is applied to this table.
+    (SELECT is_filestream FROM sys.columns WHERE object_id = OBJECT_ID('LightDMS.FileContent') and name = 'Content')
+        = 1
+    AND
+    -- Check if there is still some BLOB space used by this table.
+    -- It should be 0 because filestream keeps data separately.
+    (SELECT page_count
+    FROM sys.dm_db_index_physical_stats(DB_ID(), OBJECT_ID('LightDMS.FileContent'), NULL, NULL , 'Detailed')
+    WHERE alloc_unit_type_desc = 'LOB_DATA')
+        > 0
+BEGIN
+    DBCC CLEANTABLE (0, 'LightDMS.FileContent', 1000);
+END
 ```
 
 ## How to contribute
@@ -223,7 +257,7 @@ The build output is a NuGet package in the "Install" subfolder.
     powershell .\Test.ps1
     ```
 
-#### How it works
+#### How testing works
 
 1. `Test.ps1` interacts with SQL databases and storage emulators to prepare necessary file contents
 2. `Test.ps1` interacts with `TestApp` via `WebApplicationFactory` to perform assertions. Learn more about integration test with ASP.NET Core at: <https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-5.0>
