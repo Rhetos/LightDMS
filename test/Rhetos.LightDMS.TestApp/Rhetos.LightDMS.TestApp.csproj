@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Plugins\Rhetos.LightDMS\Rhetos.LightDMS.csproj" />
+    <ProjectReference Include="..\..\src\Rhetos.LightDMS\Rhetos.LightDMS.csproj" />
     <PackageReference Include="Rhetos.Host" Version="5.0.0" />
     <PackageReference Include="Rhetos.Host.AspNet" Version="5.0.0" />
     <PackageReference Include="Rhetos.CommonConcepts" Version="5.0.0" />
@@ -28,21 +28,21 @@
 
   <Target Name="CopyDslScripts" BeforeTargets="ResolveRhetosBuildItems">
     <ItemGroup>
-      <LightDMSDslScripts Include="..\..\src\DslScripts\**\*" />
+      <LightDMSDslScripts Include="..\..\src\Rhetos.LightDMS\DslScripts\**\*" />
     </ItemGroup>
     <Copy SourceFiles="@(LightDMSDslScripts)" DestinationFolder="DslScripts\LightDMS" SkipUnchangedFiles="true" />
   </Target>
 
   <Target Name="CopyAfterDeploy" BeforeTargets="ResolveRhetosBuildItems">
     <ItemGroup>
-      <LightDMSAfterDeploy Include="..\..\src\AfterDeploy\**\*" />
+      <LightDMSAfterDeploy Include="..\..\src\Rhetos.LightDMS\AfterDeploy\**\*" />
     </ItemGroup>
     <Copy SourceFiles="@(LightDMSAfterDeploy)" DestinationFolder="AfterDeploy" SkipUnchangedFiles="true" />
   </Target>
 
   <Target Name="CopyDataMigration" BeforeTargets="ResolveRhetosBuildItems">
     <ItemGroup>
-      <LightDMSDataMigration Include="..\..\src\DataMigration\**\*" />
+      <LightDMSDataMigration Include="..\..\src\Rhetos.LightDMS\DataMigration\**\*" />
     </ItemGroup>
     <Copy SourceFiles="@(LightDMSDataMigration)" DestinationFolder="DataMigration" SkipUnchangedFiles="true" />
   </Target>

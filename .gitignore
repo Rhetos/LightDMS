@@ -239,3 +239,6 @@ _Pvt_Extensions
 # Project-specific
 rhetos-app.local.settings.json
 /test-config.json
+/test/Rhetos.LightDMS.TestApp/AfterDeploy
+/test/Rhetos.LightDMS.TestApp/DslScripts/LightDMS
+/test/Rhetos.LightDMS.TestApp/DataMigration

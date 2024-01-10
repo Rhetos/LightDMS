@@ -18,7 +18,7 @@
 		
 		SaveMethod
 		{
-			Initialization 'DeadlockPrevention' <DeadlockPrevention.cs>;
+			Initialization 'DeadlockPrevention' <DeadlockPrevention.cssnippet>;
 		}
 		
 		ComposableFilterBy OtherUserDocumentCheckIn

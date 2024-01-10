@@ -81,9 +81,9 @@
 		Bool IsCheckout;
 		Reference LastVersion LightDMS.DocumentVersion;
 
-		ChangesOnChangedItems LightDMS.DocumentVersion 'Guid[]' <ComputeDocumentStatusSync.cs>;
-		ChangesOnChangedItems LightDMS.Checkout 'Guid[]' <ComputeDocumentStatusSync.cs>;
-		ChangesOnChangedItems LightDMS.UndoCheckout 'Guid[]' <ComputeDocumentStatusSync.cs>;
+		ChangesOnChangedItems LightDMS.DocumentVersion 'Guid[]' <ComputeDocumentStatusSync.cssnippet>;
+		ChangesOnChangedItems LightDMS.Checkout 'Guid[]' <ComputeDocumentStatusSync.cssnippet>;
+		ChangesOnChangedItems LightDMS.UndoCheckout 'Guid[]' <ComputeDocumentStatusSync.cssnippet>;
 	}
 	
 	Entity DocumentStatus

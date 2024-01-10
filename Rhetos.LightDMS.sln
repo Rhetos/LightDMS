@@ -15,7 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Test.ps1 = Test.ps1
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rhetos.LightDMS", "src\Plugins\Rhetos.LightDMS\Rhetos.LightDMS.csproj", "{94DD3043-0BC2-461D-A1D6-F50B4B5F68F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rhetos.LightDMS", "src\Rhetos.LightDMS\Rhetos.LightDMS.csproj", "{94DD3043-0BC2-461D-A1D6-F50B4B5F68F0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rhetos.LightDMS.IntegrationTest", "test\Rhetos.LightDMS.IntegrationTest\Rhetos.LightDMS.IntegrationTest.csproj", "{32BCC7CE-B5F5-4746-9281-0FB2FC65424D}"
 EndProject

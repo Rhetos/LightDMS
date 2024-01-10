@@ -1,0 +1,1 @@
+changedItems => changedItems.Where(item => item.DocumentID.HasValue).Select(item => item.DocumentID.Value).Distinct().ToArray()
