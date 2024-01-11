@@ -1,8 +1,9 @@
 # LightDMS
 
-LightDMS is a light document version system implementation plugin for [Rhetos development platform](https://github.com/Rhetos/Rhetos).
-It automatically creates DocumentVersion and other entities for managing documents (and their version) in Rhetos based solutions.
-Aside entities, versioning, it also exposes additional web interface for uploading/downloading files.
+LightDMS is a lightweight document storage and versioning plugin for [Rhetos development platform](https://github.com/Rhetos/Rhetos).
+
+- It supports different storage methods: (MS SQL table, MS SQL filestream, S3 storage, Azure BLOB storage).
+- It provides web API for upload, download and document versioning.
 
 See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
 
@@ -225,6 +226,9 @@ The build output is a NuGet package in the "Install" subfolder.
 
 1. Enable FileStream on the test SQL Server instance -
    SQL Server Configuration Manager [Steps](https://msdn.microsoft.com/en-us/library/cc645923.aspx)
+   - For unit tests, all 3 checkboxes must be enabled.
+   - Do not create the test database manually (delete it if not configured properly).
+     It will be created by the test scripts.
 
 2. Create and configure test settings file `.\test-config.json`, with the following content.
    Enter two database names that do not already exist on the test SQL Server.
