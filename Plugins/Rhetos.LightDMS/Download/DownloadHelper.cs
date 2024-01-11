@@ -236,6 +236,10 @@ namespace Rhetos.LightDMS
 
         private void DownloadFromS3(FileMetadata fileMetadata, HttpContext context)
         {
+            string certificateSubject =
+                System.Configuration.ConfigurationManager.AppSettings.Get("LightDms.S3.CertificateSubject")
+                ?? "gov.hr";
+
             ServicePointManager.ServerCertificateValidationCallback +=
                     delegate (
                         object sender,
@@ -243,7 +247,7 @@ namespace Rhetos.LightDMS
                         X509Chain chain,
                         SslPolicyErrors sslPolicyErrors)
                     {
-                        if (certificate.Subject.IndexOf("ssc.gov.hr") > -1)
+                        if (certificate.Subject.IndexOf(certificateSubject) > -1)
                             return true;
                         return sslPolicyErrors == SslPolicyErrors.None;
                     };
