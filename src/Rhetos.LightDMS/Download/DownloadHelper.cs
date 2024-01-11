@@ -309,7 +309,7 @@ namespace Rhetos.LightDMS
             _contentTypeProvider.TryGetContentType(fileName, out string contentType);
             context.Response.ContentType = contentType;
             // Using HttpUtility.UrlPathEncode instead of HttpUtility.UrlEncode or Uri.EscapeDataString because it correctly encodes SPACE and special characters.
-            context.Response.Headers.Add("Content-Disposition", "attachment; filename*=UTF-8''" + HttpUtility.UrlPathEncode(fileName) + "");
+            context.Response.Headers.Add("Content-Disposition", "attachment; filename*=UTF-8''\"" + HttpUtility.UrlPathEncode(fileName) + "\"");
             context.Response.StatusCode = (int)HttpStatusCode.OK;
             context.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
         }
