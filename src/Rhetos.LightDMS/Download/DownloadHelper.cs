@@ -308,8 +308,9 @@ namespace Rhetos.LightDMS
         {
             _contentTypeProvider.TryGetContentType(fileName, out string contentType);
             context.Response.ContentType = contentType;
-            // Using HttpUtility.UrlPathEncode instead of HttpUtility.UrlEncode or Uri.EscapeDataString because it correctly encodes SPACE and special characters.
-            context.Response.Headers.Add("Content-Disposition", "attachment; filename*=UTF-8''\"" + HttpUtility.UrlPathEncode(fileName) + "\"");
+            // RFC 5987 https://datatracker.ietf.org/doc/html/rfc5987 specifies the usage of "UTF-8''" prefix and the character encoding, see "Inside the value part, characters not contained in attr-char are encoded".
+            // See also https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition on general usage of "filename" and "filename*" parameters.
+            context.Response.Headers.Add("Content-Disposition", "attachment; filename*=UTF-8''" + EscapeFilename(fileName) + "");
             context.Response.StatusCode = (int)HttpStatusCode.OK;
             context.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
         }
@@ -321,6 +322,13 @@ namespace Rhetos.LightDMS
                 return id;
             else
                 return null;
+        }
+
+        public static string EscapeFilename(string fileName)
+        {
+            //HttpUtility.UrlPathEncode(fileName) does not escape special characters required by RFC 5987. Issues with comma character in the filename.
+            //HttpUtility.UrlEncode(fileName) does not escape space by RFC 5987. Does not escape some special characters.
+            return Uri.EscapeDataString(fileName);
         }
     }
 }

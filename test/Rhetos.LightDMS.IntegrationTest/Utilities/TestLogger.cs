@@ -39,7 +39,8 @@ namespace Rhetos.LightDMS.IntegrationTest
 
         public void Write(EventType eventType, Func<string> logMessage)
         {
-            _testOutput.WriteLine($"[{eventType}] {_eventName}: {CsUtility.Limit(logMessage(), 50000, true)}");
+            if (eventType >= EventType.Info)
+                _testOutput.WriteLine($"[{eventType}] {_eventName}: {CsUtility.Limit(logMessage(), 50000, true)}");
         }
     }
 }
