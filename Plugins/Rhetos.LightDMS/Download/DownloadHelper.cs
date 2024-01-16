@@ -311,7 +311,7 @@ namespace Rhetos.LightDMS
         {
             context.Response.ContentType = MimeMapping.GetMimeMapping(fileName);
             // Koristiti HttpUtility.UrlPathEncode umjesto HttpUtility.UrlEncode ili Uri.EscapeDataString jer drugačije handlea SPACE i specijalne znakove
-            context.Response.Headers.Add("Content-Disposition", "attachment; filename*=UTF-8''\"" + HttpUtility.UrlPathEncode(fileName) + "\"");
+            context.Response.AddHeader("Content-Disposition", "attachment; filename*=UTF-8''" + HttpUtility.UrlPathEncode(fileName) + "");
             context.Response.StatusCode = (int)HttpStatusCode.OK;
             context.Response.BufferOutput = false;
         }
