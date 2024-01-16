@@ -6,8 +6,8 @@
 
 		Reference Repository LightDMS.DocumentRepository; 
 		Guid DocumentID;
-		Reference CreatedBy Common.Principal { SystemRequired; CreatedBy; }
-		DateTime CreatedDate { DenyUserEdit; CreationTime; SystemRequired; }
+		Reference CreatedBy Common.Principal { CreatedBy; SystemRequired; DenyUserEdit; }
+		DateTime CreatedDate { CreationTime; SystemRequired; DenyUserEdit; }
 		LongString Comment;
 
 		Is LightDMS.DocumentEvent;
