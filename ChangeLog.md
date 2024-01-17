@@ -1,5 +1,10 @@
 # LightDMS release notes
 
+## 1.10.0 (2024-01-17)
+
+* Configurable Azure S3 storage option "LightDms.S3.CertificateSubject", instead of the hardcoded value.
+  The default value is backward compatible.
+
 ## 1.9.0 (2021-07-05)
 
 ### New features
