@@ -11,15 +11,15 @@
     <copyright>Copyright Omega software 2016</copyright>
     <tags>Rhetos plugin</tags>
     <dependencies>
-      <dependency id="Azure.Storage.Blobs" version="12.15.0" />
+      <dependency id="Azure.Storage.Blobs" version="12.19.1" />
       <dependency id="Rhetos.AfterDeploy" version="5.0.0" />
-      <dependency id="Rhetos.CommonConcepts" version="5.0.0" />
-      <dependency id="Rhetos.Host.AspNet" version="5.0.0" />
+      <dependency id="Rhetos.CommonConcepts" version="6.0.0-dev24011711054c6feb" />
+      <dependency id="Rhetos.Host.AspNet" version="6.0.0-dev24011711054c6feb" />
       <dependency id="WindowsAzure.Storage" version="9.3.3" />
-      <dependency id="AWSSDK.S3" version="3.7.1.2" />
+      <dependency id="AWSSDK.S3" version="3.7.305.12" />
     </dependencies>
     <frameworkReferences>
-      <group targetFramework="net5.0">
+      <group targetFramework="net8.0">
         <frameworkReference name="Microsoft.AspNetCore.App" />
       </group>
     </frameworkReferences>
@@ -30,7 +30,7 @@
     <file src="src\Rhetos.LightDMS\AfterDeploy\**\*" target="AfterDeploy" />
     <file src="src\Rhetos.LightDMS\DataMigration\**\*" target="DataMigration" />
     <file src="src\Rhetos.LightDMS\DslScripts\**\*" target="DslScripts" />
-    <file src="src\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.dll" target="lib\net5.0" />
-    <file src="src\Rhetos.LightDMS\bin\Debug\net5.0\Rhetos.LightDMS.pdb" target="lib\net5.0" />
+    <file src="src\Rhetos.LightDMS\bin\Debug\net8.0\Rhetos.LightDMS.dll" target="lib\net8.0" />
+    <file src="src\Rhetos.LightDMS\bin\Debug\net8.0\Rhetos.LightDMS.pdb" target="lib\net8.0" />
   </files>
 </package>

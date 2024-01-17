@@ -1,15 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.15.0" />
-    <PackageReference Include="Rhetos" Version="5.0.0" />
-    <PackageReference Include="Rhetos.CommonConcepts" Version="5.0.0" />
-    <PackageReference Include="Rhetos.Host.AspNet" Version="5.0.0" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.1.2" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
+    <PackageReference Include="Rhetos" Version="6.0.0-dev24011711054c6feb" />
+    <PackageReference Include="Rhetos.CommonConcepts" Version="6.0.0-dev24011711054c6feb" />
+    <PackageReference Include="Rhetos.MsSqlEf6" Version="6.0.0-dev24011711054c6feb" />
+    <PackageReference Include="Rhetos.Host.AspNet" Version="6.0.0-dev24011711054c6feb" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.305.12" />
   </ItemGroup>
   
   <ItemGroup>

@@ -67,7 +67,7 @@ namespace Rhetos.LightDMS.IntegrationTest
 
         private void ConfigureRhetos(IServiceProvider serviceProvider, IRhetosHostBuilder rhetosHostBuilder)
         {
-            var rootPath = Path.Combine("..", "..", "..", "..", "Rhetos.LightDMS.TestApp", "bin", "Debug", "net5.0");
+            var rootPath = Path.Combine("..", "..", "..", "..", "Rhetos.LightDMS.TestApp", "bin", "Debug", "net8.0");
             rhetosHostBuilder.UseRootFolder(rootPath);
             rhetosHostBuilder.ConfigureContainer(_rhetosContainerBuilder);
             rhetosHostBuilder.UseBuilderLogProvider(_logProvider);
