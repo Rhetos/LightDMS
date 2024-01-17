@@ -15,7 +15,6 @@
       <dependency id="Rhetos.AfterDeploy" version="5.0.0" />
       <dependency id="Rhetos.CommonConcepts" version="6.0.0-dev24011711054c6feb" />
       <dependency id="Rhetos.Host.AspNet" version="6.0.0-dev24011711054c6feb" />
-      <dependency id="WindowsAzure.Storage" version="9.3.3" />
       <dependency id="AWSSDK.S3" version="3.7.305.12" />
     </dependencies>
     <frameworkReferences>
