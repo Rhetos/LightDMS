@@ -37,6 +37,13 @@
 * Implemented option to directly upload to Azure or S3 storage;
   In app settings set `Rhetos:LightDMS:UploadTarget` value to `Database`, `Azure` or `S3`.
 
+## 1.10.0 (2024-01-17)
+
+(The following changes as not available in releases v5.0 - v5.2. They are included in 5.3.0 and later.)
+
+* Configurable Azure S3 storage option "LightDms.S3.CertificateSubject", instead of the hardcoded value.
+  The default value is backward compatible.
+
 ## 1.9.0 (2021-07-05)
 
 ### New features
