@@ -1,5 +1,9 @@
 # Rhetos.LightDMS release notes
 
+## 5.3.0 (2024-01-17)
+
+* Bugfix: Download fails if the filename contains a comma character.
+
 ## 5.2.0 (2023-03-16)
 
 * Updated Azure.Storage.Blobs dependency.
