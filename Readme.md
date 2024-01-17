@@ -88,6 +88,7 @@ Set Azure S3 configuration in section `Rhetos:LightDMS:S3`.
       "ServiceURL": "S3 Service url",
       "BucketName": "S3 Bucket",
       "DestinationFolder": "Optional folder of files",
+      "CertificateSubject": "S3 CertificateSubject",
       "ForcePathStyle": true // if your bucket is url path not on subdomain
     }
   }
