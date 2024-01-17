@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Rhetos.LightDMS\Rhetos.LightDMS.csproj" />
-	<PackageReference Include="Rhetos.AfterDeploy" Version="6.0.0-dev24011717272b30776" />
+    <PackageReference Include="Rhetos.AfterDeploy" Version="6.0.0-dev24011717272b30776" />
     <PackageReference Include="Rhetos.Host" Version="6.0.0-dev24011711054c6feb" />
     <PackageReference Include="Rhetos.Host.AspNet" Version="6.0.0-dev24011711054c6feb" />
     <PackageReference Include="Rhetos.CommonConcepts" Version="6.0.0-dev24011711054c6feb" />
