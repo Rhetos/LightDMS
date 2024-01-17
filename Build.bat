@@ -1,5 +1,5 @@
 SETLOCAL
-SET Version=1.10.0
+SET Version=1.11.0
 SET Prerelease=auto
 
 CALL Tools\Build\FindVisualStudio.bat || GOTO Error0
