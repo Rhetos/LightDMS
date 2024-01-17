@@ -95,7 +95,7 @@ namespace Rhetos.LightDMS
 
         private async Task Download(FileMetadata fileDownloadMetadata, HttpContext context, Stream stream)
         {
-            context.Response.Headers.Add("Content-Length", fileDownloadMetadata.Size.ToString());
+            context.Response.Headers.Append("Content-Length", fileDownloadMetadata.Size.ToString());
 
             var buffer = new byte[BUFFER_SIZE];
             int bytesRead;
@@ -217,7 +217,7 @@ namespace Rhetos.LightDMS
                     var properties = await blobClient.GetPropertiesAsync();
 
                     if (httpResponse != null)
-                        httpResponse.Headers.Add("Content-Length", properties.Value.ContentLength.ToString());
+                        httpResponse.Headers.Append("Content-Length", properties.Value.ContentLength.ToString());
 
                     // Downloads directly to outputStream
                     await blobClient.DownloadToAsync(outputStream);
@@ -310,7 +310,7 @@ namespace Rhetos.LightDMS
             context.Response.ContentType = contentType;
             // RFC 5987 https://datatracker.ietf.org/doc/html/rfc5987 specifies the usage of "UTF-8''" prefix and the character encoding, see "Inside the value part, characters not contained in attr-char are encoded".
             // See also https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition on general usage of "filename" and "filename*" parameters.
-            context.Response.Headers.Add("Content-Disposition", "attachment; filename*=UTF-8''" + EscapeFilename(fileName) + "");
+            context.Response.Headers.Append("Content-Disposition", "attachment; filename*=UTF-8''" + EscapeFilename(fileName) + "");
             context.Response.StatusCode = (int)HttpStatusCode.OK;
             context.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
         }
