@@ -11,11 +11,13 @@
     <copyright>Copyright Omega software 2016</copyright>
     <tags>Rhetos plugin</tags>
     <dependencies>
-      <dependency id="Azure.Storage.Blobs" version="12.19.1" />
-      <dependency id="Rhetos.AfterDeploy" version="6.0.0-dev24011717272b30776" />
-      <dependency id="Rhetos.CommonConcepts" version="6.0.0-dev24011711054c6feb" />
-      <dependency id="Rhetos.Host.AspNet" version="6.0.0-dev24011711054c6feb" />
-      <dependency id="AWSSDK.S3" version="3.7.305.12" />
+      <group targetFramework="net8.0">
+        <dependency id="Azure.Storage.Blobs" version="12.19.1" />
+        <dependency id="Rhetos.AfterDeploy" version="6.0.0-dev24011717272b30776" />
+        <dependency id="Rhetos.CommonConcepts" version="6.0.0-dev24011711054c6feb" />
+        <dependency id="Rhetos.Host.AspNet" version="6.0.0-dev24011711054c6feb" />
+        <dependency id="AWSSDK.S3" version="3.7.305.12" />
+      </group>
     </dependencies>
     <frameworkReferences>
       <group targetFramework="net8.0">
