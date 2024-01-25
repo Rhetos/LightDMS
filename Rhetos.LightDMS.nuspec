@@ -5,7 +5,7 @@
     <version>6.0.0-dev</version>
     <authors>Omega software</authors>
     <owners>Omega software</owners>
-    <licenseUrl>http://opensource.org/licenses/AGPL-3.0</licenseUrl>
+    <license type="expression">AGPL-3.0-only</license>
     <projectUrl>https://github.com/rhetos/rhetos</projectUrl>
     <description>LightDMS is a lightweight document storage and versioning plugin for Rhetos development platform.</description>
     <copyright>Copyright Omega software 2016</copyright>
