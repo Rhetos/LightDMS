@@ -18,7 +18,6 @@
 */
 
 using Amazon.S3.Transfer;
-using Rhetos.LightDms.Storage;
 using Rhetos.LightDMS.Storage;
 using Rhetos.Logging;
 using Rhetos.Utilities;
@@ -40,25 +39,16 @@ namespace Rhetos.LightDMS
     {
         private readonly ILogger _performanceLogger;
         private readonly ConnectionString _connectionString;
-        private readonly LightDmsOptions _lightDmsOptions;
-        private readonly S3Options _s3Options;
-        private readonly AzureStorageClient _azureStorageClient;
-        private readonly S3StorageClient _s3StorageClient;
+        private readonly IStorageProvider _storageProvider;
 
         public UploadHelper(
             ILogProvider logProvider, 
             ConnectionString connectionString, 
-            LightDmsOptions lightDmsOptions, 
-            S3Options s3Options,
-            AzureStorageClient azureStorageClient,
-            S3StorageClient s3StorageClient)
+            IStorageProvider storageProvider)
         {
             _performanceLogger = logProvider.GetLogger("Performance.LightDMS");
             _connectionString = connectionString;
-            _lightDmsOptions = lightDmsOptions;
-            _s3Options = s3Options;
-            _azureStorageClient = azureStorageClient;
-            _s3StorageClient = s3StorageClient;
+            _storageProvider = storageProvider;
         }
 
         public async Task<FileUploadResult> UploadStream(Stream inputStream)
@@ -70,19 +60,13 @@ namespace Rhetos.LightDMS
             sqlConnection.Open();
             SqlTransaction sqlTransaction = null;
 
-            bool isS3 = _lightDmsOptions.UploadTarget == UploadTarget.S3;
-            bool isAzure = _lightDmsOptions.UploadTarget == UploadTarget.Azure;
             try
             {
                 sqlTransaction = sqlConnection.BeginTransaction(IsolationLevel.ReadUncommitted);
-                InsertEmptyFileContent(id, sqlTransaction, isS3, isAzure);
+                InsertEmptyFileContent(id, sqlTransaction, _storageProvider is S3StorageClient, _storageProvider is AzureStorageClient);
 
-                if (_lightDmsOptions.UploadTarget == UploadTarget.S3)
-                    await UploadStreamToS3(inputStream, id);
-                else if (_lightDmsOptions.UploadTarget == UploadTarget.Azure)
-                    await UploadStreamToAzure(inputStream, id);
-                else
-                    await UploadStreamToDatabase(inputStream, id, sqlConnection, sqlTransaction);
+                if(_storageProvider is DatabaseStorage) await UploadStreamToDatabase(inputStream, id, sqlConnection, sqlTransaction);
+                else await _storageProvider.UploadStream(inputStream, id);
 
                 sqlTransaction.Commit();
                 sqlConnection.Close();
@@ -122,47 +106,6 @@ namespace Rhetos.LightDMS
             string createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             SqlCommand createEmptyFileContent = new SqlCommand("INSERT INTO LightDMS.FileContent(ID, [Content], [CreatedDate], [AzureStorage], [S3Storage]) VALUES('" + fileContentId + "', 0x0, '" + createdDate + "', " + (isAzure ? 1 : 0) + ", " + (isS3 ? 1 : 0) + ")", sqlTransaction.Connection, sqlTransaction);
             createEmptyFileContent.ExecuteNonQuery();
-        }
-
-        private async Task UploadStreamToAzure(Stream inputStream, Guid id)
-        {
-            var containerClient = await _azureStorageClient.GetBlobContainerClientAsync();
-            var blobClient = containerClient.GetBlobClient("doc-" + id.ToString());
-            await blobClient.UploadAsync(inputStream);
-        }
-
-        private async Task UploadStreamToS3(Stream inputStream, Guid id)
-        {
-            if (!string.IsNullOrEmpty(_s3Options.CertificateSubject))
-            {
-                ServicePointManager.ServerCertificateValidationCallback +=
-                    delegate (
-                        object ssender,
-                        X509Certificate certificate,
-                        X509Chain chain,
-                        SslPolicyErrors sslPolicyErrors)
-                    {
-                        if (certificate.Subject.IndexOf(_s3Options.CertificateSubject) > -1)
-                            return true;
-                        return sslPolicyErrors == SslPolicyErrors.None;
-                    };
-            }
-            
-            using (var client = _s3StorageClient.GetAmazonS3Client())
-            {
-                using (var transferUtility = new TransferUtility(client))
-                {
-                    var s3Folder = _s3Options.DestinationFolder;
-                    var req = new TransferUtilityUploadRequest
-                    {
-                        BucketName = _s3Options.BucketName
-                    };
-                    var fileName = s3Folder + "/doc-" + id.ToString();
-                    req.Key = fileName;
-                    req.InputStream = inputStream;
-                    await transferUtility.UploadAsync(req);
-                }
-            }
         }
 
         private static async Task UploadStreamToDatabase(Stream inputStream, Guid id, SqlConnection sqlConnection, SqlTransaction sqlTransaction)

@@ -21,7 +21,7 @@ using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.StaticFiles;
-using Rhetos.LightDms.Storage;
+using Rhetos.LightDMS.Storage;
 using Rhetos.Logging;
 using Rhetos.Utilities;
 using System;

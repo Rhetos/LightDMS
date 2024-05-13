@@ -39,7 +39,7 @@ namespace Rhetos.LightDMS.IntegrationTest
 
         public DownloadAzureBlobFileTests(ITestOutputHelper testOutput)
         {
-            var lightDmsOptions = new LightDmsOptions 
+            var lightDmsOptions = new AzureStorageOptions 
             { 
                 StorageContainer = TestDataUtilities.BLOB_CONTAINER_NAME
             };

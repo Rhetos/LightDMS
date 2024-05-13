@@ -17,11 +17,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Autofac;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Rhetos.LightDMS;
+using Rhetos.LightDMS.Storage;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -35,9 +37,14 @@ namespace Rhetos
     /// </remarks>
     public static class LightDmsRhetosServiceCollectionBuilderExtensions
     {
-        public static RhetosServiceCollectionBuilder AddLightDMS(this RhetosServiceCollectionBuilder builder)
+        public static RhetosServiceCollectionBuilder AddLightDMS<TStorageProvider>(this RhetosServiceCollectionBuilder builder) where TStorageProvider : class, IStorageProvider
         {
             builder.Services.AddScoped<LightDmsService>();
+
+            builder.ConfigureRhetosHost(
+                (serviceProvider, rhetosHostBuilder) => rhetosHostBuilder.ConfigureContainer(
+                    rhetosContainer => rhetosContainer.RegisterType<TStorageProvider>().As<IStorageProvider>()
+                ));
 
             builder.Services
                 .AddControllers()
