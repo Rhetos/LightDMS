@@ -32,13 +32,13 @@ $masterConnString = "Server=$($sqlServerName);Database=master;$($sqlCredential);
 $fsDbConnString = "Server=$($sqlServerName);Database=$($fsDbName);$($sqlCredential);"
 $varbinDbConnString = "Server=$($sqlServerName);Database=$($varbinDbName);$($sqlCredential);"
 
-Write-Prompt "Setting up database without FILESTREAM enabled (use varbinary to store file content)... "
+Write-Output "Setting up database without FILESTREAM enabled (use varbinary to store file content)... "
 $cmd = "IF DB_ID('$($varbinDbName)') IS NULL CREATE DATABASE $($varbinDbName)"
 Invoke-Sqlcmd -ConnectionString $masterConnString -Query $cmd
-Write-Host "OK!"
+Write-Output "OK!"
 
 # BEGIN Create FS DB
-Write-Prompt "Setting up database with FILESTREAM enabled... "
+Write-Output "Setting up database with FILESTREAM enabled... "
 
 $cmd = "SELECT DB_ID('$($fsDbName)')"
 $r = Invoke-Sqlcmd -ConnectionString $masterConnString -Query $cmd -OutputAs DataRows
@@ -59,13 +59,13 @@ if ([string]::IsNullOrEmpty($r[0])) {
         TO FILEGROUP fs_Group;"
     Invoke-Sqlcmd -ConnectionString $masterConnString -Query $cmd
 
-    Write-Host "OK!"
+    Write-Output "OK!"
 }
 # END Create FS DB
 
 Push-Location .\test\Rhetos.LightDMS.TestApp\bin\Debug\net5.0\
 
-Write-Host "Deploying test app to $($varbinDbName)..."
+Write-Output "Deploying test app to $($varbinDbName)..."
 $appSettingsObj = [pscustomobject]@{
     ConnectionStrings = [pscustomobject]@{
         RhetosConnectionString = '';
@@ -77,7 +77,7 @@ ConvertTo-Json $appSettingsObj -Depth 5 | Set-Content -Path rhetos-app.local.set
 & .\rhetos dbupdate .\Rhetos.LightDMS.TestApp.dll
 if ($LastExitCode -ne 0) { throw "rhetos dbupdate failed on varbinDbConnString." }
 
-Write-Host "Deploying test app to $($fsDbName)..."
+Write-Output "Deploying test app to $($fsDbName)..."
 $appSettingsObj.ConnectionStrings.RhetosConnectionString = $fsDbConnString
 ConvertTo-Json $appSettingsObj -Depth 5 | Set-Content -Path rhetos-app.local.settings.json
 & .\rhetos dbupdate .\Rhetos.LightDMS.TestApp.dll
@@ -88,12 +88,12 @@ Invoke-Sqlcmd -ConnectionString $fsDbConnString -Query $enableFileStreamCmd
 
 Pop-Location
 
-Write-Prompt "Checking Docker install... "
+Write-Output "Checking Docker install... "
 $DockerOS = docker info -f "{{.OSType}}"
 if ($DockerOS -eq "linux") {
-    Write-Host "OK!"
+    Write-Output "OK!"
 } else {
-    Write-Host "FAIL!"
+    Write-Output "FAIL!"
     Write-Error "You need to run Docker in Linux container mode."
     exit 1
 }
@@ -118,9 +118,9 @@ if (-not ([string]::IsNullOrEmpty($containerId)))
 & dotnet test --no-build
 if ($LastExitCode -ne 0) { throw "dotnet test failed." }
 
-Write-Host 'Test completed, cleaning up test resources ...'
+Write-Output 'Test completed, cleaning up test resources ...'
 
 Remove-Item '.\test\Rhetos.LightDMS.TestApp\bin\Debug\net5.0\rhetos-app.local.settings.json'
 docker stop lightdms_s3ninja lightdms_azurite
 
-Write-Host 'Done!'
+Write-Output 'Done!'

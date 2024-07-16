@@ -235,7 +235,7 @@ The build output is a NuGet package in the "Install" subfolder.
    Enter two database names that do not already exist on the test SQL Server.
    The test script will create and configure this two databases from the configuration file,
    if not created already.
-   Note: **remove comments** from the created 'test-config.json' file.
+   * Note: **remove comments** from the created 'test-config.json' file.
 
     ```js
     {
