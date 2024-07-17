@@ -21,7 +21,6 @@ using Rhetos.Host.AspNet.Dashboard;
 
 namespace Rhetos.LightDMS
 {
-    [Options("Rhetos:LightDMS")]
     public class LightDmdDashboardSnippet : IDashboardSnippet
     {
         public string DisplayName => "LightDMS";

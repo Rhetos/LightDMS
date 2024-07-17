@@ -17,15 +17,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using Rhetos.LightDMS.Storage;
-
 namespace Rhetos.LightDMS
 {
-    [Options("Rhetos:LightDMS")]
-    public class LightDmsOptions
+    [Options("Rhetos:LightDMS:Azure")]
+    public class AzureStorageOptions
     {
         public string StorageContainer { get; set; }
         public string StorageConnectionVariable { get; set; }
-        public UploadTarget UploadTarget { get; set; } = UploadTarget.Database;
     }
 }

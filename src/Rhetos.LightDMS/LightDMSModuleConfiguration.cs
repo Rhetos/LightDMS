@@ -19,7 +19,7 @@
 
 using Autofac;
 using Microsoft.AspNetCore.StaticFiles;
-using Rhetos.LightDms.Storage;
+using Rhetos.LightDMS.Storage;
 using Rhetos.Utilities;
 using System.ComponentModel.Composition;
 
@@ -30,7 +30,7 @@ namespace Rhetos.LightDMS
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.Register(context => context.Resolve<IConfiguration>().GetOptions<LightDmsOptions>()).SingleInstance().PreserveExistingDefaults();
+            builder.Register(context => context.Resolve<IConfiguration>().GetOptions<AzureStorageOptions>()).SingleInstance().PreserveExistingDefaults();
             builder.Register(context => context.Resolve<IConfiguration>().GetOptions<S3Options>()).SingleInstance().PreserveExistingDefaults();
             builder.RegisterType<DownloadHandler>().InstancePerLifetimeScope();
             builder.RegisterType<DownloadHelper>().InstancePerLifetimeScope();

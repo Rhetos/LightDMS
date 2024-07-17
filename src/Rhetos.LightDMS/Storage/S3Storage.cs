@@ -19,11 +19,16 @@
 
 using Amazon.S3;
 using Amazon.S3.Transfer;
-using Rhetos.LightDMS;
+using System.IO;
+using System.Net.Security;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
+using System;
 
-namespace Rhetos.LightDms.Storage
+namespace Rhetos.LightDMS.Storage
 {
-    public class S3StorageClient
+    public class S3StorageClient : IStorageProvider
     {
         private readonly S3Options _s3Options;
 
@@ -46,6 +51,41 @@ namespace Rhetos.LightDms.Storage
 
             var client = new AmazonS3Client(accessKeyID, key, s3Config);
             return client;
+        }
+
+        public async Task UploadStream(Stream inputStream, Guid id)
+        {
+            Console.WriteLine("Uploading Stream S3");
+            if (!string.IsNullOrEmpty(_s3Options.CertificateSubject))
+            {
+                ServicePointManager.ServerCertificateValidationCallback +=
+                    delegate (
+                        object ssender,
+                        X509Certificate certificate,
+                        X509Chain chain,
+                        SslPolicyErrors sslPolicyErrors)
+                    {
+                        if (certificate.Subject.IndexOf(_s3Options.CertificateSubject) > -1)
+                            return true;
+                        return sslPolicyErrors == SslPolicyErrors.None;
+                    };
+            }
+
+            using (var client = GetAmazonS3Client())
+            {
+                using (var transferUtility = new TransferUtility(client))
+                {
+                    var s3Folder = _s3Options.DestinationFolder;
+                    var req = new TransferUtilityUploadRequest
+                    {
+                        BucketName = _s3Options.BucketName
+                    };
+                    var fileName = s3Folder + "/doc-" + id.ToString();
+                    req.Key = fileName;
+                    req.InputStream = inputStream;
+                    await transferUtility.UploadAsync(req);
+                }
+            }
         }
     }
 }

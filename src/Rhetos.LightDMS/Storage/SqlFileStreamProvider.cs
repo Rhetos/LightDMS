@@ -24,7 +24,7 @@ using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using System.IO;
 
-namespace Rhetos.LightDms.Storage
+namespace Rhetos.LightDMS.Storage
 {
     /// <summary>
     /// SqlFileStreamProvider for SqlFileStream

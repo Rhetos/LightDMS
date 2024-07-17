@@ -70,14 +70,29 @@ LightDMS allows the following storage options:
 Installing this package to a Rhetos application:
 
 1. Add 'Rhetos.LightDMS' NuGet package, available at the [NuGet.org](https://www.nuget.org/) on-line gallery.
-2. Extend Rhetos services configuration (at `services.AddRhetosHost`) with the LightDMS service: `.AddLightDMS()`
+2. Extend Rhetos services configuration (at `services.AddRhetosHost`) with the LightDMS service: `.AddLightDMS<STORAGE PROVIDER IMPLEMENTATION>()`.
+   Select the storage provider implementation with the generic type parameter:
+   * `.AddLightDMS<Rhetos.LightDMS.Storage.DatabaseStorage>()` for simple BLOB storage in the **database** table or FILESTREAM storage (if enabled in database).
+   * `.AddLightDMS<Rhetos.LightDMS.Storage.AzureStorageClient>()` for **Azure Blob Storage**
+   * `.AddLightDMS<Rhetos.LightDMS.Storage.S3StorageClient>()` for **Amazon S3 storage**
+   * or implement a custom `IStorageProvider` and use it as AddLightDMS generic type parameter.
 
-Select storage model for new uploaded files by configuring settings key `Rhetos:LightDMS:UploadTarget`. Set the value to `Database`, `Azure` or `S3`.
 On download, LightDMS will automatically use a storage where each file was uploaded.
 
-To configure the StorageContainer and StorageConnectionVariable use the `Rhetos:LightDMS:StorageContainer` and `Rhetos:LightDMS:StorageConnectionVariable` keys.
+For **Azure Blob Storage**, set the configuration in section `Rhetos:LightDMS:Azure`.
 
-Set Azure S3 configuration in section `Rhetos:LightDMS:S3`.
+```js
+"Rhetos": {
+  "LightDMS": {
+    "Azure": {
+      "StorageContainer": "...",
+      "StorageConnectionVariable": "..."
+    }
+  }
+}
+```
+
+For **Amazon S3 storage**, set the configuration in section `Rhetos:LightDMS:S3`.
 
 ```js
 "Rhetos": {
@@ -97,7 +112,7 @@ Set Azure S3 configuration in section `Rhetos:LightDMS:S3`.
 
 ## Optimize database storage with FILESTREAM
 
-When using **database** storage, instead of Azure BLOG storage or Amazon S3, is it advised to optimize your database by enabling FILESTREAM storage for files:
+When using **database** storage, instead of Azure Blob Storage or Amazon S3, is it advised to optimize your database by enabling FILESTREAM storage for files:
 
 ### 1. Enable FILESTREAM on your application's database
 
@@ -235,7 +250,7 @@ The build output is a NuGet package in the "Install" subfolder.
    Enter two database names that do not already exist on the test SQL Server.
    The test script will create and configure this two databases from the configuration file,
    if not created already.
-   Note: **remove comments** from the created 'test-config.json' file.
+   * Note: **remove comments** from the created 'test-config.json' file.
 
     ```js
     {

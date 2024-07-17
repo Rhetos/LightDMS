@@ -34,16 +34,16 @@ namespace Rhetos.LightDMS
     /// </summary>
     public class DefaultBlobConnectionStringResolver : IAzureBlobConnectionStringResolver
     {
-        private readonly LightDmsOptions _lightDMSOptions;
+        private readonly AzureStorageOptions _azureStorageOptions;
 
-        public DefaultBlobConnectionStringResolver(LightDmsOptions lightDMSOptions)
+        public DefaultBlobConnectionStringResolver(AzureStorageOptions azureStorageOptions)
         {
-            _lightDMSOptions = lightDMSOptions;
+            _azureStorageOptions = azureStorageOptions;
         }
 
         public string Resolve()
         {
-            var storageConnectionVariable = _lightDMSOptions.StorageConnectionVariable;
+            var storageConnectionVariable = _azureStorageOptions.StorageConnectionVariable;
             if (string.IsNullOrWhiteSpace(storageConnectionVariable))
                 throw new FrameworkException("Azure Blob Storage connection variable name missing.");
 

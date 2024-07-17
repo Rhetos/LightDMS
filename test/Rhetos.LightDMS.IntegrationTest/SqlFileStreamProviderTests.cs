@@ -19,7 +19,7 @@
 
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Rhetos.LightDms.Storage;
+using Rhetos.LightDMS.Storage;
 using Rhetos.LightDMS.TestApp;
 using Rhetos.Utilities;
 using System;
