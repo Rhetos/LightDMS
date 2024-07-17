@@ -75,9 +75,18 @@ Installing this package to a Rhetos application:
 Select storage model for new uploaded files by configuring settings key `Rhetos:LightDMS:UploadTarget`. Set the value to `Database`, `Azure` or `S3`.
 On download, LightDMS will automatically use a storage where each file was uploaded.
 
-To configure the StorageContainer and StorageConnectionVariable use the `Rhetos:LightDMS:StorageContainer` and `Rhetos:LightDMS:StorageConnectionVariable` keys.
+For **Azure Blob Storage**, set the configuration in section `Rhetos:LightDMS`.
 
-Set Azure S3 configuration in section `Rhetos:LightDMS:S3`.
+```js
+"Rhetos": {
+  "LightDMS": {
+    "StorageContainer": "...",
+    "StorageConnectionVariable": "..."
+  }
+}
+```
+
+For **Amazon S3 storage**, set the configuration in section `Rhetos:LightDMS:S3`.
 
 ```js
 "Rhetos": {
@@ -97,7 +106,7 @@ Set Azure S3 configuration in section `Rhetos:LightDMS:S3`.
 
 ## Optimize database storage with FILESTREAM
 
-When using **database** storage, instead of Azure BLOG storage or Amazon S3, is it advised to optimize your database by enabling FILESTREAM storage for files:
+When using **database** storage, instead of Azure Blob Storage or Amazon S3, is it advised to optimize your database by enabling FILESTREAM storage for files:
 
 ### 1. Enable FILESTREAM on your application's database
 

@@ -20,7 +20,7 @@
 * Migrated from .NET Framework to .NET 5 and Rhetos 5.
 * Removed MimeTypeHelper class. Use the Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider class instead.
 * To configure the StorageContainer and StorageConnectionVariable use the `Rhetos:LightDMS:StorageContainer` and `Rhetos:LightDMS:StorageConnectionVariable` keys.
-* Azure S3 configuration settings are read from configuration section `Rhetos:LightDMS:S3` instead of `LightDMS:S3`.
+* Amazon S3 configuration settings are read from configuration section `Rhetos:LightDMS:S3` instead of `LightDMS:S3`.
   ```json
   "Rhetos": {
     "LightDMS": {
@@ -38,14 +38,14 @@
 
 ### New features
 
-* Implemented option to directly upload to Azure or S3 storage;
+* Implemented option to directly upload to Azure or Amazon S3 storage;
   In app settings set `Rhetos:LightDMS:UploadTarget` value to `Database`, `Azure` or `S3`.
 
 ## 1.10.0 (2024-01-17)
 
 (The following changes as not available in releases v5.0 - v5.2. They are included in 5.3.0 and later.)
 
-* Configurable Azure S3 storage option "LightDms.S3.CertificateSubject", instead of the hardcoded value.
+* Configurable Amazon S3 storage option "LightDms.S3.CertificateSubject", instead of the hardcoded value.
   The default value is backward compatible.
 
 ## 1.9.0 (2021-07-05)
