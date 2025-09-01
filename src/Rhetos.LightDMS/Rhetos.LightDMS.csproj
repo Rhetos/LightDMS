@@ -10,7 +10,7 @@
     <PackageReference Include="Rhetos.CommonConcepts" Version="6.0.0-dev24011711054c6feb" />
     <PackageReference Include="Rhetos.MsSqlEf6" Version="6.0.0-dev24011711054c6feb" />
     <PackageReference Include="Rhetos.Host.AspNet" Version="6.0.0-dev24011711054c6feb" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.305.12" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.500.12" />
   </ItemGroup>
   
   <ItemGroup>

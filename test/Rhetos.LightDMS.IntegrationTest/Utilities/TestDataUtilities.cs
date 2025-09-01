@@ -58,7 +58,7 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             }
 
             var request = new HttpRequestMessage(HttpMethod.Post, "LightDMS/Upload")
-            { 
+            {
                 Content = content
             };
 
@@ -138,47 +138,28 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             blobClient.Upload(fileStream, true);
         }
 
-        public static void SeedS3StorageFile(WebApplicationFactory<Startup> factory,
+        public static Guid SeedS3StorageFile(WebApplicationFactory<Startup> factory,
             Guid documentVersionId,
             Guid fileContentId,
             string fileContent)
         {
             var fileName = $"doc-{fileContentId}";
 
+            using var scope = factory.Server.Services.CreateScope();
+            var s3Options = scope.ServiceProvider.GetService<IRhetosComponent<S3Options>>().Value;
+            var lightDmsOptions = scope.ServiceProvider.GetService<IRhetosComponent<LightDmsOptions>>().Value;
+            lightDmsOptions.UploadTarget = Storage.UploadTarget.S3;
+            var uploadHelper = scope.ServiceProvider.GetService<IRhetosComponent<UploadHelper>>();
+            using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
+            var uploadedFileResult = uploadHelper.Value.UploadStream(fileStream).GetAwaiter().GetResult();
             var connectionString = GetHostConnectionString(factory);
             using var connection = new SqlConnection(connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
-
-            InsertFileContentAsVarBinary(fileContentId, connection, transaction, isS3: true);
-            InsertDocumentVersion(documentVersionId, fileContentId, fileName, connection, transaction);
-
+            InsertDocumentVersion(documentVersionId, uploadedFileResult.ID.Value, fileName, connection, transaction);
             transaction.Commit();
             connection.Close();
-
-            // Upload file to S3 storage
-            using var scope = factory.Server.Services.CreateScope();
-            var s3Options = scope.ServiceProvider.GetService<IRhetosComponent<S3Options>>().Value;
-            UploadFileToS3Storage(fileContent, fileName, s3Options);
-        }
-
-        private static void UploadFileToS3Storage(string fileContent, string fileName, S3Options s3Options)
-        {
-            var config = new AmazonS3Config()
-            {
-                ServiceURL = s3Options.ServiceURL,
-                ForcePathStyle = s3Options.ForcePathStyle
-            };
-            using var client = new AmazonS3Client(s3Options.AccessKeyID, s3Options.Key, config);
-            using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
-
-            var folder = string.IsNullOrEmpty(s3Options.DestinationFolder) ? string.Empty : $"{s3Options.DestinationFolder}/";
-            client.PutObjectAsync(new PutObjectRequest
-            {
-                BucketName = s3Options.BucketName,
-                Key = $"{folder}{fileName}",
-                InputStream = fileStream
-            }).Wait();
+            return uploadedFileResult.ID.Value;
         }
 
         public static void CleanupBlobFile(WebApplicationFactory<Startup> factory,
