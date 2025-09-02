@@ -1,4 +1,4 @@
-﻿Module LightDMS
+Module LightDMS
 {
 	Entity DocumentVersion
 	{
@@ -31,7 +31,7 @@
 			return repository.LightDMS.DocumentEvent.Query()
 				.Where(de =>
 					itemListIds.Contains(de.DocumentVersionID) &&
-					itemListDocumentIds.Contains(de.DocumentID) && // Ne micati. Dodatan uvjet za sprječavanje lockova 
+					itemListDocumentIds.Contains(de.DocumentID) && // Do not remove. This condition is added to prevent locks.
 					de.Extension_DocumentStatusBeforeEvent.CheckoutID != null &&
 					de.Extension_DocumentStatusBeforeEvent.CheckedOutToID != de.DocumentVersion.CreatedByID)
 				.Select(de => de.DocumentVersion);
