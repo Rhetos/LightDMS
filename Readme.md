@@ -263,7 +263,10 @@ The build output is a NuGet package in the "Install" subfolder.
     }
     ```
 
-3. Once you have everything configured properly, you can run the test:
+3. On Windows, install either [Docker Desktop](https://www.docker.com/products/docker-desktop/),
+   or a free [Docker Engine](https://docs.docker.com/engine/install/) installed on WSL.
+
+4. Once you have everything configured properly, you can run the test:
 
     ```batch
     Clean.bat
