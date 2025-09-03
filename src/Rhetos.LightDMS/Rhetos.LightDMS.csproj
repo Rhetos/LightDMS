@@ -5,12 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
-    <PackageReference Include="Rhetos" Version="6.0.0-dev24011711054c6feb" />
-    <PackageReference Include="Rhetos.CommonConcepts" Version="6.0.0-dev24011711054c6feb" />
-    <PackageReference Include="Rhetos.MsSqlEf6" Version="6.0.0-dev24011711054c6feb" />
-    <PackageReference Include="Rhetos.Host.AspNet" Version="6.0.0-dev24011711054c6feb" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.500.12" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
+    <PackageReference Include="Rhetos" Version="6.0.0" />
+    <PackageReference Include="Rhetos.CommonConcepts" Version="6.0.0" />
+    <PackageReference Include="Rhetos.MsSqlEf6" Version="6.0.0" />
+    <PackageReference Include="Rhetos.Host.AspNet" Version="6.0.0" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.6.13" />
   </ItemGroup>
   
   <ItemGroup>
