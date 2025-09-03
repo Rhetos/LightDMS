@@ -35,12 +35,12 @@ namespace Rhetos.LightDMS.IntegrationTest
 
         private readonly string _fileContent = Guid.NewGuid().ToString();
         private readonly Guid _documentVersionId = Guid.NewGuid();
-        private readonly Guid _fileContentId = Guid.NewGuid();
+        private Guid _fileContentId;
 
         public DownloadS3StorageTests(ITestOutputHelper testOutputHelper)
         {
             _factory = new CustomWebApplicationFactory<Startup>(testOutputHelper);
-            TestDataUtilities.SeedS3StorageFile(_factory, _documentVersionId, _fileContentId, _fileContent);
+            _fileContentId = TestDataUtilities.SeedS3StorageFile(_factory, _documentVersionId, _fileContentId, _fileContent);
         }
 
         public void Dispose()
