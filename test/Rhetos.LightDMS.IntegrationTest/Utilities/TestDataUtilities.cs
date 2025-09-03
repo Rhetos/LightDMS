@@ -1,4 +1,4 @@
-﻿/*
+/*
     Copyright (C) 2014 Omega software d.o.o.
 
     This file is part of Rhetos.
@@ -19,6 +19,7 @@
 
 using Amazon.S3;
 using Amazon.S3.Model;
+using Autofac;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using Xunit;
 
 namespace Rhetos.LightDMS.IntegrationTest.Utilities
 {
@@ -145,13 +147,16 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
         {
             var fileName = $"doc-{fileContentId}";
 
-            using var scope = factory.Server.Services.CreateScope();
-            var s3Options = scope.ServiceProvider.GetService<IRhetosComponent<S3Options>>().Value;
-            var lightDmsOptions = scope.ServiceProvider.GetService<IRhetosComponent<LightDmsOptions>>().Value;
-            lightDmsOptions.UploadTarget = Storage.UploadTarget.S3;
-            var uploadHelper = scope.ServiceProvider.GetService<IRhetosComponent<UploadHelper>>();
+            using var scope = factory.Server.Services.GetService<RhetosHost>().CreateScope(
+                b => b.ConfigureOptions<LightDmsOptions>(o => o.UploadTarget = Storage.UploadTarget.S3));
+            var uploadHelper = scope.Resolve<UploadHelper>();
             using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
-            var uploadedFileResult = uploadHelper.Value.UploadStream(fileStream).GetAwaiter().GetResult();
+            var uploadedFileResult = uploadHelper.UploadStream(fileStream).GetAwaiter().GetResult();
+            if (uploadedFileResult.Error != null
+                || uploadedFileResult.Exception != null
+                || uploadedFileResult.ID == null)
+                Assert.Fail($"Upload failed. StatusCode {uploadedFileResult.StatusCode}. Error {uploadedFileResult.Error}. {uploadedFileResult.Exception}");
+
             var connectionString = GetHostConnectionString(factory);
             using var connection = new SqlConnection(connectionString);
             connection.Open();
