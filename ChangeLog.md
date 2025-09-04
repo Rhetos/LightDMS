@@ -1,9 +1,10 @@
 # Rhetos.LightDMS release notes
 
-## 6.0.0 (TO BE RELEASED)
+## 6.0.0 (2025-09-04)
 
-* Bugfix: Fixed Amazon S3 upload error on S3 Ninja server "AmazonS3Exception: The computed request signature does not match the one provided. Check login credentials.",
-  by updating to newer AWSSDK.S3.
+* Update to .NET 8 and Rhetos 6.
+* Bugfix: Amazon S3 upload error on S3 Ninja server "AmazonS3Exception: The computed request signature does not match the one provided. Check login credentials.".
+* Updated dependency AWSSDK.S3 4.0.6.13.
 
 ## 5.3.0 (2024-01-17)
 

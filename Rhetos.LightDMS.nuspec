@@ -8,15 +8,17 @@
     <license type="expression">AGPL-3.0-only</license>
     <projectUrl>https://github.com/rhetos/rhetos</projectUrl>
     <description>LightDMS is a lightweight document storage and versioning plugin for Rhetos development platform.</description>
+    <readme>docs\Readme.md</readme>
     <copyright>Copyright Omega software 2016</copyright>
     <tags>Rhetos plugin</tags>
     <dependencies>
       <group targetFramework="net8.0">
         <dependency id="Azure.Storage.Blobs" version="12.25.0" />
-        <dependency id="Rhetos.AfterDeploy" version="6.0.0-dev24011717272b30776" />
+        <dependency id="Rhetos.AfterDeploy" version="6.0.0" />
         <dependency id="Rhetos.CommonConcepts" version="6.0.0" />
         <dependency id="Rhetos.Host.AspNet" version="6.0.0" />
-        <dependency id="AWSSDK.S3" version="3.7.305.12" />
+        <dependency id="Rhetos.MsSqlEf6" version="6.0.0" />
+        <dependency id="AWSSDK.S3" version="4.0.6.13" />
       </group>
     </dependencies>
     <frameworkReferences>
@@ -26,7 +28,7 @@
     </frameworkReferences>
   </metadata>
   <files>
-    <file src="Readme.md" target="" />
+    <file src="Readme.md" target="docs" />
     <file src="ChangeLog.md" target="" />
     <file src="src\Rhetos.LightDMS\AfterDeploy\**\*" target="AfterDeploy" />
     <file src="src\Rhetos.LightDMS\DataMigration\**\*" target="DataMigration" />
