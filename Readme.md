@@ -228,7 +228,7 @@ The build output is a NuGet package in the "Install" subfolder.
 
 #### Prerequisites
 
-* PowerShell
+* PowerShell 7
 * Docker with Linux container mode (for Azure Blob and S3 Storage emulators)
 * MS SQL Server instance with FILESTREAM enabled
 
@@ -271,7 +271,7 @@ The build output is a NuGet package in the "Install" subfolder.
     ```batch
     Clean.bat
     Build.bat
-    powershell .\Test.ps1
+    pwsh .\Test.ps1
     ```
 
 #### How testing works

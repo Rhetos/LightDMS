@@ -1,3 +1,5 @@
+#Requires -Version 7.0
+
 # This script expects either Docker Desktop installed on Windows (https://www.docker.com/products/docker-desktop/),
 # or a free Docker Engine installed on WSL in the Windows (https://docs.docker.com/engine/install/).
 
@@ -31,9 +33,9 @@ $fsLocation = $config.FileStreamFileLocation
 $varbinDbName = $config.VarBinaryDatabaseName
 
 # Computed parameters
-$masterConnString = "Server=$($sqlServerName);Database=master;$($sqlCredential);"
-$fsDbConnString = "Server=$($sqlServerName);Database=$($fsDbName);$($sqlCredential);"
-$varbinDbConnString = "Server=$($sqlServerName);Database=$($varbinDbName);$($sqlCredential);"
+$masterConnString = "Server=$($sqlServerName);Database=master;$($sqlCredential);TrustServerCertificate=true;"
+$fsDbConnString = "Server=$($sqlServerName);Database=$($fsDbName);$($sqlCredential);TrustServerCertificate=true;"
+$varbinDbConnString = "Server=$($sqlServerName);Database=$($varbinDbName);$($sqlCredential);TrustServerCertificate=true;"
 
 Write-Output "Setting up database without FILESTREAM enabled (use varbinary to store file content)... "
 $cmd = "IF DB_ID('$($varbinDbName)') IS NULL CREATE DATABASE $($varbinDbName)"
@@ -96,13 +98,12 @@ $winDocker = [bool](Get-Command docker -CommandType Application -ErrorAction Sil
 $wslDocker = &{ wsl.exe sh -lc 'command -v docker >/dev/null 2>&1'; $LASTEXITCODE -eq 0 }
 
 function Invoke-Docker {
-    $argList = @($args | ForEach-Object { '"' + $_.ToString() + '"' })
     if ($winDocker) {
-        Write-Host -- docker @argList
-        & docker @argList
+        Write-Host -- docker $args
+        & docker $args
     } elseif ($wslDocker) {
-        Write-Host -- wsl.exe -- docker @argList
-        & wsl.exe -- docker @argList
+        Write-Host -- wsl.exe -- docker $args
+        & wsl.exe -- docker $args
     } else {
         throw "Docker is NOT available."
     }
