@@ -35,5 +35,7 @@ namespace Rhetos.LightDMS
         public string CertificateSubject { get; internal set; }
 
         public bool ForcePathStyle { get; set; }
+
+        public bool CalculateHash { get; set; } = false;
     }
 }

@@ -17,6 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Transfer;
 using Rhetos.LightDMS;
@@ -39,7 +40,8 @@ namespace Rhetos.LightDms.Storage
             var s3Config = new AmazonS3Config()
             {
                 ServiceURL = _s3Options.ServiceURL,
-                ForcePathStyle = _s3Options.ForcePathStyle
+                ForcePathStyle = _s3Options.ForcePathStyle,
+                RequestChecksumCalculation = _s3Options.CalculateHash ? RequestChecksumCalculation.WHEN_SUPPORTED : RequestChecksumCalculation.WHEN_REQUIRED
             };
             if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(accessKeyID) || string.IsNullOrWhiteSpace(s3Config.ServiceURL))
                 throw new FrameworkException("Invalid S3 storage configuration parameters.");

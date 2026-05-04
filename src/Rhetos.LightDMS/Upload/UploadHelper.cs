@@ -147,7 +147,7 @@ namespace Rhetos.LightDMS
                         return sslPolicyErrors == SslPolicyErrors.None;
                     };
             }
-            
+
             using (var client = _s3StorageClient.GetAmazonS3Client())
             {
                 using (var transferUtility = new TransferUtility(client))
@@ -159,10 +159,30 @@ namespace Rhetos.LightDMS
                     };
                     var fileName = s3Folder + "/doc-" + id.ToString();
                     req.Key = fileName;
+
+                    if (_s3Options.CalculateHash)
+                    {
+                        var hash = CalculateHash(inputStream);
+                        if (inputStream.CanSeek)
+                            inputStream.Position = 0;
+
+                        req.ChecksumSHA256 = hash;
+                    }
+
                     req.InputStream = inputStream;
+
                     await transferUtility.UploadAsync(req);
                 }
             }
+        }
+
+        private string CalculateHash(Stream memoryStream)
+        {
+            using var sha256 = SHA256.Create();
+            memoryStream.Position = 0;
+            var hashBytes = sha256.ComputeHash(memoryStream);
+
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
         }
 
         private static async Task UploadStreamToDatabase(Stream inputStream, Guid id, SqlConnection sqlConnection, SqlTransaction sqlTransaction)
