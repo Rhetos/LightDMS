@@ -40,7 +40,7 @@ namespace Rhetos.LightDMS.IntegrationTest
         public DownloadS3StorageTests(ITestOutputHelper testOutputHelper)
         {
             _factory = new CustomWebApplicationFactory<Startup>(testOutputHelper);
-            _fileContentId = TestDataUtilities.SeedS3StorageFile(_factory, _documentVersionId, _fileContentId, _fileContent);
+            _fileContentId = TestDataUtilities.SeedS3StorageFile(_factory, _documentVersionId, _fileContent);
         }
 
         public void Dispose()

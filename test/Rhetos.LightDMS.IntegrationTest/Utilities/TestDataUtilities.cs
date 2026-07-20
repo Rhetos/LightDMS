@@ -140,13 +140,8 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             blobClient.Upload(fileStream, true);
         }
 
-        public static Guid SeedS3StorageFile(WebApplicationFactory<Startup> factory,
-            Guid documentVersionId,
-            Guid fileContentId,
-            string fileContent)
+        public static Guid SeedS3StorageFile(WebApplicationFactory<Startup> factory, Guid documentVersionId, string fileContent)
         {
-            var fileName = $"doc-{fileContentId}";
-
             using var scope = factory.Server.Services.GetService<RhetosHost>().CreateScope(
                 b => b.ConfigureOptions<LightDmsOptions>(o => o.UploadTarget = Storage.UploadTarget.S3));
             var uploadHelper = scope.Resolve<UploadHelper>();
@@ -157,14 +152,16 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
                 || uploadedFileResult.ID == null)
                 Assert.Fail($"Upload failed. StatusCode {uploadedFileResult.StatusCode}. Error {uploadedFileResult.Error}. {uploadedFileResult.Exception}");
 
+            Guid fileContentId = uploadedFileResult.ID.Value;
+            var fileName = $"doc-{fileContentId}";
             var connectionString = GetHostConnectionString(factory);
             using var connection = new SqlConnection(connectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
-            InsertDocumentVersion(documentVersionId, uploadedFileResult.ID.Value, fileName, connection, transaction);
+            InsertDocumentVersion(documentVersionId, fileContentId, fileName, connection, transaction);
             transaction.Commit();
             connection.Close();
-            return uploadedFileResult.ID.Value;
+            return fileContentId;
         }
 
         public static void CleanupBlobFile(WebApplicationFactory<Startup> factory,

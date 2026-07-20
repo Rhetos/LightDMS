@@ -28,11 +28,11 @@ namespace Rhetos.LightDMS
 
         public string ServiceURL { get; set; }
 
-        public string BucketName { get; internal set; }
+        public string BucketName { get; set; }
 
-        public string DestinationFolder { get; internal set; }
+        public string DestinationFolder { get; set; }
 
-        public string CertificateSubject { get; internal set; }
+        public string CertificateSubject { get; set; }
 
         public bool ForcePathStyle { get; set; }
 
