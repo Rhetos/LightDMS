@@ -41,7 +41,12 @@ namespace Rhetos.LightDms.Storage
             {
                 ServiceURL = _s3Options.ServiceURL,
                 ForcePathStyle = _s3Options.ForcePathStyle,
-                RequestChecksumCalculation = _s3Options.CalculateHash ? RequestChecksumCalculation.WHEN_SUPPORTED : RequestChecksumCalculation.WHEN_REQUIRED
+                RequestChecksumCalculation = _s3Options.EnableIntegrityChecks
+                    ? RequestChecksumCalculation.WHEN_SUPPORTED
+                    : RequestChecksumCalculation.WHEN_REQUIRED,
+                ResponseChecksumValidation = _s3Options.EnableIntegrityChecks
+                    ? ResponseChecksumValidation.WHEN_SUPPORTED
+                    : ResponseChecksumValidation.WHEN_REQUIRED
             };
             if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(accessKeyID) || string.IsNullOrWhiteSpace(s3Config.ServiceURL))
                 throw new FrameworkException("Invalid S3 storage configuration parameters.");
