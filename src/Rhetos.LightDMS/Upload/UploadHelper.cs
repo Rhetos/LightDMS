@@ -160,6 +160,14 @@ namespace Rhetos.LightDMS
                     var fileName = s3Folder + "/doc-" + id.ToString();
                     req.Key = fileName;
                     req.InputStream = inputStream;
+
+                    // When integrity checks are disabled (e.g. for Dell ECS and other S3-compatible services
+                    // that do not fully implement AWS SigV4 payload signing), send the payload with
+                    // "x-amz-content-sha256: UNSIGNED-PAYLOAD" instead of a signed SHA-256 of the body.
+                    // Otherwise such services reject the upload with "The Content-SHA256 you specified did not
+                    // match what we received". This is safe because the connection to ServiceURL uses HTTPS.
+                    if (!_s3Options.EnableIntegrityChecks)
+                        req.DisablePayloadSigning = true;
                     await transferUtility.UploadAsync(req);
                 }
             }

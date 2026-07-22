@@ -2,9 +2,8 @@
 
 ## 6.1.0 (TO BE RELEASED)
 
-* Bugfix: Since the AWS SDK upgrade in LightDMS 6.0.0, S3 upload to Dell ECS (and other S3-compatible servers without AWS "flexible checksums" support) failed with "The ContentSHA256 you specified did not match what we received".
-  The AWS SDK's automatic request checksums and response checksum validation are now disabled by default.
-  Set the new option `Rhetos:LightDMS:S3:EnableIntegrityChecks` to true to re-enable automatic data-integrity checks on servers that support them (AWS S3, Ceph, S3 Ninja, ...).
+* Bugfix: Since LightDMS 6.0.0, S3 uploads to Dell ECS and some other non-AWS S3-compatible servers failed with a "Content-SHA256" error. Such uploads now work out of the box.
+  If needed, the new option `Rhetos:LightDMS:S3:EnableIntegrityChecks` restores the previous behavior (AWS S3, Ceph, S3 Ninja, ...).
 
 ## 6.0.0 (2025-09-04)
 

@@ -99,7 +99,7 @@ For **Amazon S3 storage**, set the configuration in section `Rhetos:LightDMS:S3`
       "DestinationFolder": "Optional folder of files",
       "CertificateSubject": "S3 CertificateSubject",
       "ForcePathStyle": true, // if your bucket is url path not on subdomain
-      "EnableIntegrityChecks": false // set true for automatic integrity checks on services that support AWS flexible checksums (AWS S3, Ceph, ...); keep false for services that do not (e.g. Dell ECS)
+      "EnableIntegrityChecks": false // set true for automatic integrity checks (flexible checksums + signed payload SHA-256) on services that support them (AWS S3, Ceph, ...); keep false for services that do not (e.g. Dell ECS)
     }
   }
 }
