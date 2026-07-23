@@ -29,9 +29,11 @@ using Rhetos.Utilities;
 using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using Xunit;
 
 namespace Rhetos.LightDMS.IntegrationTest.Utilities
@@ -144,6 +146,7 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
         {
             using var scope = factory.Server.Services.GetService<RhetosHost>().CreateScope(
                 b => b.ConfigureOptions<LightDmsOptions>(o => o.UploadTarget = Storage.UploadTarget.S3));
+            EnsureS3ServerRunning(scope.Resolve<S3Options>());
             var uploadHelper = scope.Resolve<UploadHelper>();
             using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
             var uploadedFileResult = uploadHelper.UploadStream(fileStream).GetAwaiter().GetResult();
@@ -162,6 +165,45 @@ namespace Rhetos.LightDMS.IntegrationTest.Utilities
             transaction.Commit();
             connection.Close();
             return fileContentId;
+        }
+
+        /// <summary>
+        /// Waits until the S3 emulator (S3Ninja) is ready to serve requests, then returns. Fails fast with a
+        /// clear message if it does not become ready in time, instead of letting the upload fail later with the
+        /// cryptic "The response ended prematurely (ResponseEnded)" error.
+        /// The S3Ninja container is started by Test.ps1; when running the tests directly (IDE / dotnet test)
+        /// it must be started manually, e.g. "docker start lightdms_s3ninja".
+        /// A plain TCP connect is not enough: S3Ninja binds the port almost immediately after "docker start",
+        /// but the web application inside needs a few more seconds to finish booting. During that window an
+        /// upload fails with "The response ended prematurely". We therefore poll with real HTTP requests until
+        /// the server returns a complete response (any status code), which means it has finished starting up.
+        /// </summary>
+        private static void EnsureS3ServerRunning(S3Options s3Options)
+        {
+            var timeout = TimeSpan.FromSeconds(30);
+            var pollInterval = TimeSpan.FromMilliseconds(500);
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+
+            var stopwatch = Stopwatch.StartNew();
+            Exception lastError = null;
+            do
+            {
+                try
+                {
+                    // Any completed HTTP response means the web app has finished booting and is serving requests.
+                    using var response = httpClient.GetAsync(s3Options.ServiceURL).GetAwaiter().GetResult();
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    lastError = ex;
+                    Thread.Sleep(pollInterval);
+                }
+            } while (stopwatch.Elapsed < timeout);
+
+            Assert.Fail($"S3 service is not ready at {s3Options.ServiceURL} after {timeout.TotalSeconds:0} s "
+                + $"({lastError?.InnerException?.Message ?? lastError?.Message}). "
+                + "Start the S3Ninja container before running S3 tests, e.g. run Test.ps1 or 'docker start lightdms_s3ninja'.");
         }
 
         public static void CleanupBlobFile(WebApplicationFactory<Startup> factory,
