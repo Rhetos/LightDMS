@@ -1,6 +1,6 @@
 # Rhetos.LightDMS release notes
 
-## 6.1.0 (TO BE RELEASED)
+## 6.1.0 (2026-07-23)
 
 * Bugfix: Since LightDMS 6.0.0, S3 uploads to Dell ECS and some other non-AWS S3-compatible servers failed with a "Content-SHA256" error. Such uploads now work out of the box.
   If needed, the new option `Rhetos:LightDMS:S3:EnableIntegrityChecks` restores the previous behavior (AWS S3, Ceph, S3 Ninja, ...).
