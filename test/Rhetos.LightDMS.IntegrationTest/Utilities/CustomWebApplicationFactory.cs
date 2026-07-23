@@ -21,6 +21,7 @@ using Autofac;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Rhetos.Logging;
 using Rhetos.Utilities;
 using System;
@@ -35,8 +36,9 @@ namespace Rhetos.LightDMS.IntegrationTest
         private readonly Action<IServiceCollection> _serviceBuilder = services => { };
         private readonly Action<ContainerBuilder> _rhetosContainerBuilder = builder => { };
         private readonly ILogProvider _logProvider = new ConsoleLogProvider();
+        private readonly ITestOutputHelper _testOutput;
 
-        public CustomWebApplicationFactory() 
+        public CustomWebApplicationFactory()
         {
         }
 
@@ -51,6 +53,7 @@ namespace Rhetos.LightDMS.IntegrationTest
 
             if (testOutput != null)
             {
+                _testOutput = testOutput;
                 _logProvider = new TestLogProvider(testOutput);
                 _rhetosContainerBuilder += builder => builder.RegisterInstance(_logProvider);
             }
@@ -58,6 +61,19 @@ namespace Rhetos.LightDMS.IntegrationTest
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            // Route ASP.NET framework logs (e.g. the unhandled-exception report from
+            // DeveloperExceptionPageMiddleware, which is expected for some negative tests) to the
+            // xUnit test output instead of the console, so they stay visible in the failing test's
+            // details but do not spam the shared test-run console output.
+            if (_testOutput != null)
+            {
+                builder.ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddProvider(new XUnitLoggerProvider(_testOutput));
+                });
+            }
+
             builder.ConfigureServices(services =>
             {
                 services.AddRhetosHost(ConfigureRhetos);
