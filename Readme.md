@@ -5,7 +5,7 @@ LightDMS is a lightweight document storage and versioning plugin for [Rhetos dev
 - It supports different storage methods: (MS SQL table, MS SQL filestream, S3 storage, Azure BLOB storage).
 - It provides web API for upload, download and document versioning.
 
-See [rhetos.org](http://www.rhetos.org/) for more information on Rhetos.
+See <https://github.com/Rhetos/Rhetos> for more information on Rhetos.
 
 1. [Features](#features)
    1. [File web API](#file-web-api)
